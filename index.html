@@ -924,6 +924,15 @@
       position: relative;
     }
 
+    .charmander-video-wrap {
+      /* (수정) 볼륨 바가 아래 액션 버튼들과 겹쳐 보이던 문제의 원인은
+         .charmander-control-bar의 position:absolute 기준점이 버튼까지
+         포함하는 .charmander-container 전체였기 때문. 동영상만 감싸는
+         별도 래퍼를 만들어 그 기준점을 동영상 영역으로 한정한다. */
+      position: relative;
+      width: 100%;
+    }
+
     .charmander-video {
       width: 100%; 
       /* (버그 수정) 예전에는 aspect-ratio를 422/364(약 1.16:1)로 고정해뒀는데,
@@ -937,14 +946,16 @@
       max-width: 422px;
       aspect-ratio: 16 / 9;
       height: auto;
+      display: block;
       object-fit: contain;
       border-radius: 8px;
       cursor: pointer;
     }
 
     .charmander-control-bar {
-      /* (변경) 우측 세로 오버레이 대신, 동영상 하단 가장자리에 가로로
-         떠 있는 미니 컨트롤로 배치. */
+      /* (변경) 일반 동영상 플레이어처럼, 평소에는 숨겨져 있다가 동영상에
+         마우스를 올리거나(hover) 슬라이더를 조작 중일 때만(focus-within)
+         하단 가운데에 나타나도록 한다. */
       position: absolute;
       left: 50%;
       bottom: 8px;
@@ -960,6 +971,16 @@
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       width: auto;
       max-width: none;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+
+    .charmander-video-wrap:hover .charmander-control-bar,
+    .charmander-video-wrap.controls-visible .charmander-control-bar,
+    .charmander-control-bar:focus-within {
+      opacity: 1;
+      pointer-events: auto;
     }
 
     .mute-toggle-btn {
@@ -2139,21 +2160,23 @@
       <div class="card-box charmander-box draggable-panel" id="panel-video">
         <div class="panel-drag-handle-bar" title="드래그해서 이동"></div>
         <div class="charmander-container">
-          <video id="charmander-video" class="charmander-video" autoplay loop playsinline muted>
-            <source src="우로 걷는 파이리.mp4" type="video/mp4">
-          </video>
-          
-          <div class="charmander-control-bar">
-            <button class="mute-toggle-btn" id="charmander-mute-btn">
-              <svg class="volume-on-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none;">
-                <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
-              </svg>
-              <svg class="volume-off-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
-              </svg>
-            </button>
-            <input type="range" id="charmander-volume-slider" class="charmander-volume-slider" min="0" max="100" value="0">
-            <span id="charmander-volume-text" class="charmander-volume-value">0</span>
+          <div class="charmander-video-wrap">
+            <video id="charmander-video" class="charmander-video" autoplay loop playsinline muted>
+              <source src="우로 걷는 파이리.mp4" type="video/mp4">
+            </video>
+
+            <div class="charmander-control-bar">
+              <button class="mute-toggle-btn" id="charmander-mute-btn">
+                <svg class="volume-on-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" style="display:none;">
+                  <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+                </svg>
+                <svg class="volume-off-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+                </svg>
+              </button>
+              <input type="range" id="charmander-volume-slider" class="charmander-volume-slider" min="0" max="100" value="0">
+              <span id="charmander-volume-text" class="charmander-volume-value">0</span>
+            </div>
           </div>
 
           <div class="charmander-action-buttons">
@@ -2164,6 +2187,7 @@
             <button class="charmander-act-btn" data-src="YOU_AND_ME.mkv">너도? 나도!</button>
           </div>
         </div>
+
       </div>
     </div>
 
@@ -3394,6 +3418,19 @@
       });
     }
 
+    // 터치 기기는 :hover가 제대로 동작하지 않으므로, 동영상을 탭하면
+    // 볼륨 컨트롤 바가 잠깐 나타나도록(showing 클래스) 별도 처리한다.
+    (function setupCharmanderTouchControls() {
+      const wrap = document.querySelector('.charmander-video-wrap');
+      if (!wrap) return;
+      let hideTimer = null;
+      wrap.addEventListener('touchstart', () => {
+        wrap.classList.add('controls-visible');
+        if (hideTimer) clearTimeout(hideTimer);
+        hideTimer = setTimeout(() => wrap.classList.remove('controls-visible'), 3000);
+      }, { passive: true });
+    })();
+
     /* 슬라이더 트랙 배경 비활성 영역을 연한 회색으로 통일 */
     function updateLpSpeedTrack(val) {
       if (lpSpeedSlider) {
@@ -3463,6 +3500,15 @@
       updateLpSpeedTrack(initVal);
     }
 
+    // 걷기 액션은 좌로/우로 걷는 영상 2개를 번갈아(순서대로) 재생한다.
+    // (버그 수정) 예전에는 클릭할 때마다 매번 무작위로 골랐기 때문에
+    // 같은 영상이 연속으로 나오는 경우가 있었다. 이제 인덱스를 기억해뒀다가
+    // 클릭할 때마다 다음 순서로 넘어가게 해서 항상 번갈아 나오도록 한다.
+    const walkVideos = ['좌로 걷는 파이리.mp4', '우로 걷는 파이리.mp4'];
+    // 기본 소스가 '우로 걷는 파이리.mp4'(index 1)이므로, 다음 클릭 시
+    // index 0('좌로')부터 시작하도록 맞춰둔다.
+    let walkVideoIndex = 1;
+
     charmanderActBtns.forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -3473,9 +3519,8 @@
         let src = '';
 
         if (action === 'walk') {
-          const walkVideos = ['좌로 걷는 파이리.mp4', '우로 걷는 파이리.mp4'];
-          const randomIndex = Math.floor(Math.random() * walkVideos.length);
-          src = walkVideos[randomIndex];
+          walkVideoIndex = (walkVideoIndex + 1) % walkVideos.length;
+          src = walkVideos[walkVideoIndex];
         } else {
           src = btn.getAttribute('data-src');
         }
