@@ -907,7 +907,9 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 12px;
+      /* 박스 테두리 여백을 최소한으로 줄여서, 그만큼 아낀 공간을 전부
+         동영상 크기를 키우는 데 쓴다. */
+      padding: 6px;
     }
 
     .charmander-container {
@@ -915,55 +917,56 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      /* 볼륨 바를 더 이상 동영상 아래 별도 줄로 두지 않고, 동영상 위에
+         겹쳐서 띄우는 오버레이로 바꿨다. position: relative를 기준점으로
+         잡아서 아래 .charmander-control-bar가 이 안쪽 우하단에 절대
+         위치로 떠 있게 한다. */
+      position: relative;
     }
 
     .charmander-video {
       width: 100%; 
-      /* 박스(.charmander-box) 전체 크기는 그대로 두고 싶어서, 세로 높이는
-         기존과 동일하게 유지한 채(195px 기준 비율) 가로 폭만 패널이 허용하는
-         최대치(420px, .left-panel 내부 여백을 뺀 실사용 가능 너비)까지
-         넓혔다. 가로세로 비율 자체를 더 넓게(420:195) 바꿨기 때문에
-         aspect-ratio만 키우면 원본 영상이 옆으로 눌려 보이므로,
-         object-fit을 contain에서 cover로 바꿔 비율은 유지한 채 좌우를
-         꽉 채우고 위아래를 살짝 잘라내는 방식으로 화면에 보이는 실제
-         출력 크기를 키웠다(높이가 그대로라 박스 세로 크기는 안 바뀐다). */
-      max-width: 420px;
-      aspect-ratio: 420 / 195;
+      /* 볼륨 바가 더 이상 자기 줄(행)을 차지하지 않고 동영상 위에 겹쳐지는
+         오버레이로 바뀌었기 때문에, 그 줄이 쓰던 세로 공간(컨트롤 바 높이 +
+         위쪽 여백)까지 전부 동영상 높이로 흡수시켰다. 가로는 패널 안에서
+         쓸 수 있는 최대 폭(422px)까지, 세로는 그만큼 커진 비율(344px)까지
+         꽉 채워서 동영상 자체의 출력 면적을 최대한 키웠다. */
+      max-width: 422px;
+      aspect-ratio: 422 / 364;
       height: auto;
-      object-fit: cover;
+      object-fit: contain;
       border-radius: 8px;
       cursor: pointer;
     }
 
     .charmander-control-bar {
+      /* 우측 가장자리, 세로 중앙에 떠 있는 미니 컨트롤로 배치했다.
+         (요청: "동영상 안에 우측에서 조절") 레이아웃 흐름 밖(position:
+         absolute)이라 자기 줄을 차지하지 않으므로 세로 공간은 그대로
+         전부 동영상 크기로 넘어간다. */
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
       display: flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
-      background: rgba(13, 17, 23, 0.5);
-      padding: 6px 14px;
-      border-radius: 50px;
+      gap: 6px;
+      background: rgba(13, 17, 23, 0.55);
+      padding: 8px 5px;
+      border-radius: 20px;
       border: 1px solid rgba(255, 255, 255, 0.2);
-      margin-top: 8px;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
-      /* backdrop-filter를 여기 넣으면 이 요소가 이미 backdrop-filter가 걸린
-         .card-box 안에 있어서 블러가 두 겹으로 겹친다. transform: scale()로
-         축소되는 상위 요소(.player-wrapper) 안에서 이렇게 blur가 중첩되면
-         Chrome 합성 과정에서 마우스를 올리는 등 재합성이 일어날 때마다
-         모서리를 따라 흰 이음선이 보인다. background 색만으로 충분히
-         구분되므로 backdrop-filter는 뺀다. */
-      width: 100%;
-      /* 동영상 폭을 420px로 넓힌 만큼, 그 아래 볼륨 조절 바도 기존
-         240px로 좁게 남겨두지 않고 같이 넓혀서 슬라이더를 조작할 수
-         있는 공간 자체를 여유 있게 늘렸다. */
-      max-width: 360px;
+      width: auto;
+      max-width: none;
     }
 
     .mute-toggle-btn {
       background: none;
       color: currentColor;
       border: none;
-      width: 24px;
-      height: 24px;
+      width: 18px;
+      height: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -973,10 +976,14 @@
     }
 
     .charmander-volume-slider {
-      flex: 1;
+      /* 가로 슬라이더를 세로로 세운다(최신 Chrome/Edge/Firefox 지원). */
+      writing-mode: vertical-lr;
+      direction: rtl;
+      width: 4px;
+      height: 56px;
+      flex: none;
       -webkit-appearance: none;
       appearance: none;
-      height: 4px;
       border-radius: 2px;
       background: rgba(0, 0, 0, 0.15);
       outline: none;
@@ -984,10 +991,9 @@
     }
 
     .charmander-volume-value {
-      font-size: 12px;
+      font-size: 10px;
       color: #c5cbd3;
-      width: 26px;
-      text-align: right;
+      text-align: center;
       flex-shrink: 0;
     }
 
@@ -995,7 +1001,7 @@
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin-top: 10px;
+      margin-top: 6px;
       width: 100%;
       justify-content: center;
     }
@@ -1088,9 +1094,9 @@
     /* 파이리 영상 카드는 별도 제목바가 없어서 상단에 얇은 드래그 바를 추가로 붙인다 */
     .panel-drag-handle-bar {
       width: 100%;
-      margin: -20px -20px 10px -20px;
-      width: calc(100% + 40px);
-      height: 14px;
+      margin: -6px -6px 6px -6px;
+      width: calc(100% + 12px);
+      height: 12px;
       border-radius: 20px 20px 0 0;
       display: flex;
       align-items: center;
