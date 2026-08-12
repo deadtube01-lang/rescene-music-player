@@ -3782,9 +3782,17 @@
       const box = document.getElementById('album-select-container');
       if (!box) return;
 
+      // 트랙리스트 휠 스크롤과 같은 이유로, 진행 중인 smooth 스크롤 애니메이션이
+      // 끝나기 전까지는 추가 휠 입력을 무시한다.
+      let wheelBusy = false;
+
       box.addEventListener('wheel', (e) => {
         const cards = box.querySelectorAll('.album-card-item');
         if (cards.length === 0) return;
+
+        e.preventDefault();
+        if (wheelBusy) return;
+        wheelBusy = true;
 
         const firstCardRect = cards[0].getBoundingClientRect();
         let rowGap = 6;
@@ -3797,8 +3805,9 @@
         }
         const rowStep = firstCardRect.height + rowGap;
 
-        e.preventDefault();
         box.scrollBy({ top: e.deltaY > 0 ? rowStep : -rowStep, behavior: 'smooth' });
+
+        setTimeout(() => { wheelBusy = false; }, 200);
       }, { passive: false });
     })();
 
@@ -3817,11 +3826,24 @@
       const box = document.querySelector('.tracklist-box');
       if (!box) return;
 
+      // (버그) 마우스/트랙패드 종류에 따라 "한 번 굴렸다"고 느껴지는 순간에도
+      // 실제로는 wheel 이벤트가 연달아 여러 번(2~3회) 발생할 수 있다. 바로
+      // 아래에서 시작한 smooth 스크롤 애니메이션이 채 끝나기도 전에 다음
+      // wheel 이벤트가 또 들어오면, 그 시점의 box.scrollTop은 아직 애니메이션
+      // 중간값이라 "다음/이전 항목"을 잘못 계산해서 한 번에 두세 줄씩
+      // 건너뛰거나(휠 한 번에 여러 줄 점프), 반대로 위로 끝까지 스크롤해도
+      // 계산이 꼬여서 첫 줄로 못 돌아가는 문제가 생겼다. 진행 중인 스크롤
+      // 애니메이션이 끝날 때까지는 추가 휠 입력을 무시해서, 한 번의 휠
+      // 동작이 항상 정확히 한 줄만 이동하게 한다.
+      let wheelBusy = false;
+
       box.addEventListener('wheel', (e) => {
         const items = Array.from(box.querySelectorAll('.track-item'));
         if (items.length === 0) return;
 
         e.preventDefault();
+        if (wheelBusy) return;
+        wheelBusy = true;
 
         const direction = e.deltaY > 0 ? 1 : -1;
         const currentTop = box.scrollTop;
@@ -3837,6 +3859,10 @@
         targetIdx = Math.max(0, Math.min(items.length - 1, targetIdx));
 
         box.scrollTo({ top: items[targetIdx].offsetTop, behavior: 'smooth' });
+
+        // smooth 스크롤이 대략 끝날 시간(넉넉하게 200ms)이 지난 뒤에야
+        // 다음 휠 입력을 다시 받는다.
+        setTimeout(() => { wheelBusy = false; }, 200);
       }, { passive: false });
     })();
 
