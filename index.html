@@ -6031,7 +6031,12 @@
         video.style.display = 'none';
         document.body.appendChild(video);
         video.src = WALK_SRC;
-        video.play().catch(() => {});
+        video.addEventListener('error', () => {
+          console.error('[wild-charmander] 영상 로드 실패:', video.currentSrc || WALK_SRC, video.error);
+        });
+        video.play().catch((err) => {
+          console.warn('[wild-charmander] 영상 재생 실패(자동재생 차단 등):', err);
+        });
 
         const canvas = document.createElement('canvas');
         canvas.className = 'wild-charmander-canvas';
@@ -6288,20 +6293,25 @@
         }
       }
 
-      // ------- 등장 트리거: 랜덤 이스터에그 + 테스트용 단축키 -------
-      // 3~8분마다 한 번씩, 35% 확률로 야생 파이리를 등장시킨다.
+      // ------- 등장 트리거: 3분마다 + 테스트용 단축키 -------
+      // 아직 포획(등장) 중이 아니라면 정확히 3분마다 야생 파이리를 등장시킨다.
+      const WILD_SPAWN_INTERVAL = 3 * 60 * 1000;
       function scheduleWildSpawnCheck() {
-        const delay = 3 * 60 * 1000 + Math.random() * 5 * 60 * 1000;
         setTimeout(() => {
-          if (!wildState && Math.random() < 0.35) spawnWildCharmander();
+          if (!wildState) spawnWildCharmander();
           scheduleWildSpawnCheck();
-        }, delay);
+        }, WILD_SPAWN_INTERVAL);
       }
       scheduleWildSpawnCheck();
 
       // 테스트/디버그용: Shift + W를 누르면 바로 야생 파이리 등장.
+      // 이미 등장해 있던 개체가 있으면(화면에 안 보이는 상태로 남아있는 경우 포함)
+      // 먼저 정리한 뒤 새로 소환해서, 테스트 중 언제 눌러도 확실히 나오게 한다.
       document.addEventListener('keydown', (e) => {
         if (e.shiftKey && (e.key === 'W' || e.key === 'w')) {
+          e.preventDefault();
+          console.log('[wild-charmander] Shift+W 눌림: 테스트 소환');
+          if (wildState) despawnWild();
           spawnWildCharmander();
         }
       });
