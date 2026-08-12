@@ -128,6 +128,93 @@
       -webkit-user-drag: none;
     }
 
+    /* ----------------------------------
+       이스터에그: 야생 파이리 & 포켓몬 포획
+    ---------------------------------- */
+    .captured-list-btn {
+      left: 68px;
+      font-size: 20px;
+    }
+
+    .captured-list-panel {
+      position: fixed;
+      left: 16px;
+      bottom: 68px;
+      z-index: 9998;
+      background: rgba(18, 22, 28, 0.85);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 12px;
+      padding: 10px;
+      min-width: 170px;
+      max-height: 260px;
+      overflow-y: auto;
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4);
+    }
+
+    .captured-list-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 2px;
+      font-size: 12px;
+      color: #fff;
+    }
+
+    .captured-list-row button {
+      background: rgba(252, 111, 207, 0.25);
+      border: 1px solid #FC6FCF;
+      color: #fff;
+      border-radius: 8px;
+      padding: 3px 9px;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    .captured-list-row button:hover {
+      background: rgba(252, 111, 207, 0.45);
+    }
+
+    .captured-list-empty {
+      font-size: 12px;
+      color: #9aa4af;
+      text-align: center;
+      padding: 6px 0;
+    }
+
+    /* 캔버스로 실시간 크로마키(검은 배경 제거) 처리된 파이리 스프라이트.
+       배경화면보다는 위(z-index -1 초과), 몬스터볼(z-index 5)이나 카드
+       패널(z-index 50 이상)보다는 아래에 둬서 소품처럼 보이게 한다. */
+    .wild-charmander-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 4;
+      pointer-events: none;
+      filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
+      transition: opacity 0.35s ease;
+    }
+
+    .wild-charmander-canvas.capture-flash {
+      filter: drop-shadow(0 0 10px #ffffff) drop-shadow(0 0 22px #ffffff) brightness(2.4);
+    }
+
+    #pokeball-toy.capture-light {
+      filter: drop-shadow(0 0 8px #ff3b3b) drop-shadow(0 0 16px #ff3b3b);
+    }
+
+    #pokeball-toy.capture-success {
+      filter: drop-shadow(0 0 12px #4ade80) drop-shadow(0 0 22px #4ade80);
+    }
+
+    #pokeball-toy.capture-fail {
+      filter: drop-shadow(0 0 10px #94a3b8);
+    }
+
     .bg-layer.active {
       opacity: 1;
     }
@@ -2090,6 +2177,10 @@
   <!-- 몬스터볼 장난감: 버튼을 누르면 나타나 위에서 떨어지고, 잡아서 던지면 중력을
        받아 벽/바닥에 튕겨 다닌다. 다시 버튼을 누르면 사라진다. -->
   <img id="pokeball-toy" class="pokeball-toy" src="POKEMON/POKEBALL.png" alt="몬스터볼" ondragstart="return false;" title="잡아서 던져보세요" style="display: none;">
+
+  <!-- 포획된 포켓몬 버튼: 처음엔 숨겨져 있다가 하나라도 포획하면 나타난다. -->
+  <button id="captured-list-btn" class="pokeball-spawn-btn captured-list-btn" title="포획된 포켓몬" style="display:none;">📦</button>
+  <div id="captured-list-panel" class="captured-list-panel" style="display:none;"></div>
 
   <!-- 최상단 왼쪽 테마 토글 버튼 (기본 상태 라이트 모드) -->
   <button id="theme-toggle-btn" class="theme-toggle-btn">
@@ -5742,6 +5833,13 @@
 
         render();
 
+        // 이스터에그: 야생 파이리가 활성화돼 있으면 매 프레임 몬스터볼과의
+        // 충돌(맞았는지)을 검사한다. 던지는 도중(공중/바닥에서 굴러가는 중)에도
+        // 계속 검사되도록 stepPhysics 루프 안에 훅을 심어둔다.
+        if (window.__wildCollisionCheck) {
+          window.__wildCollisionCheck(x + BALL_SIZE / 2, y + BALL_SIZE / 2);
+        }
+
         const onFloor = y >= maxY - 0.5;
         const settled = onFloor && Math.abs(vx) < REST_SPEED && Math.abs(vy) < REST_SPEED;
 
@@ -5859,7 +5957,355 @@
         y = Math.min(y, maxY);
         render();
       });
+
+      // 이스터에그(야생 파이리 포획) 연출에서 몬스터볼을 흔들거나 빛나게
+      // 하기 위해, 이 클로저 안의 x/y/angle/render에 접근하는 헬퍼들을
+      // window에 노출해둔다. (몬스터볼 코드를 직접 수정하지 않고도 바깥의
+      // 야생 파이리 모듈에서 몬스터볼을 조작할 수 있게 하기 위함)
+      window.__pokeballGetCenter = function () {
+        return { x: x + BALL_SIZE / 2, y: y + BALL_SIZE / 2 };
+      };
+
+      window.__pokeballGlow = function (className, duration) {
+        if (!ball) return;
+        ball.classList.add(className);
+        setTimeout(() => ball.classList.remove(className), duration);
+      };
+
+      // 몬스터볼을 제자리에서 좌우로 3번 정도 흔든 뒤 콜백을 호출한다.
+      window.__pokeballShake = function (cycles, onDone) {
+        stopPhysics();
+        const baseAngle = angle;
+        let count = 0;
+
+        function oneShake() {
+          if (count >= cycles) {
+            angle = baseAngle;
+            render();
+            if (onDone) onDone();
+            return;
+          }
+          count++;
+          const duration = 260;
+          let t0 = null;
+          function step(ts) {
+            if (t0 === null) t0 = ts;
+            const p = Math.min(1, (ts - t0) / duration);
+            angle = baseAngle + Math.sin(p * Math.PI * 2) * 16;
+            render();
+            if (p < 1) requestAnimationFrame(step);
+            else oneShake();
+          }
+          requestAnimationFrame(step);
+        }
+        oneShake();
+      };
     })()
+
+    // ----------------------------------
+    // 이스터에그: 야생 파이리 등장 & 몬스터볼로 포획하기
+    //
+    // "POKEMON/야생의 우로 걷는 파이리.mp4" 하나만 검은 배경으로 촬영돼 있고
+    // 기본적으로 오른쪽을 보고 걷는다. <video>를 직접 화면에 깔면 검은
+    // 사각형이 그대로 보이기 때문에, 보이지 않는 <video>에서 매 프레임을
+    // <canvas>로 그린 다음 어두운(검정에 가까운) 픽셀의 알파값만 낮춰서
+    // 실시간으로 "크로마키"처럼 투명하게 만든 캔버스를 화면 위에 스프라이트로
+    // 띄운다. 왼쪽으로 이동할 때는 별도 영상 없이 캔버스에 그릴 때 좌우
+    // 반전(scaleX(-1))만 적용해서 같은 영상을 재사용한다.
+    // ----------------------------------
+    (function setupWildCharmanderEasterEgg() {
+      const WALK_SRC = 'POKEMON/야생의 우로 걷는 파이리.mp4'; // 기본이 오른쪽을 보고 걷는 영상
+      const SPRITE_WIDTH = 90;
+      const BLACK_CUTOFF = 60;   // 이 밝기(R+G+B) 이하는 완전 투명
+      const BLACK_SOFT_EDGE = 130; // 이 밝기까지는 서서히 투명도가 올라옴(경계 부드럽게)
+      const STORAGE_KEY = 'rescene_captured_charmanders';
+
+      // 영상은 하나만 재생해두고, 이동 방향이 왼쪽일 때만 캔버스에 그릴 때
+      // 좌우로 뒤집어서(scaleX(-1)) 그린다. 오른쪽으로 갈 땐 원본 그대로.
+      function createCharmanderSprite() {
+        const video = document.createElement('video');
+        video.muted = true;
+        video.loop = true;
+        video.playsInline = true;
+        video.autoplay = true;
+        video.style.display = 'none';
+        document.body.appendChild(video);
+        video.src = WALK_SRC;
+        video.play().catch(() => {});
+
+        const canvas = document.createElement('canvas');
+        canvas.className = 'wild-charmander-canvas';
+        document.body.appendChild(canvas);
+        const ctx = canvas.getContext('2d', { willReadFrequently: true });
+
+        let dir = 'right';
+        let sized = false;
+        let rafId = null;
+
+        function ensureSize() {
+          if (video.videoWidth) {
+            canvas.width = SPRITE_WIDTH;
+            canvas.height = Math.round(SPRITE_WIDTH * video.videoHeight / video.videoWidth);
+            sized = true;
+          }
+        }
+
+        function draw() {
+          if (!sized) ensureSize();
+          if (sized && video.readyState >= 2) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            ctx.save();
+            if (dir === 'left') {
+              // 좌우 반전: 오른쪽을 보는 원본 영상을 거울처럼 뒤집어서
+              // 왼쪽을 보고 걷는 것처럼 보이게 한다.
+              ctx.translate(canvas.width, 0);
+              ctx.scale(-1, 1);
+            }
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            ctx.restore();
+            const frame = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const d = frame.data;
+            for (let i = 0; i < d.length; i += 4) {
+              const brightness = d[i] + d[i + 1] + d[i + 2];
+              if (brightness < BLACK_CUTOFF) {
+                d[i + 3] = 0;
+              } else if (brightness < BLACK_SOFT_EDGE) {
+                d[i + 3] = Math.round((brightness - BLACK_CUTOFF) / (BLACK_SOFT_EDGE - BLACK_CUTOFF) * 255);
+              }
+            }
+            ctx.putImageData(frame, 0, 0);
+          }
+          rafId = requestAnimationFrame(draw);
+        }
+        draw();
+
+        return {
+          canvas,
+          setDirection(d) { dir = d; },
+          destroy() {
+            if (rafId) cancelAnimationFrame(rafId);
+            video.pause();
+            video.remove();
+            canvas.remove();
+          }
+        };
+      }
+
+      // 화면 안을 무작위로 어슬렁거리며 걸어다니게 하는 이동 컨트롤러.
+      function startWandering(sprite, opts) {
+        opts = opts || {};
+        const SPEED = opts.speed || 75;
+        let x = opts.startX != null ? opts.startX : Math.random() * Math.max(0, innerWidth - SPRITE_WIDTH);
+        let y = opts.startY != null ? opts.startY : Math.random() * Math.max(0, innerHeight * 0.7);
+        let targetX = x, targetY = y;
+        let lastTime = null;
+        let stopped = false;
+        const state = { x, y, w: SPRITE_WIDTH, h: SPRITE_WIDTH };
+
+        function pickTarget() {
+          targetX = Math.random() * Math.max(0, innerWidth - SPRITE_WIDTH);
+          targetY = Math.random() * Math.max(0, innerHeight * 0.7);
+        }
+        pickTarget();
+
+        function frame(ts) {
+          if (stopped) return;
+          if (lastTime === null) lastTime = ts;
+          const dt = Math.min((ts - lastTime) / 1000, 0.05);
+          lastTime = ts;
+
+          const dx = targetX - x, dy = targetY - y;
+          const dist = Math.hypot(dx, dy);
+          if (dist < 4) {
+            pickTarget();
+          } else {
+            const nx = dx / dist, ny = dy / dist;
+            x += nx * SPEED * dt;
+            y += ny * SPEED * dt;
+            sprite.setDirection(nx >= 0 ? 'right' : 'left');
+          }
+          state.x = x; state.y = y;
+          state.h = sprite.canvas.height || SPRITE_WIDTH;
+          sprite.canvas.style.transform = `translate(${x}px, ${y}px)`;
+          requestAnimationFrame(frame);
+        }
+        requestAnimationFrame(frame);
+
+        return {
+          getRect() { return state; },
+          stop() { stopped = true; }
+        };
+      }
+
+      // ------- 포획 목록 저장/표시 -------
+      function loadCapturedList() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]'); }
+        catch (e) { return []; }
+      }
+      function saveCapturedList(list) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); } catch (e) {}
+      }
+
+      let capturedList = loadCapturedList();
+      const releasedSprites = {}; // entry.id -> { sprite, controller }
+
+      const listBtn = document.getElementById('captured-list-btn');
+      const listPanel = document.getElementById('captured-list-panel');
+
+      function renderCapturedListUI() {
+        if (!listBtn || !listPanel) return;
+        listBtn.style.display = capturedList.length ? 'flex' : 'none';
+        listPanel.innerHTML = '';
+        if (capturedList.length === 0) {
+          const empty = document.createElement('div');
+          empty.className = 'captured-list-empty';
+          empty.textContent = '아직 포획한 파이리가 없어요.';
+          listPanel.appendChild(empty);
+          return;
+        }
+        capturedList.forEach((entry, i) => {
+          const row = document.createElement('div');
+          row.className = 'captured-list-row';
+          const label = document.createElement('span');
+          label.textContent = `파이리 #${i + 1}`;
+          const toggleBtn = document.createElement('button');
+          toggleBtn.textContent = releasedSprites[entry.id] ? '불러들이기' : '꺼내기';
+          toggleBtn.addEventListener('click', () => toggleReleased(entry.id));
+          row.appendChild(label);
+          row.appendChild(toggleBtn);
+          listPanel.appendChild(row);
+        });
+      }
+
+      function toggleReleased(id) {
+        if (releasedSprites[id]) {
+          releasedSprites[id].controller.stop();
+          releasedSprites[id].sprite.destroy();
+          delete releasedSprites[id];
+        } else {
+          const sprite = createCharmanderSprite();
+          const controller = startWandering(sprite, { speed: 55 });
+          releasedSprites[id] = { sprite, controller };
+        }
+        renderCapturedListUI();
+      }
+
+      if (listBtn) {
+        listBtn.addEventListener('click', () => {
+          listPanel.style.display = listPanel.style.display === 'none' ? 'block' : 'none';
+        });
+      }
+
+      renderCapturedListUI();
+
+      // ------- 야생 파이리 스폰 / 포획 시퀀스 -------
+      let wildState = null; // { sprite, controller, capturing, despawnTimer }
+
+      function makeCollisionChecker() {
+        return function (ballCx, ballCy) {
+          if (!wildState || wildState.capturing) return;
+          const rect = wildState.controller.getRect();
+          const charCx = rect.x + rect.w / 2;
+          const charCy = rect.y + rect.h * 0.65;
+          const dist = Math.hypot(ballCx - charCx, ballCy - charCy);
+          if (dist < 46) startCaptureSequence();
+        };
+      }
+
+      function spawnWildCharmander(opts) {
+        if (wildState) return;
+        const sprite = createCharmanderSprite();
+        const controller = startWandering(sprite, Object.assign({ speed: 70 }, opts || {}));
+        wildState = { sprite, controller, capturing: false, despawnTimer: null };
+        window.__wildCollisionCheck = makeCollisionChecker();
+        // 1분간 등장, 못 잡으면 사라짐.
+        wildState.despawnTimer = setTimeout(() => {
+          if (wildState && !wildState.capturing) despawnWild();
+        }, 60000);
+      }
+
+      function despawnWild() {
+        if (!wildState) return;
+        clearTimeout(wildState.despawnTimer);
+        window.__wildCollisionCheck = null;
+        wildState.controller.stop();
+        wildState.sprite.destroy();
+        wildState = null;
+      }
+
+      function startCaptureSequence() {
+        if (!wildState || wildState.capturing) return;
+        wildState.capturing = true;
+        window.__wildCollisionCheck = null;
+        clearTimeout(wildState.despawnTimer);
+        wildState.controller.stop();
+
+        const sprite = wildState.sprite;
+        // 1) 하얀 광선에 휩싸이는 연출: 밝게 빛나다가 서서히 사라진다.
+        sprite.canvas.classList.add('capture-flash');
+        setTimeout(() => {
+          sprite.canvas.style.opacity = '0';
+          setTimeout(() => {
+            sprite.destroy();
+            // 2) 몬스터볼이 3번 흔들림
+            if (window.__pokeballShake) {
+              window.__pokeballShake(3, () => {
+                // 3) 빨간불이 들어옴
+                window.__pokeballGlow && window.__pokeballGlow('capture-light', 500);
+                setTimeout(() => {
+                  finishCapture(Math.random() < 0.5); // 포획 확률 50%
+                }, 550);
+              });
+            } else {
+              finishCapture(Math.random() < 0.5);
+            }
+          }, 300);
+        }, 350);
+      }
+
+      function finishCapture(success) {
+        if (success) {
+          window.__pokeballGlow && window.__pokeballGlow('capture-success', 700);
+          capturedList.push({ id: 'c' + Date.now(), caughtAt: Date.now() });
+          saveCapturedList(capturedList);
+          renderCapturedListUI();
+          wildState = null;
+        } else {
+          // 포획 실패: 몬스터볼 근처에서 다시 튀어나와 도망 재개.
+          window.__pokeballGlow && window.__pokeballGlow('capture-fail', 400);
+          const center = window.__pokeballGetCenter ? window.__pokeballGetCenter() : null;
+          const sprite = createCharmanderSprite();
+          const controller = startWandering(sprite, {
+            speed: 100,
+            startX: center ? Math.max(0, center.x - SPRITE_WIDTH / 2) : undefined,
+            startY: center ? Math.max(0, center.y - SPRITE_WIDTH / 2) : undefined
+          });
+          wildState = { sprite, controller, capturing: false, despawnTimer: null };
+          window.__wildCollisionCheck = makeCollisionChecker();
+          wildState.despawnTimer = setTimeout(() => {
+            if (wildState && !wildState.capturing) despawnWild();
+          }, 60000);
+        }
+      }
+
+      // ------- 등장 트리거: 랜덤 이스터에그 + 테스트용 단축키 -------
+      // 3~8분마다 한 번씩, 35% 확률로 야생 파이리를 등장시킨다.
+      function scheduleWildSpawnCheck() {
+        const delay = 3 * 60 * 1000 + Math.random() * 5 * 60 * 1000;
+        setTimeout(() => {
+          if (!wildState && Math.random() < 0.35) spawnWildCharmander();
+          scheduleWildSpawnCheck();
+        }, delay);
+      }
+      scheduleWildSpawnCheck();
+
+      // 테스트/디버그용: Shift + W를 누르면 바로 야생 파이리 등장.
+      document.addEventListener('keydown', (e) => {
+        if (e.shiftKey && (e.key === 'W' || e.key === 'w')) {
+          spawnWildCharmander();
+        }
+      });
+    })();
 
     console.log('[rescene] build fit-jitter-fix-2026-08-12b');
   </script>
