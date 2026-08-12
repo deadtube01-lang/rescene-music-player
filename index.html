@@ -1801,6 +1801,177 @@
       border-color: rgba(15, 23, 42, 0.12);
       color: #0f172a;
     }
+
+    /* ----------------------------------
+       모바일 반응형 레이아웃 (화면 폭 768px 이하)
+       - 데스크탑용 자유배치(드래그) 좌표는 무시하고 세로 1열 스크롤 레이아웃으로 전환
+       - 좌측 상단에 고정돼 있던 테마/배경화면 컨트롤을 상단 가로 바로 이동
+       - 버튼/슬라이더 등 터치 조작 영역을 더 크게
+    ---------------------------------- */
+    @media (max-width: 768px) {
+      body {
+        flex-direction: column;
+        align-items: stretch;
+        justify-content: flex-start;
+        padding: 12px 12px 24px 12px;
+        overflow-y: auto;
+        overflow-x: hidden;
+        height: auto;
+        min-height: 100vh;
+      }
+
+      /* 배경 이미지 레이어는 화면 전체를 덮는 고정 배경으로만 사용 */
+      #bg-layers {
+        position: fixed !important;
+        inset: 0 !important;
+      }
+
+      /* 좌상단에 세로로 떠 있던 테마 토글 + 배경화면 컨트롤을 화면 맨 위 가로 바로 이동 */
+      .theme-toggle-btn,
+      .wallpaper-controls {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+      }
+
+      .theme-toggle-btn {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 8px;
+      }
+
+      .wallpaper-controls {
+        flex-direction: row !important;
+        flex-wrap: wrap;
+        align-items: center !important;
+        margin-bottom: 10px;
+      }
+
+      .wallpaper-top-row,
+      .wallpaper-nav-row {
+        flex-wrap: wrap;
+      }
+
+      .wallpaper-btn {
+        width: auto;
+        min-width: 72px;
+        height: 40px;
+        font-size: 11px;
+      }
+
+      .wallpaper-nav-btn {
+        width: 36px;
+        height: 36px;
+      }
+
+      /* 데스크탑 자유배치(드래그) 좌표/크기는 전부 무시하고 세로로 쌓는다 */
+      .player-wrapper {
+        position: static !important;
+        display: flex !important;
+        flex-direction: column !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        transform: none !important;
+        gap: 12px !important;
+      }
+
+      .left-panel,
+      .right-panel {
+        position: static !important;
+        display: flex !important;
+        flex-direction: column !important;
+        flex: none !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        max-width: 100% !important;
+        margin-top: 0 !important;
+        gap: 12px !important;
+      }
+
+      .draggable-panel {
+        position: static !important;
+        left: auto !important;
+        top: auto !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+      }
+
+      .draggable-panel.dragging {
+        box-shadow: none !important;
+      }
+
+      /* 손가락으로 잡고 옮기다 오작동하지 않도록 드래그 손잡이는 모바일에서 비활성 표시 */
+      .panel-drag-handle,
+      .panel-drag-handle-bar {
+        cursor: default;
+      }
+
+      .card-box {
+        width: 100% !important;
+        max-width: 100% !important;
+      }
+
+      /* 앨범/트랙 이미지 등 데스크탑 고정폭 요소를 화면 폭에 맞게 축소 */
+      .album-select-box,
+      #album-select-container,
+      .album-grid-container,
+      #current-playlist,
+      .tracklist-box {
+        max-width: 100% !important;
+      }
+
+      .charmander-box,
+      .charmander-video,
+      .main-player-card,
+      #current-playlist {
+        max-width: 100% !important;
+      }
+
+      /* 터치 조작 영역을 넓게: 버튼/탭/슬라이더 */
+      .cat-btn {
+        min-height: 42px;
+        padding: 0 14px;
+        font-size: 14px;
+      }
+
+      .playlist-tab-btn,
+      .playlist-clear-btn,
+      button {
+        min-height: 40px;
+      }
+
+      input[type="range"] {
+        height: 26px;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        width: 20px;
+        height: 20px;
+      }
+
+      /* 트랙/앨범 목록은 화면 안에서 세로 스크롤로 보기 좋게 높이 제한 */
+      #current-playlist {
+        max-height: 220px;
+        overflow-y: auto;
+      }
+
+      .tracklist-box {
+        max-height: 280px;
+        overflow-y: auto;
+      }
+    }
+
+    /* 아주 좁은 화면(작은 폰)에서는 앨범 카드 개수를 줄여 글자/이미지가 너무 작아지지 않게 */
+    @media (max-width: 420px) {
+      .album-grid-container {
+        grid-template-columns: repeat(3, 1fr) !important;
+      }
+
+      .card-box {
+        padding: 14px !important;
+      }
+    }
   </style>
 </head>
 <body class="light-mode" oncontextmenu="return false;">
