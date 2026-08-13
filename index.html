@@ -1122,7 +1122,7 @@
       align-items: center;
       /* 박스 테두리 여백을 최소한으로 줄여서, 그만큼 아낀 공간을 전부
          동영상 크기를 키우는 데 쓴다. */
-      padding: calc(6px * var(--ui-scale, 1));
+      padding: 6px;
     }
 
     .charmander-container {
@@ -1173,16 +1173,12 @@
       position: relative;
       width: 100%;
       box-sizing: border-box;
-      /* 리사이즈 핸들로 카드 크기를 조절할 때, 안쪽 패딩/버튼/글자 크기가
-         전부 같은 비율로 커지고 작아지도록 하는 배율 값. JS(setupCharmanderResize)가
-         새 너비 / 기준 너비 비율을 계산해서 여기 넣어준다. 기본값 1은 원래 크기. */
-      --ui-scale: 1;
     }
 
     .charmander-resize-handle {
       position: absolute;
-      width: clamp(16px, calc(20px * var(--ui-scale, 1)), 32px);
-      height: clamp(16px, calc(20px * var(--ui-scale, 1)), 32px);
+      width: 20px;
+      height: 20px;
       z-index: 5;
       touch-action: none;
     }
@@ -1218,15 +1214,15 @@
          하단 가운데에 나타나도록 한다. */
       position: absolute;
       left: 50%;
-      bottom: calc(8px * var(--ui-scale, 1));
+      bottom: 8px;
       transform: translateX(-50%);
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: calc(6px * var(--ui-scale, 1));
+      gap: 6px;
       background: rgba(13, 17, 23, 0.55);
-      padding: calc(5px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
-      border-radius: calc(20px * var(--ui-scale, 1));
+      padding: 5px 10px;
+      border-radius: 20px;
       border: 1px solid rgba(255, 255, 255, 0.2);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       width: auto;
@@ -1247,8 +1243,8 @@
       background: none;
       color: currentColor;
       border: none;
-      width: calc(18px * var(--ui-scale, 1));
-      height: calc(18px * var(--ui-scale, 1));
+      width: 18px;
+      height: 18px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1261,8 +1257,8 @@
       /* (변경) 하단 가로 배치에 맞춰 슬라이더도 다시 가로 방향으로. */
       writing-mode: horizontal-tb;
       direction: ltr;
-      width: calc(70px * var(--ui-scale, 1));
-      height: calc(4px * var(--ui-scale, 1));
+      width: 70px;
+      height: 4px;
       flex: none;
       -webkit-appearance: none;
       appearance: none;
@@ -1273,7 +1269,7 @@
     }
 
     .charmander-volume-value {
-      font-size: calc(10px * var(--ui-scale, 1));
+      font-size: 10px;
       color: #c5cbd3;
       text-align: center;
       flex-shrink: 0;
@@ -1282,21 +1278,21 @@
     .charmander-action-buttons {
       display: flex;
       flex-wrap: wrap;
-      gap: calc(6px * var(--ui-scale, 1));
-      margin-top: calc(6px * var(--ui-scale, 1));
+      gap: 6px;
+      margin-top: 6px;
       width: 100%;
       justify-content: center;
     }
 
     .charmander-act-btn {
       flex: 1 1 auto;
-      min-width: calc(88px * var(--ui-scale, 1));
+      min-width: 88px;
       background: rgba(13, 17, 23, 0.5);
       color: #c5cbd3;
       border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
-      border-radius: calc(12px * var(--ui-scale, 1));
-      font-size: calc(12px * var(--ui-scale, 1));
+      padding: 6px 8px;
+      border-radius: 12px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       /* 위 .charmander-control-bar와 같은 이유로 backdrop-filter는 제거.
@@ -1312,7 +1308,7 @@
          버튼들을 위해 그대로 남겨둔다. */
       flex: 0 0 auto;
       min-width: 0;
-      padding: calc(6px * var(--ui-scale, 1)) calc(12px * var(--ui-scale, 1));
+      padding: 6px 12px;
     }
 
     .charmander-act-btn.active {
@@ -1441,10 +1437,85 @@
       width: 220px;
       height: 220px;
       flex-shrink: 0;
-      margin-bottom: 15px;
+      margin-bottom: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
+    }
+
+    /* 좌/우 세로 슬라이더 공용 컨테이너 (LP판 옆, 버튼과 겹치지 않는 여백 안에 배치) */
+    .side-vert-controls {
+      position: absolute;
+      display: flex;
+      align-items: center;
+      z-index: 15;
+    }
+
+    .side-vert-left {
+      left: -34px;
+      top: 4px;
+      bottom: 62px;
+      flex-direction: row;
+      gap: 6px;
+      align-items: stretch;
+    }
+
+    .side-vert-right {
+      right: -32px;
+      top: 46px;
+      bottom: 4px;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .vert-slider-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      width: 15px;
+      height: 100%;
+    }
+
+    .vert-slider-label {
+      font-size: 8px;
+      color: #c5cbd3;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      writing-mode: vertical-rl;
+      transform: rotate(180deg);
+      white-space: nowrap;
+    }
+
+    .vert-slider-value {
+      font-size: 9px;
+      color: #c5cbd3;
+      flex-shrink: 0;
+    }
+
+    input.vert-slider {
+      -webkit-appearance: slider-vertical;
+      appearance: slider-vertical;
+      writing-mode: vertical-lr;
+      direction: rtl;
+      width: 4px;
+      flex: 1;
+      min-height: 40px;
+      border-radius: 2px;
+      background: rgba(0, 0, 0, 0.15);
+      outline: none;
+      cursor: pointer;
+    }
+
+    .side-vert-right .vert-mute-btn {
+      padding: 2px;
+      flex-shrink: 0;
+    }
+
+    .side-vert-right .vert-mute-btn svg {
+      width: 16px;
+      height: 16px;
     }
 
     .baksu-side-control {
@@ -1645,7 +1716,7 @@
 
     .track-info {
       width: 100%;
-      margin-bottom: 10px;
+      margin-bottom: 4px;
     }
 
     .title-container {
@@ -1686,18 +1757,6 @@
     @keyframes smooth-marquee {
       0% { transform: translateX(0); }
       100% { transform: translateX(var(--marquee-shift, 0px)); }
-    }
-
-    #album-name {
-      font-size: 14px;
-      line-height: 18px;
-      height: 18px;
-      color: #c5cbd3;
-      text-align: center;
-      width: 100%;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
     }
 
     .progress-section {
@@ -1747,6 +1806,52 @@
     .ctrl-btn svg {
       width: 28px;
       height: 28px;
+    }
+
+    .lyrics-section {
+      width: 100%;
+      margin-top: 10px;
+    }
+
+    .lyrics-box {
+      width: 100%;
+      max-height: 150px;
+      overflow-y: auto;
+      background: rgba(13, 17, 23, 0.6);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      padding: 10px 8px;
+      scroll-behavior: smooth;
+    }
+
+    .lyrics-box::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .lyrics-box::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 2px;
+    }
+
+    .lyrics-line {
+      font-size: 13px;
+      line-height: 1.6;
+      color: #7c8590;
+      text-align: center;
+      padding: 3px 4px;
+      transition: color 0.25s ease, transform 0.25s ease;
+    }
+
+    .lyrics-line.active {
+      color: #ffffff;
+      font-weight: 700;
+      transform: scale(1.04);
+      text-shadow: 0 0 10px rgba(252, 111, 207, 0.35);
+    }
+
+    .lyrics-placeholder {
+      color: #7c8590;
+      font-style: italic;
     }
 
     .play-main-btn {
@@ -2503,6 +2608,20 @@
 
         <!-- LP판 효과 커버 컨테이너 -->
         <div class="cover-container">
+          <!-- 왼쪽: SLAP/SNARE 세로 볼륨 바 (박수 이미지 위) -->
+          <div class="side-vert-controls side-vert-left">
+            <div class="vert-slider-col">
+              <span class="vert-slider-label">SLAP</span>
+              <input type="range" id="bbyam-volume-slider" class="sub-vol-slider vert-slider" min="0" max="100" value="30" orient="vertical">
+              <span id="bbyam-volume-text" class="vert-slider-value">30</span>
+            </div>
+            <div class="vert-slider-col">
+              <span class="vert-slider-label">SNARE</span>
+              <input type="range" id="snare-volume-slider" class="sub-vol-slider vert-slider" min="0" max="100" value="30" orient="vertical">
+              <span id="snare-volume-text" class="vert-slider-value">30</span>
+            </div>
+          </div>
+
           <!-- 박수 이미지 고정 배치 -->
           <div class="baksu-side-control">
             <img src="baksu.png" alt="Baksu" id="baksu-img" class="baksu-img" ondragstart="return false;" title="">
@@ -2517,6 +2636,17 @@
           </div>
           <!-- LP 우측 상단 즐겨찾기 하트 버튼 -->
           <button id="lp-fav-btn" class="lp-fav-btn">🤍</button>
+
+          <!-- 오른쪽: 메인 볼륨 세로 바 (하트 버튼 아래) -->
+          <div class="side-vert-controls side-vert-right">
+            <button id="mute-btn" class="ctrl-btn mute-btn vert-mute-btn">
+              <span id="volume-icon">
+                <svg viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+              </span>
+            </button>
+            <input type="range" id="volume-slider" class="vert-slider" min="0" max="100" value="50" step="1" orient="vertical">
+            <span id="volume-text" class="vert-slider-value">50</span>
+          </div>
         </div>
 
         <!-- LP 회전 속도 조절 슬라이더 바 -->
@@ -2533,7 +2663,6 @@
               <h2 id="song-title">곡을 선택하세요</h2>
             </div>
           </div>
-          <p id="album-name">앨범 이름</p>
         </div>
 
         <div class="progress-section">
@@ -2570,26 +2699,12 @@
           </button>
         </div>
 
-        <div class="volume-section">
-          <button id="mute-btn" class="ctrl-btn mute-btn">
-            <span id="volume-icon">
-              <svg viewBox="0 0 24 24"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-            </span>
-          </button>
-          <input type="range" id="volume-slider" min="0" max="100" value="50" step="1">
-          <span id="volume-text" class="volume-value">50</span>
-        </div>
-
-        <div class="sound-sub-controls">
-          <div class="sub-vol-row">
-            <span class="sub-vol-label">SLAP</span>
-            <input type="range" id="bbyam-volume-slider" class="sub-vol-slider" min="0" max="100" value="30">
-            <span id="bbyam-volume-text" class="sub-vol-value">30</span>
-          </div>
-          <div class="sub-vol-row">
-            <span class="sub-vol-label">SNARE</span>
-            <input type="range" id="snare-volume-slider" class="sub-vol-slider" min="0" max="100" value="30">
-            <span id="snare-volume-text" class="sub-vol-value">30</span>
+        <!-- 싱크 가사창: lyrics 배열(타임스탬프+텍스트)을 읽어 현재 재생 시간에
+             맞는 줄을 하이라이트하고 자동 스크롤한다. 가사 텍스트는 아래 JS의
+             LYRICS_DATA 배열에 직접 채워 넣으면 된다. -->
+        <div class="lyrics-section" id="lyrics-section">
+          <div class="lyrics-box" id="lyrics-box">
+            <p class="lyrics-line lyrics-placeholder">가사 줄 입력</p>
           </div>
         </div>
 
@@ -3540,6 +3655,118 @@
     const trackListEl = document.getElementById('track-list');
     const currentPlaylistEl = document.getElementById('current-playlist');
     const audio = youtubeAudioShim;
+
+    // ----------------------------------
+    // 싱크 가사(Synced Lyrics)
+    // - LYRICS_DATA: [초 단위 시간, 가사 텍스트] 배열. 아래 예시처럼
+    //   "가사 줄 입력" 자리에 타임스탬프(초)와 텍스트만 채워 넣으면 된다.
+    //   시간 순서대로 정렬되어 있어야 하며, 정렬 안 되어 있어도 자동 정렬됨.
+    // ----------------------------------
+   const LYRICS_DATA = [
+  { time: 2.93, text: 'Feeling love attack' },
+  { time: 4.21, text: 'I am all you need, I am all you need' },
+  { time: 7.51, text: 'So come and get it now' },
+  { time: 8.58, text: 'I am all you need, I am all you need' },
+  { time: 12.00, text: 'Yeah, get it' },
+  { time: 13.05, text: "걸음마다 눈부신 나, let's get it started" },
+  { time: 17.36, text: '모든 순간 시선을 난 피하지 않지' },
+  { time: 21.45, text: "What you waiting for (I'm just waiting for)" },
+  { time: 25.85, text: '나를 스친깊은 끌림 직감을 chasing' },
+  { time: 30.08, text: 'Oh, so strong (너를 느껴 난)' },
+  { time: 31.92, text: 'Yeah, so strong (다가가 이미 난)' },
+  { time: 34.22, text: 'On and on (너를 파헤쳐)' },
+  { time: 36.43, text: 'One, two, three, four' },
+  { time: 38.18, text: 'Like me, like me, 아주 눈이 부신' },
+  { time: 41.93, text: '너를 숨김없이 보여줘' },
+  { time: 45.90, text: '한 번도 빛난 적 없었던 미지의' },
+  { time: 50.32, text: '향으로 온 세상을 물들여' },
+  { time: 54.23, text: '새로워진 장면에 (no, ah) 두 눈앞은 황홀해 (yeah, yeah)' },
+  { time: 58.58, text: '너의 손을 잡을 땐 (yeah, yeah), 너와 어우러질 땐' },
+  { time: 62.57, text: '빛을 이끌어 with me, with me, 마치 chemically' },
+  { time: 67.75, text: '우린 완벽하게 어울려, feeling love attack' },
+  { time: 72.69, text: '너 역시 날 많이 기다려 왔겠지' },
+  { time: 74.83, text: "자, 오늘 이 순간 날 you can't deny it" },
+  { time: 77.07, text: "I got you, the feeling it's hotter than fire" },
+  { time: 79.06, text: "You with it, I'm with it, admit, no lying" },
+  { time: 81.35, text: '한순간에 난 발견해' },
+  { time: 83.43, text: '가려졌던 널 찾아내' },
+  { time: 85.65, text: '짙게 번지는 Ambergris' },
+  { time: 87.74, text: '어서 너의 모든 걸 드러내' },
+  { time: 90.00, text: 'Beautiful (너를 느껴 난)' },
+  { time: 92.16, text: 'Fabulous (다가가 이미 난)' },
+  { time: 94.27, text: 'On and on (너를 파헤쳐)' },
+  { time: 96.41, text: 'One, two, three, four (때를 기다려)' },
+  { time: 98.18, text: 'Like me, like me, 아주 눈이 부신' },
+  { time: 101.95, text: '너를 숨김없이 보여줘' },
+  { time: 106.11, text: '한 번도 빛난 적 없었던 미지의' },
+  { time: 110.23, text: '향으로 온 세상을 물들여' },
+  { time: 114.21, text: '새로워진 장면에 (no, ah) 두 눈앞은 황홀해 (yeah, yeah)' },
+  { time: 118.67, text: '너의 손을 잡을 땐 (yeah, yeah), 너와 어우러질 땐' },
+  { time: 122.79, text: '빛을 이끌어 with me, with me, 마치 chemically' },
+  { time: 127.89, text: '우린 완벽하게 어울려, feeling love attack' },
+  { time: 132.79, text: 'I am all you need, I am all you need' },
+  { time: 136.23, text: 'So come and get it now' },
+  { time: 137.13, text: 'I am all you need, I am all you need' },
+  { time: 140.58, text: 'So come and get it now, one, two, three, four' },
+  { time: 143.35, text: 'Like me, like me, 아주 눈이 부신' },
+  { time: 146.94, text: '너를 숨김없이 보여줘' },
+  { time: 150.91, text: '한 번도 빛난 적 없었던 미지의' },
+  { time: 155.39, text: '향으로 온 세상을 물들여' },
+  { time: 159.12, text: '새로워진 장면에 (장면에), 두 눈앞은 황홀해 (황홀해)' },
+  { time: 163.38, text: '너의 손을 잡을 땐 (yeah, yeah), 너와 어우러질 땐' },
+  { time: 167.55, text: '빛을 이끌어 with me, with me, 마치 chemically' },
+  { time: 172.82, text: '우린 완벽하게 어울려 (완벽하게 어울려), feeling love attack' },
+  { time: 180.31, text: '' },
+];
+
+    let sortedLyrics = [...LYRICS_DATA].sort((a, b) => a.time - b.time);
+    let lyricsLineEls = [];
+    let currentLyricsIdx = -1;
+
+    function renderLyrics() {
+      const box = document.getElementById('lyrics-box');
+      if (!box) return;
+      box.innerHTML = '';
+      lyricsLineEls = [];
+      currentLyricsIdx = -1;
+      sortedLyrics.forEach((line, idx) => {
+        const p = document.createElement('p');
+        p.className = 'lyrics-line';
+        p.textContent = line.text;
+        p.dataset.idx = idx;
+        p.addEventListener('click', () => {
+          if (audio) {
+            audio.currentTime = line.time;
+          }
+        });
+        box.appendChild(p);
+        lyricsLineEls.push(p);
+      });
+    }
+
+    function updateLyricsHighlight(currentTime) {
+      if (!sortedLyrics.length || !lyricsLineEls.length) return;
+      let newIdx = -1;
+      for (let i = 0; i < sortedLyrics.length; i++) {
+        if (currentTime >= sortedLyrics[i].time) {
+          newIdx = i;
+        } else {
+          break;
+        }
+      }
+      if (newIdx === currentLyricsIdx) return;
+      if (currentLyricsIdx >= 0 && lyricsLineEls[currentLyricsIdx]) {
+        lyricsLineEls[currentLyricsIdx].classList.remove('active');
+      }
+      currentLyricsIdx = newIdx;
+      if (currentLyricsIdx >= 0 && lyricsLineEls[currentLyricsIdx]) {
+        const activeEl = lyricsLineEls[currentLyricsIdx];
+        activeEl.classList.add('active');
+        activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      }
+    }
+
+    renderLyrics();
     const statusDot = document.getElementById('status-dot');
 
     const playBtn = document.getElementById('play-btn');
@@ -4114,21 +4341,10 @@
 
       const MIN_WIDTH = 220;
       const MAX_WIDTH = 900;
-      // 카드가 처음 렌더링된 너비를 "1배(원래 크기)" 기준으로 삼는다.
-      // 이후 카드 너비가 이 기준보다 커지거나 작아진 비율만큼 안쪽 패딩/버튼/
-      // 글자 크기(--ui-scale)도 같이 커지거나 작아지게 한다.
-      const BASE_WIDTH = box.getBoundingClientRect().width || 340;
-      const MIN_SCALE = 0.6;
-      const MAX_SCALE = 1.8;
       let resizing = false;
       let corner = 'br';
       let startX = 0;
       let startWidth = 0;
-
-      function applyScale(width) {
-        const scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, width / BASE_WIDTH));
-        box.style.setProperty('--ui-scale', scale);
-      }
 
       function onMove(e) {
         if (!resizing) return;
@@ -4141,7 +4357,6 @@
         newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
         box.style.width = `${newWidth}px`;
         box.style.maxWidth = 'none';
-        applyScale(newWidth);
       }
 
       function onUp() {
@@ -4726,6 +4941,8 @@
       if (albumCover) albumCover.src = item.album.cover;
       if (albumName) albumName.innerText = item.album.title;
       if (songTitle) songTitle.innerText = item.track.name;
+      currentLyricsIdx = -1;
+      lyricsLineEls.forEach(el => el.classList.remove('active'));
 
       updateLpFavButtonUI();
       setTimeout(updateMarqueeEffect, 50);
@@ -5153,6 +5370,7 @@
           const curS = Math.floor(audio.currentTime % 60);
           if (currentTimeEl) currentTimeEl.innerText = `${curM}:${curS < 10 ? '0' : ''}${curS}`;
         }
+        updateLyricsHighlight(audio.currentTime || 0);
       });
 
       audio.addEventListener('loadedmetadata', () => {
