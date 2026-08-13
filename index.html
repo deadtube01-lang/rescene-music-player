@@ -6073,17 +6073,27 @@
       // 화면 안을 무작위로 어슬렁거리며 걸어다니게 하는 이동 컨트롤러.
       function startWandering(sprite, opts) {
         opts = opts || {};
-        const SPEED = opts.speed || 75;
+        const baseSpeed = opts.speed || 75;
+        // 매번 목표 지점을 새로 정할 때마다 속도도 무작위로 바뀌어서,
+        // 어떨 땐 느리게 어떨 땐 확 빠르게 움직여 예측하기 어렵게 만든다.
+        const SPEED_MIN = baseSpeed * 0.8;
+        const SPEED_MAX = baseSpeed * 2.4;
+        let speed = baseSpeed;
         let x = opts.startX != null ? opts.startX : Math.random() * Math.max(0, innerWidth - SPRITE_WIDTH);
         let y = opts.startY != null ? opts.startY : Math.random() * Math.max(0, innerHeight * 0.7);
         let targetX = x, targetY = y;
         let lastTime = null;
         let stopped = false;
+        let nextJitterAt = 0;
         const state = { x, y, w: SPRITE_WIDTH, h: SPRITE_WIDTH };
 
         function pickTarget() {
           targetX = Math.random() * Math.max(0, innerWidth - SPRITE_WIDTH);
           targetY = Math.random() * Math.max(0, innerHeight * 0.7);
+          speed = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN);
+          // 다음 방향 전환까지 걸리는 시간도 무작위(0.4~1.4초)로 잡아서,
+          // 목표 지점에 도달하기 전에도 갑자기 방향을 트는 경우가 생기게 한다.
+          nextJitterAt = performance.now() + 400 + Math.random() * 1000;
         }
         pickTarget();
 
@@ -6095,12 +6105,12 @@
 
           const dx = targetX - x, dy = targetY - y;
           const dist = Math.hypot(dx, dy);
-          if (dist < 4) {
+          if (dist < 4 || ts >= nextJitterAt) {
             pickTarget();
           } else {
             const nx = dx / dist, ny = dy / dist;
-            x += nx * SPEED * dt;
-            y += ny * SPEED * dt;
+            x += nx * speed * dt;
+            y += ny * speed * dt;
             sprite.setDirection(nx >= 0 ? 'right' : 'left');
           }
           state.x = x; state.y = y;
@@ -6195,7 +6205,7 @@
         if (wildState) return;
         if (capturedList.length >= MAX_CAPTURED) return; // 이미 최대치를 포획했으면 더 이상 등장하지 않음
         const sprite = createCharmanderSprite();
-        const controller = startWandering(sprite, Object.assign({ speed: 70 }, opts || {}));
+        const controller = startWandering(sprite, Object.assign({ speed: 110 }, opts || {}));
         wildState = { sprite, controller, capturing: false, despawnTimer: null };
         window.__wildCollisionCheck = makeCollisionChecker();
         // 1분간 등장, 못 잡으면 사라짐.
@@ -6257,7 +6267,7 @@
           const center = window.__pokeballGetCenter ? window.__pokeballGetCenter() : null;
           const sprite = createCharmanderSprite();
           const controller = startWandering(sprite, {
-            speed: 100,
+            speed: 140,
             startX: center ? Math.max(0, center.x - SPRITE_WIDTH / 2) : undefined,
             startY: center ? Math.max(0, center.y - SPRITE_WIDTH / 2) : undefined
           });
