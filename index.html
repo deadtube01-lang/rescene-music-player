@@ -158,7 +158,7 @@
       border: 1px solid rgba(255, 255, 255, 0.25);
       border-radius: 12px;
       padding: 10px;
-      min-width: 170px;
+      min-width: 210px;
       max-height: 260px;
       overflow-y: auto;
       backdrop-filter: blur(12px);
@@ -206,6 +206,22 @@
 
     .captured-list-row button:hover {
       background: rgba(252, 111, 207, 0.45);
+    }
+
+    .captured-list-btn-group {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
+    .captured-list-discard-btn {
+      background: rgba(255, 255, 255, 0.08) !important;
+      border-color: rgba(255, 255, 255, 0.35) !important;
+    }
+
+    .captured-list-discard-btn:hover {
+      background: rgba(255, 99, 99, 0.35) !important;
+      border-color: #ff6363 !important;
     }
 
     .captured-list-empty {
@@ -6558,10 +6574,32 @@
           const toggleBtn = document.createElement('button');
           toggleBtn.textContent = releasedSprites[entry.id] ? '불러들이기' : '꺼내기';
           toggleBtn.addEventListener('click', () => toggleReleased(entry.id));
+          const discardBtn = document.createElement('button');
+          discardBtn.className = 'captured-list-discard-btn';
+          discardBtn.textContent = '놓아주기';
+          discardBtn.addEventListener('click', () => discardCaptured(entry.id));
+          const btnGroup = document.createElement('div');
+          btnGroup.className = 'captured-list-btn-group';
+          btnGroup.appendChild(toggleBtn);
+          btnGroup.appendChild(discardBtn);
           row.appendChild(label);
-          row.appendChild(toggleBtn);
+          row.appendChild(btnGroup);
           listPanel.appendChild(row);
         });
+      }
+
+      // 포획한 파이리를 완전히 놓아준다(버리기): 목록/저장소에서 지우고,
+      // 지금 화면에 꺼내져 있는 상태였다면 그것도 함께 치운다.
+      function discardCaptured(id) {
+        if (releasedSprites[id]) {
+          releasedSprites[id].controller.stop();
+          releasedSprites[id].sprite.destroy();
+          delete releasedSprites[id];
+        }
+        delete lastReleasedPos[id];
+        capturedList = capturedList.filter((e) => e.id !== id);
+        saveCapturedList(capturedList);
+        renderCapturedListUI();
       }
 
       function toggleReleased(id) {
