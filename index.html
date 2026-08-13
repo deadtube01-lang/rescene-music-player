@@ -6359,11 +6359,10 @@
       const FIRE_LEFT_SRC = 'POKEMON/좌로 불뿜는 야생파이리.webp';
       const FIRE_RIGHT_SRC = 'POKEMON/우로 불뿜는 야생파이리.webp';
       const FIRE_SOUND_SRC = 'POKEMON/fire.mp3';
-      // 불뿜는 웹피 두 장은 걷는 웹피보다 캔버스 안 캐릭터가 더 작게 그려져 있어서,
-      // 같은 SPRITE_WIDTH로 표시하면 걷는 파이리보다 작아 보인다. 화면에 보이는
-      // 실제 크기를 걷는 파이리와 맞추기 위한 배율 -- 실제로 보면서 숫자만
-      // 조절해서 맞추면 된다.
-      const FIRE_SPRITE_SCALE = 1.55;
+      // 불뿜는 웹피 원본은 높이 270px, 걷는 웹피 원본은 높이 481px로 서로 다르다.
+      // 배율을 하드코딩하지 않고, 맞았을 때 실제로 걷고 있던 파이리의 화면상
+      // 높이(rect.h)에 맞춰 불뿜는 이미지의 높이를 그대로 맞춘다(너비는
+      // 원본 비율 그대로 자동 계산). fireCounterAttack() 참고.
       // 몬스터볼이 파이리에게 맞았을 때, 이 확률로 포획 연출 대신 불을 뿜어
       // 몬스터볼을 튕겨낸다(나머지 확률은 기존처럼 포획 연출 진행).
       const FIRE_COUNTER_CHANCE = 0.6;
@@ -6872,27 +6871,46 @@
         // 커지고 발 좌표(바닥)는 그대로 고정한다.
         const footX = rect.x + rect.w / 2;
         const footY = rect.y + rect.h;
+        // 걷고 있던 파이리의 실제 화면 높이. 불뿜는 이미지도 이 높이에
+        // 그대로 맞춘다(너비는 원본 가로세로 비율대로 브라우저가 자동 계산).
+        const walkHeight = rect.h;
         wildState.sprite.destroy();
 
         const fireSrc = ballSide === 'left' ? FIRE_LEFT_SRC : FIRE_RIGHT_SRC;
-        const fireWidth = SPRITE_WIDTH * FIRE_SPRITE_SCALE;
+        // 불뿜는 이미지는 캐릭터가 프레임 정중앙이 아니라, 불을 뿜는 반대쪽에
+        // 치우쳐 있고(불줄기가 뿜는 방향으로 길게 이어짐) 그 반대편 여백이
+        // 넓다. 그래서 이미지 가로 중앙을 발 좌표에 맞추면 캐릭터 자체는
+        // 옆으로 밀려 보인다. 캐릭터 몸통이 프레임 안에서 가로로 대략 어디쯤
+        // 있는지를 비율(0=왼쪽 끝, 1=오른쪽 끝)로 잡아서 그 지점을 발 좌표에 맞춘다.
+        // 실제로 보면서 캐릭터가 계속 옆으로 밀려 보이면 이 숫자만 조절하면 된다.
+        const FIRE_CHAR_ANCHOR_RATIO = 0.3;
+        const charAnchorX = ballSide === 'left' ? (1 - FIRE_CHAR_ANCHOR_RATIO) : FIRE_CHAR_ANCHOR_RATIO;
         const fireImg = document.createElement('img');
         fireImg.alt = '불뿜는 야생 파이리';
         fireImg.style.position = 'fixed';
-        fireImg.style.left = (footX - fireWidth / 2) + 'px';
-        // 실제 이미지 높이를 알기 전까지는 너비와 같은 값으로 임시 배치해두고,
-        // 로드가 끝나면 실제 비율에 맞는 높이로 다시 계산해서 발 좌표(바닥)에 맞춘다.
-        fireImg.style.top = (footY - fireWidth) + 'px';
-        fireImg.style.width = fireWidth + 'px';
-        fireImg.style.height = 'auto';
+        fireImg.style.height = walkHeight + 'px';
+        fireImg.style.width = 'auto';
         fireImg.style.zIndex = '4';
         fireImg.style.pointerEvents = 'none';
         fireImg.style.filter = 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35))';
-        fireImg.addEventListener('load', () => {
-          if (!fireImg.naturalWidth) return;
-          const actualHeight = fireWidth * (fireImg.naturalHeight / fireImg.naturalWidth);
-          fireImg.style.top = (footY - actualHeight) + 'px';
-        });
+        fireImg.style.top = (footY - walkHeight) + 'px';
+        // 실제 너비를 알기 전까지는(로드 전) 위치가 잘못 잡혀 잠깐 보이지
+        // 않도록 숨겨뒀다가, 로드되면 원본 비율로 계산한 너비로 정확히
+        // 배치한 뒤 보여준다.
+        fireImg.style.left = footX + 'px';
+        fireImg.style.opacity = '0';
+        function placeFireImg() {
+          const naturalW = fireImg.naturalWidth || walkHeight;
+          const naturalH = fireImg.naturalHeight || walkHeight;
+          const displayWidth = walkHeight * (naturalW / naturalH);
+          fireImg.style.left = (footX - displayWidth * charAnchorX) + 'px';
+          fireImg.style.opacity = '1';
+        }
+        if (fireImg.complete && fireImg.naturalWidth) {
+          placeFireImg();
+        } else {
+          fireImg.addEventListener('load', placeFireImg);
+        }
         fireImg.src = fireSrc;
         document.body.appendChild(fireImg);
 
