@@ -2295,13 +2295,13 @@
   <div id="bg-layers" class="bg-layers"></div>
 
   <!-- 몬스터볼 소환 버튼 (왼쪽 아래 고정) -->
-  <button id="pokeball-spawn-btn" class="pokeball-spawn-btn" title="">
+  <button id="pokeball-spawn-btn" class="pokeball-spawn-btn">
     <img src="POKEMON/POKEBALL.png" alt="몬스터볼" class="pokeball-spawn-btn-icon">
   </button>
 
   <!-- 몬스터볼 장난감: 버튼을 누르면 나타나 위에서 떨어지고, 잡아서 던지면 중력을
        받아 벽/바닥에 튕겨 다닌다. 다시 버튼을 누르면 사라진다. -->
-  <img id="pokeball-toy" class="pokeball-toy" src="POKEMON/POKEBALL.png" alt="몬스터볼" ondragstart="return false;" title="" style="display: none;">
+  <img id="pokeball-toy" class="pokeball-toy" src="POKEMON/POKEBALL.png" alt="몬스터볼" ondragstart="return false;" style="display: none;">
 
   <!-- 포획된 포켓몬 버튼: 처음엔 숨겨져 있다가 하나라도 포획하면 나타난다. -->
   <button id="captured-list-btn" class="pokeball-spawn-btn captured-list-btn" title="포획된 포켓몬" style="display:none;">📦</button>
@@ -5928,13 +5928,14 @@
       if (!ball || !spawnBtn) return;
 
       const BALL_SIZE = 42;
-      const GRAVITY = 1100;        // px/s^2, 아래로 당기는 힘 (너무 세면 거의 안 튕기고 바로 뚝 떨어지는 느낌이 됨)
+      const GRAVITY = 620;         // px/s^2, 평소(던지기) 중력 -- 자연스럽게 튕기도록 낮춤
+      const GRAVITY_CAPTURE = 2000; // px/s^2, 파이리를 맞혀 포획 연출이 시작된 뒤에는 훨씬 무겁게 뚝 떨어짐
       const RESTITUTION = 0.78;    // 바닥/벽에 튕길 때 남는 속도 비율(에너지 손실)
       const SPAWN_BOUNCE_RESTITUTION = 0.32; // 처음 소환돼서 떨어질 때는 너무 높게 튀지 않도록 낮은 반발계수 사용
       const FLOOR_FRICTION = 0.97; // 바닥에 닿아 있는 동안 가로 속도가 줄어드는 비율
       const REST_SPEED = 4;        // 이 속도 이하로 느려지면 멈춘 것으로 간주
       const MAX_THROW_SPEED = 3600; // 너무 세게 던져서 화면 밖으로 순식간에 사라지지 않도록 제한
-      const DROP_START_OFFSET = 260; // 버튼을 눌렀을 때, 화면 위쪽 이 높이만큼에서 떨어뜨리기 시작
+      const DROP_START_RATIO = 0.3; // 버튼을 눌렀을 때, 바닥에서 화면 높이의 이 비율만큼 위에서 떨어뜨리기 시작
 
       let x = 80;
       let y = 0;
@@ -5947,6 +5948,9 @@
       let grabDX = 0, grabDY = 0;
       // 놓는 순간의 속도를 추정하기 위해 최근 마우스 위치/시각을 짧게 기록해둔다.
       let history = [];
+      // 손으로 한 번이라도 잡아서 던지기 전까지는(소환 직후 떨어지는 중에는)
+      // 야생 파이리와 부딪혀도 포획되지 않도록 막는 플래그.
+      let thrown = false;
 
       let rafId = null;
       let lastTime = null;
@@ -5985,7 +5989,7 @@
         const dt = Math.min((timestamp - lastTime) / 1000, 0.032);
         lastTime = timestamp;
 
-        vy += GRAVITY * dt;
+        vy += (dropStraight ? GRAVITY_CAPTURE : GRAVITY) * dt;
         x += vx * dt;
         y += vy * dt;
 
@@ -6042,8 +6046,9 @@
 
         // 이스터에그: 야생 파이리가 활성화돼 있으면 매 프레임 몬스터볼과의
         // 충돌(맞았는지)을 검사한다. 던지는 도중(공중/바닥에서 굴러가는 중)에도
-        // 계속 검사되도록 stepPhysics 루프 안에 훅을 심어둔다.
-        if (window.__wildCollisionCheck) {
+        // 계속 검사되도록 stepPhysics 루프 안에 훅을 심어둔다. 단, 손으로
+        // 잡아서 한 번 던지기 전(소환 직후 떨어지는 중)에는 검사하지 않는다.
+        if (thrown && window.__wildCollisionCheck) {
           window.__wildCollisionCheck(x + BALL_SIZE / 2, y + BALL_SIZE / 2);
         }
 
@@ -6073,17 +6078,18 @@
         rafId = requestAnimationFrame(stepPhysics);
       }
 
-      // 버튼을 누르면: 버튼 바로 위, 화면 위쪽 어딘가에서 "툭" 떨어지기 시작한다.
+      // 버튼을 누르면: 바닥에서 화면 높이의 DROP_START_RATIO만큼 위에서 "툭" 떨어지기 시작한다.
       function spawnBall() {
         const btnRect = spawnBtn.getBoundingClientRect();
-        const { maxX } = viewportBounds();
+        const { maxX, maxY } = viewportBounds();
         x = Math.min(maxX, Math.max(0, btnRect.left + 88));
-        y = -DROP_START_OFFSET;
+        y = maxY * (1 - DROP_START_RATIO);
         vx = 0;
         vy = 0;
         angle = 0;
         dropStraight = false;
         spawnGentleBounce = true;
+        thrown = false; // 손으로 잡아서 던지기 전까지는 포획 판정 안 함
         active = true;
         ball.style.display = 'block';
         render();
@@ -6095,6 +6101,7 @@
         dragging = false;
         dropStraight = false;
         spawnGentleBounce = false;
+        thrown = false;
         ball.classList.remove('grabbing');
         stopPhysics();
         ball.style.display = 'none';
@@ -6157,7 +6164,6 @@
       window.__pokeballResetAvailability = function () {
         spawnBtn.disabled = false;
         spawnBtn.classList.remove('pokeball-spawn-btn-disabled');
-        spawnBtn.title = '몬스터볼 던지기 놀이';
       };
 
       ball.addEventListener('mousedown', (e) => {
@@ -6195,6 +6201,7 @@
       document.addEventListener('mouseup', () => {
         if (!dragging) return;
         dragging = false;
+        thrown = true; // 손으로 잡아서 놓은 순간부터 포획 판정을 시작한다.
         ball.classList.remove('grabbing');
 
         const now = performance.now();
@@ -6352,10 +6359,10 @@
       // 같은 SPRITE_WIDTH로 표시하면 걷는 파이리보다 작아 보인다. 화면에 보이는
       // 실제 크기를 걷는 파이리와 맞추기 위한 배율 -- 실제로 보면서 숫자만
       // 조절해서 맞추면 된다.
-      const FIRE_SPRITE_SCALE = 3.2;
+      const FIRE_SPRITE_SCALE = 1.7;
       // 몬스터볼이 파이리에게 맞았을 때, 이 확률로 포획 연출 대신 불을 뿜어
       // 몬스터볼을 튕겨낸다(나머지 확률은 기존처럼 포획 연출 진행).
-      const FIRE_COUNTER_CHANCE = 0.3;
+      const FIRE_COUNTER_CHANCE = 0.6;
       // 자주 재생되는 효과음들은 미리 만들어 둬서(브라우저가 미리 내려받아 두도록)
       // 실제 재생 시점에 로딩 지연으로 소리가 늦게 나오는 걸 줄인다.
       const audioPreloadCache = {};
