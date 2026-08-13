@@ -6145,6 +6145,10 @@
 
       spawnBtn.addEventListener('click', () => {
         if (spawnBtn.disabled) return;
+        // 야생 파이리가 포획(또는 불뿜기 반격) 연출 중일 때 몬스터볼을 넣었다
+        // 뺐다 하면 진행 중이던 연출이 꼬여서 잡을 수 없는 파이리가 남는
+        // 버그가 있었다. 연출이 끝날 때까지 버튼을 잠가서 막는다.
+        if (window.__wildIsCapturing) return;
         spawnBtn.classList.toggle('active', !active);
         if (active) {
           despawnBall();
@@ -6359,7 +6363,7 @@
       // 같은 SPRITE_WIDTH로 표시하면 걷는 파이리보다 작아 보인다. 화면에 보이는
       // 실제 크기를 걷는 파이리와 맞추기 위한 배율 -- 실제로 보면서 숫자만
       // 조절해서 맞추면 된다.
-      const FIRE_SPRITE_SCALE = 1.7;
+      const FIRE_SPRITE_SCALE = 1.3;
       // 몬스터볼이 파이리에게 맞았을 때, 이 확률로 포획 연출 대신 불을 뿜어
       // 몬스터볼을 튕겨낸다(나머지 확률은 기존처럼 포획 연출 진행).
       const FIRE_COUNTER_CHANCE = 0.6;
@@ -6822,6 +6826,7 @@
         }
 
         wildState.capturing = true;
+        window.__wildIsCapturing = true; // 이 연출이 끝날 때까지 몬스터볼 버튼을 잠근다.
         window.__wildCollisionCheck = null;
         clearTimeout(wildState.despawnTimer);
         wildState.controller.stop();
@@ -6855,29 +6860,40 @@
       // 어느 쪽에서 날아왔는지 -- 그 방향을 향해 불을 뿜는 이미지를 쓴다.
       function fireCounterAttack(ballSide) {
         wildState.capturing = true; // 연출 도중 다른 충돌/포획이 겹치지 않도록 잠깐 잠근다.
+        window.__wildIsCapturing = true; // 이 연출이 끝날 때까지 몬스터볼 버튼을 잠근다.
         window.__wildCollisionCheck = null;
         clearTimeout(wildState.despawnTimer);
         wildState.controller.stop();
         window.__pokeballStopBouncing && window.__pokeballStopBouncing();
 
         const rect = wildState.controller.getRect();
-        const centerX = rect.x + rect.w / 2;
-        const centerY = rect.y + rect.h / 2;
+        // 발이 서 있던 좌표(가로 중심, 바닥면) 기준으로 불뿜는 스프라이트를
+        // 맞춘다 -- 걷던 파이리와 발 위치가 어긋나지 않도록, 위쪽으로만
+        // 커지고 발 좌표(바닥)는 그대로 고정한다.
+        const footX = rect.x + rect.w / 2;
+        const footY = rect.y + rect.h;
         wildState.sprite.destroy();
 
         const fireSrc = ballSide === 'left' ? FIRE_LEFT_SRC : FIRE_RIGHT_SRC;
         const fireWidth = SPRITE_WIDTH * FIRE_SPRITE_SCALE;
         const fireImg = document.createElement('img');
-        fireImg.src = fireSrc;
         fireImg.alt = '불뿜는 야생 파이리';
         fireImg.style.position = 'fixed';
-        fireImg.style.left = (centerX - fireWidth / 2) + 'px';
-        fireImg.style.top = (centerY - fireWidth / 2) + 'px';
+        fireImg.style.left = (footX - fireWidth / 2) + 'px';
+        // 실제 이미지 높이를 알기 전까지는 너비와 같은 값으로 임시 배치해두고,
+        // 로드가 끝나면 실제 비율에 맞는 높이로 다시 계산해서 발 좌표(바닥)에 맞춘다.
+        fireImg.style.top = (footY - fireWidth) + 'px';
         fireImg.style.width = fireWidth + 'px';
         fireImg.style.height = 'auto';
         fireImg.style.zIndex = '4';
         fireImg.style.pointerEvents = 'none';
         fireImg.style.filter = 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35))';
+        fireImg.addEventListener('load', () => {
+          if (!fireImg.naturalWidth) return;
+          const actualHeight = fireWidth * (fireImg.naturalHeight / fireImg.naturalWidth);
+          fireImg.style.top = (footY - actualHeight) + 'px';
+        });
+        fireImg.src = fireSrc;
         document.body.appendChild(fireImg);
 
         playSound(FIRE_SOUND_SRC);
@@ -6892,6 +6908,7 @@
 
         setTimeout(() => {
           fireImg.remove();
+          window.__wildIsCapturing = false;
           if (!wildState) return; // 연출 도중 도망/정리된 경우 대비
           // 불뿜기 연출이 끝나면 같은 자리에서 다시 걷기 시작.
           const sprite = createCharmanderSprite();
@@ -6927,6 +6944,7 @@
 
       function finishCapture(success) {
         if (success && capturedList.length >= MAX_CAPTURED) success = false; // 안전장치: 최대치 초과 방지
+        window.__wildIsCapturing = false; // 성공/실패 어느 쪽이든 연출이 끝났으니 버튼 잠금 해제
         if (success) {
           // 몬스터볼이 딸깍 잠기며 파이리가 완전히 안으로 들어간다.
           const lockAndFinish = () => {
