@@ -2015,6 +2015,27 @@
       margin-bottom: 10px;
     }
 
+    .wallpaper-reset-btn-small {
+      margin-left: auto;
+      background: rgba(252, 111, 207, 0.15);
+      border: 1px solid rgba(252, 111, 207, 0.6);
+      color: #fff;
+      border-radius: 7px;
+      padding: 3px 9px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .wallpaper-reset-btn-small:hover {
+      background: rgba(252, 111, 207, 0.35);
+    }
+
+    body.light-mode .wallpaper-reset-btn-small {
+      color: #1e293b;
+    }
+
     .yt-modal-msg {
       font-size: 13px;
       line-height: 1.6;
@@ -2536,14 +2557,11 @@
       <div class="yt-modal-title">
         <span style="font-size:20px;line-height:1;">🖼️</span>
         <span>배경화면 선택</span>
+        <button class="wallpaper-reset-btn-small" id="wallpaper-reset-btn" title="배경화면 초기화">초기화</button>
       </div>
       <div class="yt-modal-msg">원하는 배경화면을 최대 4장까지 골라 함께 띄울 수 있어요.</div>
       <div class="wallpaper-multi-hint">썸네일을 클릭해서 선택/해제하세요 (최대 4장, 화면에 나란히 표시)<br> 배경 이미지에 마우스를 대고 드래그하면 좌우로 움직일 수 있어요.</div>
       <div id="wallpaper-grid" class="wallpaper-grid"></div>
-      <div class="yt-modal-btn-row">
-        <button class="yt-modal-btn wallpaper-reset-btn" id="wallpaper-reset-btn">초기화</button>
-        <button class="yt-modal-btn" id="wallpaper-modal-close-btn">닫기</button>
-      </div>
     </div>
   </div>
 
@@ -4807,7 +4825,6 @@
     const wallpaperBtn = document.getElementById('wallpaper-btn');
     const wallpaperModal = document.getElementById('wallpaper-modal');
     const wallpaperGrid = document.getElementById('wallpaper-grid');
-    const wallpaperModalCloseBtn = document.getElementById('wallpaper-modal-close-btn');
     const wallpaperResetBtn = document.getElementById('wallpaper-reset-btn');
 
     function renderWallpaperGrid() {
@@ -4856,10 +4873,7 @@
       });
     }
 
-    if (wallpaperModalCloseBtn) {
-      wallpaperModalCloseBtn.addEventListener('click', closeWallpaperModal);
-    }
-
+    // 닫기 버튼은 없애고, 모달 바깥(어두운 배경)을 클릭하면 닫히도록 한다.
     // 배경화면 초기화: 선택해둔 배경(들)과 사용자가 옮겨놓은 위치까지 전부 지워서
     // 처음(배경 없음) 상태로 되돌린다.
     if (wallpaperResetBtn) {
