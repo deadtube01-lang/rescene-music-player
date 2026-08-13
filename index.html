@@ -240,6 +240,14 @@
       left: 0;
       z-index: 4;
       pointer-events: none;
+      /* 매 프레임 transform으로 위치를 갱신하므로 별도 GPU 합성 레이어로
+         승격시켜 둔다. 승격이 안 되어 있으면 방향 전환(opacity 토글)마다
+         브라우저가 이 레이어를 다시 페인트하면서 전체 화면이 같이
+         버벅이는(끊기는) 원인이 됐다. */
+      will-change: transform;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
 
     .wild-charmander-canvas {
@@ -249,6 +257,9 @@
       filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35));
       transition: opacity 0.35s ease;
       transform-origin: center center;
+      will-change: transform;
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
 
     /* 원본 webp 캔버스(2160x720) 전체 크기로 확대된 실제 <img> -- 부모의
@@ -260,6 +271,13 @@
       /* 좌/우 이미지를 opacity로만 전환(방향 전환 시 src를 안 바꿔서 애니메이션
          리셋을 막는다). 살짝의 트랜지션으로 전환이 뚝 끊기지 않게 한다. */
       transition: opacity 0.12s linear;
+      /* opacity 토글 자체를 별도 레이어에서 처리하도록 승격시켜서, 두 개의
+         큰 애니메이션 webp 이미지가 겹쳐 있어도 방향이 바뀔 때마다 페이지
+         전체가 다시 그려지며 버벅이지 않게 한다. */
+      will-change: opacity;
+      transform: translate3d(0, 0, 0);
+      backface-visibility: hidden;
+      -webkit-backface-visibility: hidden;
     }
 
     .wild-charmander-canvas.capture-flash {
@@ -1486,6 +1504,15 @@
       writing-mode: vertical-rl;
       transform: rotate(180deg);
       white-space: nowrap;
+      /* SLAP(4자)/SNARE(5자) 글자 수가 달라 라벨 높이가 서로 달라지면
+         남은 공간을 차지하는 슬라이더(flex:1) 길이도 달라진다.
+         라벨 높이를 고정해 두 슬라이더 길이가 항상 같게 만든다. */
+      height: 28px;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
     }
 
     .vert-slider-value {
@@ -1815,19 +1842,34 @@
 
     .lyrics-box {
       width: 100%;
-      max-height: 150px;
+      height: 230px;
       overflow-y: auto;
       background: rgba(18, 22, 28, 0.32);
       backdrop-filter: blur(20px) saturate(180%);
       -webkit-backdrop-filter: blur(20px) saturate(180%);
       border: 1px solid rgba(255, 255, 255, 0.22);
       border-radius: 16px;
-      padding: 14px 10px;
+      padding: 0 10px;
       scroll-behavior: smooth;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
                   inset 0 1px 0 rgba(255, 255, 255, 0.18),
                   inset 0 0 20px rgba(255, 255, 255, 0.05);
       position: relative;
+      box-sizing: border-box;
+    }
+
+    /* 곡이 선택되지 않아 안내 문구만 보여줄 때는 패딩 없이 박스 정중앙에 배치 */
+    .lyrics-box.is-empty {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* 첫 줄/마지막 줄도 박스 정중앙까지 스크롤될 수 있도록 위아래에
+       박스 절반 높이만큼 여백을 만들어주는 스페이서 */
+    .lyrics-spacer {
+      height: 100px;
+      flex-shrink: 0;
     }
 
     .lyrics-box::-webkit-scrollbar {
@@ -1844,8 +1886,9 @@
       line-height: 1.6;
       color: rgba(255, 255, 255, 0.45);
       text-align: center;
-      padding: 4px 6px;
+      padding: 6px 6px;
       white-space: pre-line;
+      cursor: pointer;
       transition: color 0.25s ease, transform 0.25s ease, text-shadow 0.25s ease;
     }
 
@@ -1862,7 +1905,8 @@
       font-weight: 600;
       letter-spacing: 0.5px;
       text-align: center;
-      padding: 30px 6px;
+      padding: 0;
+      cursor: default;
     }
 
     .play-main-btn {
@@ -3740,6 +3784,7 @@
     function showLyricsEmptyState() {
       const box = document.getElementById('lyrics-box');
       if (!box) return;
+      box.classList.add('is-empty');
       box.innerHTML = '<p class="lyrics-line lyrics-placeholder" id="lyrics-empty-msg">가사 창</p>';
       lyricsLineEls = [];
       currentLyricsIdx = -1;
@@ -3752,22 +3797,39 @@
         showLyricsEmptyState();
         return;
       }
+      box.classList.remove('is-empty');
       box.innerHTML = '';
       lyricsLineEls = [];
       currentLyricsIdx = -1;
+
+      // 첫 줄/마지막 줄도 박스 정중앙까지 스크롤될 수 있도록 위아래에 스페이서 삽입
+      const topSpacer = document.createElement('div');
+      topSpacer.className = 'lyrics-spacer';
+      box.appendChild(topSpacer);
+
       sortedLyrics.forEach((line, idx) => {
         const p = document.createElement('p');
         p.className = 'lyrics-line';
         p.textContent = line.text;
         p.dataset.idx = idx;
         p.addEventListener('click', () => {
-          if (audio) {
-            audio.currentTime = line.time;
+          if (!audio) return;
+          // 일시정지 상태에서 가사를 클릭하면 그 위치로만 이동하고 계속
+          // 멈춰있어야 한다 (클릭했다고 갑자기 재생이 시작되면 안 됨).
+          const wasPlaying = !audio.paused;
+          audio.currentTime = line.time;
+          updateLyricsHighlight(line.time);
+          if (!wasPlaying) {
+            audio.pause();
           }
         });
         box.appendChild(p);
         lyricsLineEls.push(p);
       });
+
+      const bottomSpacer = document.createElement('div');
+      bottomSpacer.className = 'lyrics-spacer';
+      box.appendChild(bottomSpacer);
     }
 
     function updateLyricsHighlight(currentTime) {
@@ -4427,13 +4489,20 @@
     function fitTracklistToThreeRows() {
       const box = document.querySelector('.tracklist-box');
       if (!box) return;
-      const items = box.querySelectorAll('.track-item, #track-list li');
-      if (items.length === 0) return;
-
-      // 항목이 1~2개뿐이어도 박스 높이는 항상 3줄 분량을 유지한다
-      // (내용이 적다고 박스가 쪼그라들면 검색할 때마다 레이아웃이
-      // 출렁여서 지저분해 보이므로, 실제 줄 수와 무관하게 고정 3줄).
+      // 플레이스홀더("검색 결과가 없습니다", "즐겨찾기한 곡이 없습니다" 등)는
+      // 실제 트랙 항목과 높이가 달라서 측정 대상에 포함되면 박스가 커지거나
+      // 작아지는 문제가 생긴다. 실제 트랙 항목(.track-item)만 측정한다.
+      const items = box.querySelectorAll('.track-item');
       const rowsToShow = 3;
+
+      if (items.length === 0) {
+        // 플레이스홀더만 있을 때는 이전에 측정해둔 정상 항목 크기
+        // (없으면 기본값)를 그대로 써서 박스 높이가 출렁이지 않게 한다.
+        const fallbackHeight = __trackFitCache.maxItemHeight || 40;
+        const fallbackGap = __trackFitCache.itemGap || 6;
+        box.style.height = `${fallbackHeight * rowsToShow + fallbackGap * (rowsToShow - 1) + 1}px`;
+        return;
+      }
 
       let maxItemHeight, itemGap;
       if (__trackFitCache.count === items.length) {
@@ -4460,7 +4529,9 @@
         __trackFitCache = { count: items.length, maxItemHeight, itemGap };
       }
 
-      box.style.height = `${maxItemHeight * rowsToShow + itemGap * (rowsToShow - 1)}px`;
+      // 살짝 여유(1px)를 더해 서브픽셀 반올림 때문에 마지막 줄 하단이
+      // 미세하게 잘려 보이는 문제를 방지한다.
+      box.style.height = `${maxItemHeight * rowsToShow + itemGap * (rowsToShow - 1) + 1}px`;
     }
 
     window.addEventListener('resize', () => {
