@@ -6107,6 +6107,35 @@
         vx = 0;
       };
 
+      // 이스터에그(불뿜기 반격): 몬스터볼이 튕겨져 나가 배경 저 멀리로 날아가며
+      // 사라지게 한다. 이번에 던진 몬스터볼은 그대로 소모돼서 다시 쓸 수 없고,
+      // 다시 던지려면 소환 버튼을 눌러 새 몬스터볼을 꺼내야 한다.
+      // dirX: -1이면 왼쪽으로, 1이면 오른쪽으로 날려보낸다.
+      window.__pokeballFlyOff = function (dirX) {
+        stopPhysics();
+        dragging = false;
+        ball.classList.remove('grabbing');
+
+        const targetX = dirX < 0 ? -BALL_SIZE - 300 : document.documentElement.clientWidth + 300;
+        const targetY = y - 220 - Math.random() * 120;
+
+        ball.style.transition = 'transform 0.55s cubic-bezier(0.25, 0.8, 0.4, 1), opacity 0.55s ease-in';
+        x = targetX;
+        y = targetY;
+        angle += dirX < 0 ? -540 : 540;
+        scale = 0.6;
+        render();
+        ball.style.opacity = '0';
+
+        setTimeout(() => {
+          ball.style.transition = '';
+          ball.style.opacity = '';
+          scale = 1;
+          despawnBall();
+          spawnBtn.classList.remove('active');
+        }, 560);
+      };
+
       spawnBtn.addEventListener('click', () => {
         if (spawnBtn.disabled) return;
         spawnBtn.classList.toggle('active', !active);
@@ -6312,14 +6341,51 @@
         'POKEMON/wooi03.mp3',
         'POKEMON/oishi.mp3'
       ];
+
+      // ------- 이스터에그: 몬스터볼을 맞고 "불뿜기 반격"으로 튕겨내기 -------
+      // 파이리 기준으로 몬스터볼이 왼쪽에서 날아왔으면 왼쪽을 향해, 오른쪽에서
+      // 날아왔으면 오른쪽을 향해 불을 뿜는 이미지를 사용한다.
+      const FIRE_LEFT_SRC = 'POKEMON/좌로 불뿜는 야생파이리.webp';
+      const FIRE_RIGHT_SRC = 'POKEMON/우로 불뿜는 야생파이리.webp';
+      const FIRE_SOUND_SRC = 'POKEMON/fire.mp3';
+      // 불뿜는 웹피 두 장은 걷는 웹피보다 캔버스 안 캐릭터가 더 작게 그려져 있어서,
+      // 같은 SPRITE_WIDTH로 표시하면 걷는 파이리보다 작아 보인다. 화면에 보이는
+      // 실제 크기를 걷는 파이리와 맞추기 위한 배율 -- 실제로 보면서 숫자만
+      // 조절해서 맞추면 된다.
+      const FIRE_SPRITE_SCALE = 1.4;
+      // 몬스터볼이 파이리에게 맞았을 때, 이 확률로 포획 연출 대신 불을 뿜어
+      // 몬스터볼을 튕겨낸다(나머지 확률은 기존처럼 포획 연출 진행).
+      const FIRE_COUNTER_CHANCE = 0.3;
+      // 자주 재생되는 효과음들은 미리 만들어 둬서(브라우저가 미리 내려받아 두도록)
+      // 실제 재생 시점에 로딩 지연으로 소리가 늦게 나오는 걸 줄인다.
+      const audioPreloadCache = {};
+      function preloadAudio(src) {
+        if (!audioPreloadCache[src]) {
+          const a = new Audio(src);
+          a.preload = 'auto';
+          audioPreloadCache[src] = a;
+        }
+        return audioPreloadCache[src];
+      }
+      function playSound(src) {
+        preloadAudio(src);
+        const audio = new Audio(src);
+        audio.play().catch((err) => {
+          console.warn('[wild-charmander] 효과음 재생 실패:', src, err);
+        });
+        return audio;
+      }
+      CRY_SOUNDS.concat([
+        'POKEMON/caught-a-pokemon.mp3',
+        'POKEMON/pokeball-out.mp3',
+        FIRE_SOUND_SRC
+      ]).forEach(preloadAudio);
+
       function playRandomCry(onCry) {
         const idx = Math.floor(Math.random() * CRY_SOUNDS.length);
         const src = CRY_SOUNDS[idx];
         const text = src.indexOf('oishi') !== -1 ? '오이쉬에~' : '우이!';
-        const audio = new Audio(src);
-        audio.play().catch((err) => {
-          console.warn('[wild-charmander] 울음소리 재생 실패:', src, err);
-        });
+        const audio = playSound(src);
         if (onCry) onCry(text, audio);
       }
 
@@ -6688,7 +6754,7 @@
           const charCx = rect.x + rect.w / 2;
           const charCy = rect.y + rect.h * 0.65;
           const dist = Math.hypot(ballCx - charCx, ballCy - charCy);
-          if (dist < 46) hitWildCharmander();
+          if (dist < 46) hitWildCharmander(ballCx < charCx ? 'left' : 'right');
         };
       }
 
@@ -6739,8 +6805,15 @@
       // 하얀 빛에 휩싸이며 사라지지만(몬스터볼 안으로 빨려들어감), 실제 좌우
       // 흔들림 연출은 몬스터볼이 "바닥에 완전히 떨어져 멈출 때"까지 기다렸다가
       // 시작한다 (window.__pokeballOnGroundedCapture 훅으로 연결).
-      function hitWildCharmander() {
+      function hitWildCharmander(ballSide) {
         if (!wildState || wildState.capturing) return;
+
+        // 일정 확률로 포획 대신 불을 뿜어 몬스터볼을 튕겨낸다.
+        if (Math.random() < FIRE_COUNTER_CHANCE) {
+          fireCounterAttack(ballSide);
+          return;
+        }
+
         wildState.capturing = true;
         window.__wildCollisionCheck = null;
         clearTimeout(wildState.despawnTimer);
@@ -6770,6 +6843,54 @@
         }, 3000);
       }
 
+      // 포획 대신 불을 뿜어 몬스터볼을 튕겨내는 반격 연출.
+      // ballSide: 몬스터볼이 파이리 기준 'left'(왼쪽)/'right'(오른쪽) 중
+      // 어느 쪽에서 날아왔는지 -- 그 방향을 향해 불을 뿜는 이미지를 쓴다.
+      function fireCounterAttack(ballSide) {
+        wildState.capturing = true; // 연출 도중 다른 충돌/포획이 겹치지 않도록 잠깐 잠근다.
+        window.__wildCollisionCheck = null;
+        clearTimeout(wildState.despawnTimer);
+        wildState.controller.stop();
+        window.__pokeballStopBouncing && window.__pokeballStopBouncing();
+
+        const rect = wildState.controller.getRect();
+        const centerX = rect.x + rect.w / 2;
+        const centerY = rect.y + rect.h / 2;
+        wildState.sprite.destroy();
+
+        const fireSrc = ballSide === 'left' ? FIRE_LEFT_SRC : FIRE_RIGHT_SRC;
+        const fireWidth = SPRITE_WIDTH * FIRE_SPRITE_SCALE;
+        const fireImg = document.createElement('img');
+        fireImg.src = fireSrc;
+        fireImg.alt = '불뿜는 야생 파이리';
+        fireImg.style.position = 'fixed';
+        fireImg.style.left = (centerX - fireWidth / 2) + 'px';
+        fireImg.style.top = (centerY - fireWidth / 2) + 'px';
+        fireImg.style.width = fireWidth + 'px';
+        fireImg.style.height = 'auto';
+        fireImg.style.zIndex = '4';
+        fireImg.style.pointerEvents = 'none';
+        fireImg.style.filter = 'drop-shadow(0 4px 6px rgba(0, 0, 0, 0.35))';
+        document.body.appendChild(fireImg);
+
+        playSound(FIRE_SOUND_SRC);
+        // 몬스터볼은 이 반격에 맞아 멀리 날아가며 사라진다(이번에 던진 볼은 다시 못 씀).
+        window.__pokeballFlyOff && window.__pokeballFlyOff(ballSide === 'left' ? -1 : 1);
+
+        setTimeout(() => {
+          fireImg.remove();
+          if (!wildState) return; // 연출 도중 도망/정리된 경우 대비
+          // 불뿜기 연출이 끝나면 같은 자리에서 다시 걷기 시작.
+          const sprite = createCharmanderSprite();
+          const controller = startWandering(sprite, { speed: 110, startX: rect.x, startY: rect.y });
+          wildState = { sprite, controller, capturing: false, despawnTimer: null };
+          window.__wildCollisionCheck = makeCollisionChecker();
+          wildState.despawnTimer = setTimeout(() => {
+            if (wildState && !wildState.capturing) despawnWild();
+          }, 60000);
+        }, 850);
+      }
+
       // step: 1, 2, 3 (몇 번째 흔들림인지)
       function runShakeStep(step) {
         const isLast = step >= 3;
@@ -6797,7 +6918,7 @@
           // 몬스터볼이 딸깍 잠기며 파이리가 완전히 안으로 들어간다.
           const lockAndFinish = () => {
             window.__pokeballGlow && window.__pokeballGlow('capture-success', 700);
-            new Audio('POKEMON/caught-a-pokemon.mp3').play().catch(() => {});
+            playSound('POKEMON/caught-a-pokemon.mp3');
             capturedList.push({ id: 'c' + Date.now(), caughtAt: Date.now() });
             saveCapturedList(capturedList);
             renderCapturedListUI();
@@ -6815,8 +6936,10 @@
           }
         } else {
           // 포획 실패: 몬스터볼 근처에서 다시 튀어나와 도망 재개.
+          // 소리를 가장 먼저(파이리가 다시 나타나기 전에) 재생해서, 파이리가
+          // 풀려난 뒤에야 소리가 뒤늦게 들리는 문제가 없게 한다.
+          playSound('POKEMON/pokeball-out.mp3');
           window.__pokeballGlow && window.__pokeballGlow('capture-fail', 400);
-          new Audio('POKEMON/pokeball-out.mp3').play().catch(() => {});
           const center = window.__pokeballGetCenter ? window.__pokeballGetCenter() : null;
           const sprite = createCharmanderSprite();
           const controller = startWandering(sprite, {
