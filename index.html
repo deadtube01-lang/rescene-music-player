@@ -6014,7 +6014,7 @@
     // 반전(scaleX(-1))만 적용해서 같은 영상을 재사용한다.
     // ----------------------------------
     ;(function setupWildCharmanderEasterEgg() {
-      const WALK_SRC = 'POKEMON/야생의 우로 걷는 파이리.mp4'; // 기본이 오른쪽을 보고 걷는 영상
+      const WALK_SRC = 'POKEMON/야생의 우로 걷는 파이리.webp'; // 기본이 오른쪽을 보고 걷는 애니메이션 webp
       const SPRITE_WIDTH = 150;
       const STORAGE_KEY = 'rescene_captured_charmanders';
       const MAX_CAPTURED = 6; // 포획 가능한 최대 파이리 수
@@ -6070,32 +6070,36 @@
         };
       }
 
-      // 화면 안을 무작위로 어슬렁거리며 걸어다니게 하는 이동 컨트롤러.
+      // 화면 안에서 X/Y/대각선 등 모든 방향으로 무작위로 계속 움직이는 이동 컨트롤러.
+      // (텔레포트처럼 보이지 않도록 목표 지점으로 순간이동시키지 않고,
+      //  현재 위치에서 이어서 방향과 속도만 무작위로 바꿔가며 끊김없이 움직인다.)
       function startWandering(sprite, opts) {
         opts = opts || {};
-        const baseSpeed = opts.speed || 75;
-        // 매번 목표 지점을 새로 정할 때마다 속도도 무작위로 바뀌어서,
-        // 어떨 땐 느리게 어떨 땐 확 빠르게 움직여 예측하기 어렵게 만든다.
+        const baseSpeed = opts.speed || 160;
         const SPEED_MIN = baseSpeed * 0.8;
-        const SPEED_MAX = baseSpeed * 2.4;
-        let speed = baseSpeed;
+        const SPEED_MAX = baseSpeed * 1.8;
         let x = opts.startX != null ? opts.startX : Math.random() * Math.max(0, innerWidth - SPRITE_WIDTH);
         let y = opts.startY != null ? opts.startY : Math.random() * Math.max(0, innerHeight * 0.7);
-        let targetX = x, targetY = y;
+        let vx = 0, vy = 0;
         let lastTime = null;
         let stopped = false;
-        let nextJitterAt = 0;
+        let nextTurnAt = 0;
+        const minX = 0;
+        const maxX = Math.max(0, innerWidth - SPRITE_WIDTH);
+        const minY = 0;
+        const maxY = Math.max(0, innerHeight * 0.7);
         const state = { x, y, w: SPRITE_WIDTH, h: SPRITE_WIDTH };
 
-        function pickTarget() {
-          targetX = Math.random() * Math.max(0, innerWidth - SPRITE_WIDTH);
-          targetY = Math.random() * Math.max(0, innerHeight * 0.7);
-          speed = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN);
-          // 다음 방향 전환까지 걸리는 시간도 무작위(0.4~1.4초)로 잡아서,
-          // 목표 지점에 도달하기 전에도 갑자기 방향을 트는 경우가 생기게 한다.
-          nextJitterAt = performance.now() + 400 + Math.random() * 1000;
+        function pickDirection() {
+          const angle = Math.random() * Math.PI * 2; // 0~360도, 대각선 포함 완전 무작위
+          const speed = SPEED_MIN + Math.random() * (SPEED_MAX - SPEED_MIN);
+          vx = Math.cos(angle) * speed;
+          vy = Math.sin(angle) * speed;
+          sprite.setDirection(vx >= 0 ? 'right' : 'left');
+          // 0.5~2초 사이 무작위 시점에 또 방향을 바꿔서 막무가내로 움직이게 한다.
+          nextTurnAt = performance.now() + 500 + Math.random() * 1500;
         }
-        pickTarget();
+        pickDirection();
 
         function frame(ts) {
           if (stopped) return;
@@ -6103,16 +6107,23 @@
           const dt = Math.min((ts - lastTime) / 1000, 0.05);
           lastTime = ts;
 
-          const dx = targetX - x, dy = targetY - y;
-          const dist = Math.hypot(dx, dy);
-          if (dist < 4 || ts >= nextJitterAt) {
-            pickTarget();
-          } else {
-            const nx = dx / dist, ny = dy / dist;
-            x += nx * speed * dt;
-            y += ny * speed * dt;
-            sprite.setDirection(nx >= 0 ? 'right' : 'left');
+          x += vx * dt;
+          y += vy * dt;
+
+          // 가장자리에 닿으면 텔레포트 없이 튕기듯 방향을 바꾼다.
+          let bounced = false;
+          if (x <= minX) { x = minX; vx = Math.abs(vx); bounced = true; }
+          else if (x >= maxX) { x = maxX; vx = -Math.abs(vx); bounced = true; }
+          if (y <= minY) { y = minY; vy = Math.abs(vy); bounced = true; }
+          else if (y >= maxY) { y = maxY; vy = -Math.abs(vy); bounced = true; }
+          if (bounced) {
+            sprite.setDirection(vx >= 0 ? 'right' : 'left');
           }
+
+          if (ts >= nextTurnAt) {
+            pickDirection();
+          }
+
           state.x = x; state.y = y;
           state.h = sprite.canvas.height || SPRITE_WIDTH;
           sprite.applyTransform(x, y);
