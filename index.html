@@ -6408,6 +6408,25 @@
       // 몬스터볼이 파이리에게 맞았을 때, 이 확률로 포획 연출 대신 불을 뿜어
       // 몬스터볼을 튕겨낸다(나머지 확률은 기존처럼 포획 연출 진행).
       const FIRE_COUNTER_CHANCE = 0.6;
+
+      // 불뿜기 webp(각 11MB)를 반격이 실제로 일어나는 시점에 처음 로드하면
+      // 그때부터 다운로드+디코딩이 시작돼서 화면에 나오기까지 눈에 띄게
+      // 늦어진다(브라우저가 처음 보는 큰 애니메이션 webp라 디코딩에 시간이
+      // 걸림). 그래서 스크립트가 시작되자마자 미리 두 방향 다 로드해서
+      // 브라우저 캐시에 올려 둔다 -- fireCounterAttack이 실제로 호출될
+      // 때는 이미 캐시/디코딩이 끝나 있어서 거의 즉시 화면에 나온다.
+      const firePreloadImgs = [];
+      function preloadFireImages() {
+        [FIRE_LEFT_SRC, FIRE_RIGHT_SRC].forEach((src) => {
+          const pre = new Image();
+          pre.src = src;
+          // decode()까지 미리 끝내두면 첫 프레임을 그리는 시점도 더 빨라진다.
+          if (pre.decode) pre.decode().catch(() => {});
+          firePreloadImgs.push(pre); // GC로 회수돼서 캐시 이점이 날아가지 않도록 참조 유지
+        });
+      }
+      preloadFireImages();
+
       // 자주 재생되는 효과음들은 미리 만들어 둬서(브라우저가 미리 내려받아 두도록)
       // 실제 재생 시점에 로딩 지연으로 소리가 늦게 나오는 걸 줄인다.
       const audioPreloadCache = {};
