@@ -6086,8 +6086,14 @@
         function draw() {
           if (!sized) ensureSize();
           if (sized && video.readyState >= 2) {
-            ctx.imageSmoothingEnabled = true;
-            ctx.imageSmoothingQuality = 'high';
+            // 크로마키 판정을 위한 색상 샘플링은 스무딩을 끄고 원본 그대로
+            // 가져와야 한다. 스무딩을 켠 채로 그리면 검은 배경 픽셀과
+            // 캐릭터 픽셀이 서로 섞여서(안티앨리어싱) 배경의 밝기가 올라가
+            // 크로마키가 안 지워지거나, 반대로 캐릭터 안의 어두운 부분이
+            // 밝게 섞여 뿌옇게 보이는 문제가 생긴다. 최종 화면 표시는 어차피
+            // CSS로 축소(width/height)되면서 브라우저가 자연스럽게 부드럽게
+            // 보여주므로, 여기서는 색상 정확도를 우선한다.
+            ctx.imageSmoothingEnabled = false;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             ctx.save();
             if (dir === 'left') {
