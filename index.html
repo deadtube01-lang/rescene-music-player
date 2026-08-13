@@ -2541,6 +2541,7 @@
       <div class="wallpaper-multi-hint">썸네일을 클릭해서 선택/해제하세요 (최대 4장, 화면에 나란히 표시)<br> 배경 이미지에 마우스를 대고 드래그하면 좌우로 움직일 수 있어요.</div>
       <div id="wallpaper-grid" class="wallpaper-grid"></div>
       <div class="yt-modal-btn-row">
+        <button class="yt-modal-btn wallpaper-reset-btn" id="wallpaper-reset-btn">초기화</button>
         <button class="yt-modal-btn" id="wallpaper-modal-close-btn">닫기</button>
       </div>
     </div>
@@ -4131,56 +4132,48 @@
       const box = document.querySelector('.tracklist-box');
       if (!box) return;
 
-      // (버그) 'smooth' 스크롤은 즉시 끝나지 않고 200~400ms에 걸쳐 서서히
-      // 이동한다. 그 사이에 또 wheel 이벤트가 들어오면(마우스/트랙패드가
-      // 한 번의 조작에도 이벤트를 여러 번 쏘는 경우가 흔함) box.scrollTop이
-      // 아직 중간값이라 "다음/이전 항목"을 잘못 계산해서 여러 줄을
-      // 건너뛰거나, 화면이 항목 중간에 걸친 것처럼 보이는 문제가 있었다.
-      // wheelBusy 락으로 어느 정도 막아봤지만, 애니메이션이 남아있는 한
-      // 근본적으로는 같은 종류의 타이밍 문제가 계속 재현될 수 있었다.
-      // 그래서 아예 'smooth' 대신 즉시(instant) 스크롤로 바꿔서, 매 wheel
-      // 이벤트가 항상 "이미 확정된" scrollTop을 기준으로만 계산하도록
-      // 만들어 이 문제군 자체를 없앤다.
+      // (버그 수정 3) getBoundingClientRect() 기반으로 매번 계산하던 이전 방식은
+      // 패널 scale, 캐시 타이밍 등 여러 변수가 얽혀 가끔 "조금씩만" 스크롤되는
+      // 문제가 있었다. .track-item은 실제로는 높이가 40px로 고정돼 있고
+      // 간격도 flex gap 6px로 고정돼 있으므로, 굳이 매번 화면 좌표를 재는
+      // 대신 "항목 높이 + 간격"(layout 픽셀, transform: scale의 영향을 받지
+      // 않음)만 한 번 구해서 그 값만큼씩 정확히 이동시키는 게 훨씬 간단하고
+      // 확실하다. 앨범 리스트처럼 휠질 한 번에 정확히 한 줄씩, 즉시 딱딱
+      // 이동한다.
+      let cachedRowStep = null;
+
+      function getRowStep() {
+        const list = document.getElementById('track-list');
+        const item = box.querySelector('.track-item');
+        if (!item) return cachedRowStep || 46;
+        const itemHeight = item.offsetHeight;
+        let gap = 6;
+        if (list) {
+          const g = parseFloat(getComputedStyle(list).rowGap);
+          if (!isNaN(g)) gap = g;
+        }
+        cachedRowStep = itemHeight + gap;
+        return cachedRowStep;
+      }
+
       box.addEventListener('wheel', (e) => {
-        const items = Array.from(box.querySelectorAll('.track-item'));
+        const items = box.querySelectorAll('.track-item');
         if (items.length === 0) return;
 
         e.preventDefault();
 
+        const rowStep = getRowStep();
         const direction = e.deltaY > 0 ? 1 : -1;
-        const currentTop = box.scrollTop;
-        const panelScale = getAncestorPanelScale(box);
+        const maxScroll = Math.max(0, box.scrollHeight - box.clientHeight);
 
-        // (버그 수정) items[i].offsetTop은 "가장 가까운 position:relative/absolute
-        // 조상"을 기준으로 계산된다. 그런데 .track-item의 진짜 스크롤 컨테이너인
-        // .tracklist-box는 position이 static이라, offsetTop이 실제로는 더 바깥의
-        // position:relative인 .card-box(패널 전체, TRACKLIST 제목까지 포함)를
-        // 기준으로 계산되고 있었다. 그래서 계산된 값이 실제 스크롤 위치와
-        // 전혀 안 맞아서, 맨 위인데도 더 스크롤되거나 항목이 중간에 잘려
-        // 보이는 문제가 있었다. getBoundingClientRect() 차이로 "박스 기준"
-        // 상대 위치를 직접 구하도록 수정.
-        // (버그 수정 2) 패널이 드래그되어 transform: scale(...)이 걸린 상태라면
-        // getBoundingClientRect()가 돌려주는 값이 화면상 스케일된 픽셀이라
-        // scrollTop(스케일 이전 기준)과 단위가 안 맞았다. panelScale로 나눠서
-        // 항상 같은 단위로 비교/대입하도록 보정한다.
-        const boxTop = box.getBoundingClientRect().top;
-        const relTop = (item) => (item.getBoundingClientRect().top - boxTop) / panelScale + currentTop;
+        // 지금 스크롤 위치를 가장 가까운 "줄 경계"로 반올림한 뒤, 거기서
+        // 정확히 한 줄만큼 이동한다. (매 이벤트가 항상 줄 경계 기준으로만
+        // 계산되므로 오차가 쌓이지 않는다.)
+        const currentStep = Math.round(box.scrollTop / rowStep);
+        let target = (currentStep + direction) * rowStep;
+        target = Math.max(0, Math.min(maxScroll, target));
 
-        // 지금 맨 위에 걸쳐있는(스크롤로 이미 지나간) 항목의 인덱스를 찾는다.
-        let idx = 0;
-        for (let i = 0; i < items.length; i++) {
-          if (relTop(items[i]) <= currentTop + 1) idx = i;
-          else break;
-        }
-
-        let targetIdx = idx + direction;
-        targetIdx = Math.max(0, Math.min(items.length - 1, targetIdx));
-
-        // 이미 맨 위/맨 아래라 더 이동할 곳이 없으면 아무 것도 하지 않는다.
-        // (맨 위에서 계속 휠을 올려도 아무 변화가 없어야 함)
-        if (targetIdx === idx) return;
-
-        box.scrollTo({ top: relTop(items[targetIdx]), behavior: 'auto' });
+        box.scrollTo({ top: target, behavior: 'auto' });
       }, { passive: false });
     })();
 
@@ -4604,7 +4597,7 @@
 
     document.addEventListener('mousedown', (e) => {
       const isVideoElement = e.target.closest('#charmander-video, .charmander-box');
-      const isControlElement = e.target.closest('button, input, select, .album-card-item, .track-item, li, .card-box, .baksu-side-control, .yt-modal-overlay, .pokeball-toy');
+      const isControlElement = e.target.closest('button, input, select, .album-card-item, .track-item, li, .card-box, .baksu-side-control, .yt-modal-overlay, .pokeball-toy, .wild-charmander-wrapper, .wild-charmander-canvas');
 
       if (!isControlElement && !isVideoElement && !isBgLocked) {
         // 마우스 X좌표 아래, 실제로 보이는(z-order 최상단) 배경 이미지를 드래그 대상으로 삼는다.
@@ -4815,6 +4808,7 @@
     const wallpaperModal = document.getElementById('wallpaper-modal');
     const wallpaperGrid = document.getElementById('wallpaper-grid');
     const wallpaperModalCloseBtn = document.getElementById('wallpaper-modal-close-btn');
+    const wallpaperResetBtn = document.getElementById('wallpaper-reset-btn');
 
     function renderWallpaperGrid() {
       if (!wallpaperGrid) return;
@@ -4864,6 +4858,19 @@
 
     if (wallpaperModalCloseBtn) {
       wallpaperModalCloseBtn.addEventListener('click', closeWallpaperModal);
+    }
+
+    // 배경화면 초기화: 선택해둔 배경(들)과 사용자가 옮겨놓은 위치까지 전부 지워서
+    // 처음(배경 없음) 상태로 되돌린다.
+    if (wallpaperResetBtn) {
+      wallpaperResetBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (isBgLocked) return;
+        activeBackgrounds = [];
+        saveActiveBackgroundsToStorage();
+        renderBackgroundLayers();
+        renderWallpaperGrid();
+      });
     }
 
     if (wallpaperModal) {
@@ -6372,6 +6379,12 @@
         img.addEventListener('error', () => {
           console.error('[wild-charmander] 이미지 로드 실패:', img.currentSrc || WALK_SRC);
         });
+        // 파이리를 누르는 순간, 배경화면 드래그(문서 전체에 걸린 mousedown 리스너)로
+        // 이벤트가 같이 전파되지 않도록 막는다. 이게 없으면 파이리를 클릭/드래그할 때
+        // 배경화면도 함께 끌려다니고, 그 과정에서 생기는 미세한 흔들림 때문에
+        // "드래그로 인식"돼 울음소리(클릭)가 씹히는 경우가 있었다.
+        img.addEventListener('mousedown', (e) => e.stopPropagation());
+        img.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
         img.src = WALK_SRC;
         wrapper.appendChild(img);
         document.body.appendChild(wrapper);
@@ -6389,6 +6402,11 @@
           let dragging = false;
           let moved = false;
           let offsetX = 0, offsetY = 0;
+          let downX = 0, downY = 0;
+          // 이 거리(px) 이상 움직여야 "드래그"로 인정한다. 너무 민감하면
+          // 클릭하려고 살짝 손이 떨리기만 해도 드래그로 오인해서 울음소리
+          // (클릭 이벤트)가 씹히는 문제가 있었다.
+          const DRAG_MOVE_THRESHOLD = 4;
 
           function getPoint(e) {
             if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
@@ -6400,6 +6418,8 @@
             if (controllerRef) controllerRef.pause();
             const rect = controllerRef ? controllerRef.getRect() : { x: 0, y: 0 };
             const p = getPoint(e);
+            downX = p.x;
+            downY = p.y;
             offsetX = p.x - rect.x;
             offsetY = p.y - rect.y;
             img.style.cursor = 'grabbing';
@@ -6411,8 +6431,12 @@
           }
           function onMove(e) {
             if (!dragging) return;
-            moved = true;
             const p = getPoint(e);
+            if (!moved) {
+              const dist = Math.hypot(p.x - downX, p.y - downY);
+              if (dist < DRAG_MOVE_THRESHOLD) return; // 아직 "드래그"로 인정할 만큼 움직이지 않음
+              moved = true;
+            }
             const maxX = Math.max(0, innerWidth - SPRITE_WIDTH);
             const maxY = Math.max(0, innerHeight - SPRITE_WIDTH);
             const nx = Math.min(Math.max(p.x - offsetX, 0), maxX);
@@ -6550,6 +6574,12 @@
       function renderCapturedListUI() {
         if (!listBtn || !listPanel) return;
         listBtn.style.display = capturedList.length ? 'flex' : 'none';
+        // 포획한 파이리가 하나도 없으면 목록 버튼 자체가 사라지므로, 패널이
+        // 열려있는 상태로 남아 "아직 포획한 파이리가 없어요" 문구가 계속
+        // 떠 있지 않도록 패널도 함께 닫아준다.
+        if (capturedList.length === 0) {
+          listPanel.style.display = 'none';
+        }
         listPanel.innerHTML = '';
         if (capturedList.length === 0) {
           const empty = document.createElement('div');
