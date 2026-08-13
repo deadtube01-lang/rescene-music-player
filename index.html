@@ -4969,7 +4969,8 @@
       if (songTitle) songTitle.innerText = item.track.name;
       currentLyricsIdx = -1;
       lyricsLineEls.forEach(el => el.classList.remove('active'));
-      lyricsTrackLoaded = true;
+      // 지금 재생하는 곡이 가사 데이터를 채워둔 곡(LOVE ATTACK)일 때만 가사를 보여준다.
+      lyricsTrackLoaded = !!(item.track.name && item.track.name.trim().toLowerCase() === 'love attack');
       renderLyrics();
 
       updateLpFavButtonUI();
