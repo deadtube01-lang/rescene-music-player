@@ -1452,7 +1452,7 @@
     }
 
     .side-vert-left {
-      left: -34px;
+      left: -50px;
       top: 4px;
       bottom: 62px;
       flex-direction: row;
@@ -1817,11 +1817,17 @@
       width: 100%;
       max-height: 150px;
       overflow-y: auto;
-      background: rgba(13, 17, 23, 0.6);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 12px;
-      padding: 10px 8px;
+      background: rgba(18, 22, 28, 0.32);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.22);
+      border-radius: 16px;
+      padding: 14px 10px;
       scroll-behavior: smooth;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.18),
+                  inset 0 0 20px rgba(255, 255, 255, 0.05);
+      position: relative;
     }
 
     .lyrics-box::-webkit-scrollbar {
@@ -1829,29 +1835,34 @@
     }
 
     .lyrics-box::-webkit-scrollbar-thumb {
-      background: rgba(255, 255, 255, 0.2);
+      background: rgba(255, 255, 255, 0.25);
       border-radius: 2px;
     }
 
     .lyrics-line {
-      font-size: 13px;
+      font-size: 15px;
       line-height: 1.6;
-      color: #7c8590;
+      color: rgba(255, 255, 255, 0.45);
       text-align: center;
-      padding: 3px 4px;
-      transition: color 0.25s ease, transform 0.25s ease;
+      padding: 4px 6px;
+      white-space: pre-line;
+      transition: color 0.25s ease, transform 0.25s ease, text-shadow 0.25s ease;
     }
 
     .lyrics-line.active {
       color: #ffffff;
       font-weight: 700;
-      transform: scale(1.04);
-      text-shadow: 0 0 10px rgba(252, 111, 207, 0.35);
+      transform: scale(1.05);
+      text-shadow: 0 0 12px rgba(252, 111, 207, 0.55), 0 0 2px rgba(255, 255, 255, 0.6);
     }
 
     .lyrics-placeholder {
-      color: #7c8590;
-      font-style: italic;
+      font-size: 14px;
+      color: rgba(197, 203, 211, 0.7);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-align: center;
+      padding: 30px 6px;
     }
 
     .play-main-btn {
@@ -2704,7 +2715,7 @@
              LYRICS_DATA 배열에 직접 채워 넣으면 된다. -->
         <div class="lyrics-section" id="lyrics-section">
           <div class="lyrics-box" id="lyrics-box">
-            <p class="lyrics-line lyrics-placeholder">가사 줄 입력</p>
+            <p class="lyrics-line lyrics-placeholder" id="lyrics-empty-msg">가사 창</p>
           </div>
         </div>
 
@@ -3664,26 +3675,26 @@
     // ----------------------------------
    const LYRICS_DATA = [
   { time: 2.73, text: 'Feeling love attack' },
-  { time: 4.01, text: 'I am all you need, I am all you need' },
+  { time: 4.01, text: 'I am all you need \n I am all you need' },
   { time: 7.31, text: 'So come and get it now' },
-  { time: 8.38, text: 'I am all you need, I am all you need' },
+  { time: 8.38, text: 'I am all you need \n I am all you need' },
   { time: 11.80, text: 'Yeah, get it' },
-  { time: 12.85, text: "걸음마다 눈부신 나, let's get it started" },
+  { time: 12.85, text: "걸음마다 눈부신 나 \n let's get it started" },
   { time: 17.16, text: '모든 순간 시선을 난 피하지 않지' },
-  { time: 21.25, text: "What you waiting for (I'm just waiting for)" },
+  { time: 21.25, text: "What you waiting for \n (I'm just waiting for)" },
   { time: 25.65, text: '나를 스친깊은 끌림 직감을 chasing' },
-  { time: 29.88, text: 'Oh, so strong (너를 느껴 난)' },
-  { time: 31.72, text: 'Yeah, so strong (다가가 이미 난)' },
-  { time: 34.02, text: 'On and on (너를 파헤쳐)' },
+  { time: 29.88, text: 'Oh, so strong \n (너를 느껴 난)' },
+  { time: 31.72, text: 'Yeah, so strong \n (다가가 이미 난)' },
+  { time: 34.02, text: 'On and on\n (너를 파헤쳐)' },
   { time: 36.23, text: 'One, two, three, four' },
   { time: 37.98, text: 'Like me, like me, 아주 눈이 부신' },
   { time: 41.73, text: '너를 숨김없이 보여줘' },
-  { time: 45.70, text: '한 번도 빛난 적 없었던 미지의' },
-  { time: 50.12, text: '향으로 온 세상을 물들여' },
-  { time: 54.03, text: '새로워진 장면에 (no, ah) 두 눈앞은 황홀해 (yeah, yeah)' },
-  { time: 58.38, text: '너의 손을 잡을 땐 (yeah, yeah), 너와 어우러질 땐' },
-  { time: 62.37, text: '빛을 이끌어 with me, with me, 마치 chemically' },
-  { time: 67.55, text: '우린 완벽하게 어울려, feeling love attack' },
+  { time: 45.70, text: '한 번도 빛난 적 없었던' },
+  { time: 59.02, text: '미지의 향으로 온 세상을 물들여' },
+  { time: 54.03, text: '새로워진 장면에 (no, ah)\n 두 눈앞은 황홀해 (yeah, yeah)' },
+  { time: 58.38, text: '너의 손을 잡을 땐 (yeah, yeah) \n 너와 어우러질 땐' },
+  { time: 62.37, text: '빛을 이끌어 with me, with me \n 마치 chemically' },
+  { time: 67.55, text: '우린 완벽하게 어울려 \n feeling love attack' },
   { time: 72.49, text: '너 역시 날 많이 기다려 왔겠지' },
   { time: 74.63, text: "자, 오늘 이 순간 날 you can't deny it" },
   { time: 76.87, text: "I got you, the feeling it's hotter than fire" },
@@ -3696,36 +3707,49 @@
   { time: 91.96, text: 'Fabulous (다가가 이미 난)' },
   { time: 94.07, text: 'On and on (너를 파헤쳐)' },
   { time: 96.21, text: 'One, two, three, four (때를 기다려)' },
-  { time: 97.98, text: 'Like me, like me, 아주 눈이 부신' },
+  { time: 97.98, text: 'Like me, like me \n 아주 눈이 부신' },
   { time: 101.75, text: '너를 숨김없이 보여줘' },
-  { time: 105.91, text: '한 번도 빛난 적 없었던 미지의' },
-  { time: 110.03, text: '향으로 온 세상을 물들여' },
-  { time: 114.01, text: '새로워진 장면에 (no, ah) 두 눈앞은 황홀해 (yeah, yeah)' },
-  { time: 118.47, text: '너의 손을 잡을 땐 (yeah, yeah), 너와 어우러질 땐' },
-  { time: 122.59, text: '빛을 이끌어 with me, with me, 마치 chemically' },
-  { time: 127.69, text: '우린 완벽하게 어울려, feeling love attack' },
-  { time: 132.59, text: 'I am all you need, I am all you need' },
+  { time: 105.91, text: '한 번도 빛난 적 없었던' },
+  { time: 109.01, text: '미지의 향으로 온 세상을 물들여' },
+  { time: 114.01, text: '새로워진 장면에 (no, ah) \n 두 눈앞은 황홀해 (yeah, yeah)' },
+  { time: 118.47, text: '너의 손을 잡을 땐 (yeah, yeah) \n 너와 어우러질 땐' },
+  { time: 122.59, text: '빛을 이끌어 with me, with me \n 마치 chemically' },
+  { time: 127.69, text: '우린 완벽하게 어울려 \n feeling love attack' },
+  { time: 132.59, text: 'I am all you need \n I am all you need' },
   { time: 136.03, text: 'So come and get it now' },
-  { time: 136.93, text: 'I am all you need, I am all you need' },
+  { time: 136.93, text: 'I am all you need \n I am all you need' },
   { time: 140.38, text: 'So come and get it now, one, two, three, four' },
-  { time: 143.15, text: 'Like me, like me, 아주 눈이 부신' },
+  { time: 143.15, text: 'Like me, like me \n 아주 눈이 부신' },
   { time: 146.74, text: '너를 숨김없이 보여줘' },
-  { time: 150.71, text: '한 번도 빛난 적 없었던 미지의' },
-  { time: 155.19, text: '향으로 온 세상을 물들여' },
-  { time: 158.92, text: '새로워진 장면에 (장면에), 두 눈앞은 황홀해 (황홀해)' },
-  { time: 163.18, text: '너의 손을 잡을 땐 (yeah, yeah), 너와 어우러질 땐' },
-  { time: 167.35, text: '빛을 이끌어 with me, with me, 마치 chemically' },
-  { time: 172.62, text: '우린 완벽하게 어울려 (완벽하게 어울려), feeling love attack' },
+  { time: 150.71, text: '한 번도 빛난 적 없었던' },
+  { time: 154.09, text: '미지의 향으로 온 세상을 물들여' },
+  { time: 158.92, text: '새로워진 장면에 (장면에) \n 두 눈앞은 황홀해 (황홀해)' },
+  { time: 163.18, text: '너의 손을 잡을 땐 (yeah, yeah) \n 너와 어우러질 땐' },
+  { time: 167.35, text: '빛을 이끌어 with me, with me \n 마치 chemically' },
+  { time: 172.62, text: '우린 완벽하게 어울려 (완벽하게 어울려)\n feeling love attack' },
   { time: 180.11, text: '' },
 ];
 
     let sortedLyrics = [...LYRICS_DATA].sort((a, b) => a.time - b.time);
     let lyricsLineEls = [];
     let currentLyricsIdx = -1;
+    let lyricsTrackLoaded = false;
+
+    function showLyricsEmptyState() {
+      const box = document.getElementById('lyrics-box');
+      if (!box) return;
+      box.innerHTML = '<p class="lyrics-line lyrics-placeholder" id="lyrics-empty-msg">가사 창</p>';
+      lyricsLineEls = [];
+      currentLyricsIdx = -1;
+    }
 
     function renderLyrics() {
       const box = document.getElementById('lyrics-box');
       if (!box) return;
+      if (!lyricsTrackLoaded || !sortedLyrics.length) {
+        showLyricsEmptyState();
+        return;
+      }
       box.innerHTML = '';
       lyricsLineEls = [];
       currentLyricsIdx = -1;
@@ -3745,7 +3769,7 @@
     }
 
     function updateLyricsHighlight(currentTime) {
-      if (!sortedLyrics.length || !lyricsLineEls.length) return;
+      if (!lyricsTrackLoaded || !sortedLyrics.length || !lyricsLineEls.length) return;
       let newIdx = -1;
       for (let i = 0; i < sortedLyrics.length; i++) {
         if (currentTime >= sortedLyrics[i].time) {
@@ -3766,7 +3790,7 @@
       }
     }
 
-    renderLyrics();
+    showLyricsEmptyState();
     const statusDot = document.getElementById('status-dot');
 
     const playBtn = document.getElementById('play-btn');
@@ -4943,6 +4967,8 @@
       if (songTitle) songTitle.innerText = item.track.name;
       currentLyricsIdx = -1;
       lyricsLineEls.forEach(el => el.classList.remove('active'));
+      lyricsTrackLoaded = true;
+      renderLyrics();
 
       updateLpFavButtonUI();
       setTimeout(updateMarqueeEffect, 50);
