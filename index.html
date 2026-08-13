@@ -4003,6 +4003,23 @@
     // 딱딱 끊어지듯 직관적으로 이동하도록 한다. (예전의 'smooth' 애니메이션은
     // 200~400ms에 걸쳐 서서히 움직여서 휠을 빠르게 여러 번 굴리면 반응이
     // 굼뜨고 밀리는 느낌이 있었다.)
+    // 패널이 드래그되어 화면에 떠 있을 때는 transform: scale(...)이 걸려있을 수
+    // 있다. getBoundingClientRect()는 이 scale이 적용된 "화면상" 픽셀을
+    // 돌려주는 반면 scrollTop은 항상 요소 자신의 scale 이전(레이아웃) 픽셀
+    // 기준이라서, 그 둘을 그냥 섞어 쓰면 scale이 1이 아닐 때 계산이 어긋난다.
+    // 가장 가까운 조상에서 dataset.panelScale을 찾아 보정값으로 나눠준다.
+    function getAncestorPanelScale(el) {
+      let n = el;
+      while (n) {
+        if (n.dataset && n.dataset.panelScale) {
+          const s = parseFloat(n.dataset.panelScale);
+          if (s > 0) return s;
+        }
+        n = n.parentElement;
+      }
+      return 1;
+    }
+
     ;(function setupAlbumWheelScroll() {
       const box = document.getElementById('album-select-container');
       if (!box) return;
@@ -4013,6 +4030,7 @@
 
         e.preventDefault();
 
+        const panelScale = getAncestorPanelScale(box);
         const boxTop = box.getBoundingClientRect().top;
         const currentTop = box.scrollTop;
 
@@ -4020,7 +4038,7 @@
         const rowTops = [];
         let lastTop = null;
         cards.forEach((card) => {
-          const relTop = card.getBoundingClientRect().top - boxTop + currentTop;
+          const relTop = (card.getBoundingClientRect().top - boxTop) / panelScale + currentTop;
           if (lastTop === null || Math.abs(relTop - lastTop) > 1) {
             rowTops.push(relTop);
             lastTop = relTop;
@@ -4079,6 +4097,7 @@
 
         const direction = e.deltaY > 0 ? 1 : -1;
         const currentTop = box.scrollTop;
+        const panelScale = getAncestorPanelScale(box);
 
         // (버그 수정) items[i].offsetTop은 "가장 가까운 position:relative/absolute
         // 조상"을 기준으로 계산된다. 그런데 .track-item의 진짜 스크롤 컨테이너인
@@ -4088,8 +4107,12 @@
         // 전혀 안 맞아서, 맨 위인데도 더 스크롤되거나 항목이 중간에 잘려
         // 보이는 문제가 있었다. getBoundingClientRect() 차이로 "박스 기준"
         // 상대 위치를 직접 구하도록 수정.
+        // (버그 수정 2) 패널이 드래그되어 transform: scale(...)이 걸린 상태라면
+        // getBoundingClientRect()가 돌려주는 값이 화면상 스케일된 픽셀이라
+        // scrollTop(스케일 이전 기준)과 단위가 안 맞았다. panelScale로 나눠서
+        // 항상 같은 단위로 비교/대입하도록 보정한다.
         const boxTop = box.getBoundingClientRect().top;
-        const relTop = (item) => item.getBoundingClientRect().top - boxTop + currentTop;
+        const relTop = (item) => (item.getBoundingClientRect().top - boxTop) / panelScale + currentTop;
 
         // 지금 맨 위에 걸쳐있는(스크롤로 이미 지나간) 항목의 인덱스를 찾는다.
         let idx = 0;
@@ -5853,6 +5876,9 @@
 
       let rafId = null;
       let lastTime = null;
+      // 야생 파이리를 맞춘 순간 true로 바뀐다. 이후로는 벽/바닥에 부딪혀도
+      // 더 이상 튕기지 않고 그 자리에서 곧장 바닥으로 떨어지도록 만든다.
+      let dropStraight = false;
 
       function viewportBounds() {
         return {
@@ -5890,10 +5916,10 @@
 
         if (x < 0) {
           x = 0;
-          vx = -vx * RESTITUTION;
+          vx = dropStraight ? 0 : -vx * RESTITUTION;
         } else if (x > maxX) {
           x = maxX;
-          vx = -vx * RESTITUTION;
+          vx = dropStraight ? 0 : -vx * RESTITUTION;
         }
 
         if (y < 0) {
@@ -5903,11 +5929,16 @@
           // 부딪힌 경우에만 튕기게 한다.
           if (vy < 0) {
             y = 0;
-            vy = -vy * RESTITUTION;
+            vy = dropStraight ? 0 : -vy * RESTITUTION;
           }
         } else if (y > maxY) {
           y = maxY;
-          if (Math.abs(vy) > REST_SPEED * 4) {
+          // dropStraight(파이리를 맞춘 직후)인 경우에는 속도와 상관없이 절대
+          // 튕기지 않고 바닥에 닿는 즉시 멈춘다.
+          if (dropStraight) {
+            vy = 0;
+            vx = 0;
+          } else if (Math.abs(vy) > REST_SPEED * 4) {
             vy = -vy * RESTITUTION;
           } else {
             vy = 0;
@@ -5962,6 +5993,7 @@
         vx = 0;
         vy = 0;
         angle = 0;
+        dropStraight = false;
         active = true;
         ball.style.display = 'block';
         render();
@@ -5971,10 +6003,18 @@
       function despawnBall() {
         active = false;
         dragging = false;
+        dropStraight = false;
         ball.classList.remove('grabbing');
         stopPhysics();
         ball.style.display = 'none';
       }
+
+      // 야생 파이리에게 맞은 순간 호출: 이후로는 벽/바닥에서 더 이상 튕기지
+      // 않고 그 자리에서 곧장 바닥으로 떨어지도록 한다.
+      window.__pokeballStopBouncing = function () {
+        dropStraight = true;
+        vx = 0;
+      };
 
       spawnBtn.addEventListener('click', () => {
         if (spawnBtn.disabled) return;
@@ -6561,6 +6601,9 @@
         window.__wildCollisionCheck = null;
         clearTimeout(wildState.despawnTimer);
         wildState.controller.stop();
+        // 몬스터볼이 파이리를 맞춘 순간: 더 이상 벽/바닥에 튕기지 않고
+        // 그 자리에서 곧장 바닥으로 떨어지도록 한다.
+        window.__pokeballStopBouncing && window.__pokeballStopBouncing();
 
         const sprite = wildState.sprite;
         sprite.canvas.classList.add('capture-flash');
@@ -6610,6 +6653,7 @@
           // 몬스터볼이 딸깍 잠기며 파이리가 완전히 안으로 들어간다.
           const lockAndFinish = () => {
             window.__pokeballGlow && window.__pokeballGlow('capture-success', 700);
+            new Audio('POKEMON/pokeball-out.mp3').play().catch(() => {});
             capturedList.push({ id: 'c' + Date.now(), caughtAt: Date.now() });
             saveCapturedList(capturedList);
             renderCapturedListUI();
@@ -6628,6 +6672,7 @@
         } else {
           // 포획 실패: 몬스터볼 근처에서 다시 튀어나와 도망 재개.
           window.__pokeballGlow && window.__pokeballGlow('capture-fail', 400);
+          new Audio('POKEMON/caught-a-pokemon.mp3').play().catch(() => {});
           const center = window.__pokeballGetCenter ? window.__pokeballGetCenter() : null;
           const sprite = createCharmanderSprite();
           const controller = startWandering(sprite, {
