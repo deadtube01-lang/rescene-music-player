@@ -1156,7 +1156,7 @@
          적용해서, 어떤 영상(걷기/불꽃세례/오이쉬 등 버튼으로 바뀌는 클립
          포함)이 재생되든 항상 그 영상의 실제 비율에 꽉 맞춰 여백이
          최소화되도록 한다. 아래 값은 JS 적용 전 잠깐 보일 초기값이다. */
-      max-width: 422px;
+      max-width: none;
       aspect-ratio: 16 / 9;
       height: auto;
       display: block;
@@ -1165,9 +1165,10 @@
       cursor: pointer;
     }
 
-    /* 동영상 카드(.charmander-box)를 오른쪽 아래 모서리를 잡고 대각선으로
-       끌어서 크게/작게 늘릴 수 있게 하는 리사이즈 핸들. 카드 크기가 커지면
-       .charmander-video는 width:100%이므로 자동으로 같이 커진다. */
+    /* 동영상 카드(.charmander-box)를 네 모서리 중 아무 곳이나 잡고
+       대각선으로 끌어서 크게/작게 늘릴 수 있게 하는 리사이즈 핸들.
+       카드 너비가 바뀌면 .charmander-video는 width:100%이므로
+       자동으로 같이 커지고, aspect-ratio 덕분에 비율도 유지된다. */
     .charmander-box {
       position: relative;
       width: 100%;
@@ -1176,26 +1177,28 @@
 
     .charmander-resize-handle {
       position: absolute;
-      right: 2px;
-      bottom: 2px;
-      width: 18px;
-      height: 18px;
-      cursor: nwse-resize;
+      width: 20px;
+      height: 20px;
       z-index: 5;
       touch-action: none;
-      border-radius: 0 0 8px 0;
     }
 
     .charmander-resize-handle::before {
       content: '';
       position: absolute;
-      right: 4px;
-      bottom: 4px;
       width: 9px;
       height: 9px;
-      border-right: 2px solid rgba(255, 255, 255, 0.55);
-      border-bottom: 2px solid rgba(255, 255, 255, 0.55);
     }
+
+    .charmander-resize-handle.tl { top: 2px; left: 2px; cursor: nwse-resize; }
+    .charmander-resize-handle.tr { top: 2px; right: 2px; cursor: nesw-resize; }
+    .charmander-resize-handle.bl { bottom: 2px; left: 2px; cursor: nesw-resize; }
+    .charmander-resize-handle.br { bottom: 2px; right: 2px; cursor: nwse-resize; }
+
+    .charmander-resize-handle.tl::before { top: 4px; left: 4px; border-top: 2px solid rgba(255, 255, 255, 0.55); border-left: 2px solid rgba(255, 255, 255, 0.55); }
+    .charmander-resize-handle.tr::before { top: 4px; right: 4px; border-top: 2px solid rgba(255, 255, 255, 0.55); border-right: 2px solid rgba(255, 255, 255, 0.55); }
+    .charmander-resize-handle.bl::before { bottom: 4px; left: 4px; border-bottom: 2px solid rgba(255, 255, 255, 0.55); border-left: 2px solid rgba(255, 255, 255, 0.55); }
+    .charmander-resize-handle.br::before { bottom: 4px; right: 4px; border-bottom: 2px solid rgba(255, 255, 255, 0.55); border-right: 2px solid rgba(255, 255, 255, 0.55); }
 
     .charmander-resize-handle:hover::before {
       border-color: rgba(255, 255, 255, 0.9);
@@ -1305,7 +1308,7 @@
          버튼들을 위해 그대로 남겨둔다. */
       flex: 0 0 auto;
       min-width: 0;
-      padding: 6px 8px;
+      padding: 6px 12px;
     }
 
     .charmander-act-btn.active {
@@ -1390,10 +1393,10 @@
 
     .panel-drag-handle-bar::before {
       content: "";
-      width: 44px;
-      height: 4px;
+      width: 0;
+      height: 0;
       border-radius: 3px;
-      background: rgba(255, 255, 255, 0.22);
+      background: transparent;
     }
 
     body.light-mode .panel-drag-handle-bar::before {
@@ -2476,8 +2479,11 @@
           </div>
         </div>
 
-        <!-- 대각선으로 끌면 동영상 카드 전체 크기를 키우거나 줄일 수 있는 리사이즈 핸들 -->
-        <div class="charmander-resize-handle" id="charmander-resize-handle" title="드래그해서 크기 조절"></div>
+        <!-- 대각선으로 끌면 동영상 카드 전체 크기를 키우거나 줄일 수 있는 리사이즈 핸들 (네 모서리) -->
+        <div class="charmander-resize-handle tl" data-corner="tl" title="드래그해서 크기 조절"></div>
+        <div class="charmander-resize-handle tr" data-corner="tr" title="드래그해서 크기 조절"></div>
+        <div class="charmander-resize-handle bl" data-corner="bl" title="드래그해서 크기 조절"></div>
+        <div class="charmander-resize-handle br" data-corner="br" title="드래그해서 크기 조절"></div>
       </div>
     </div>
 
@@ -4091,62 +4097,21 @@
 
     window.addEventListener('resize', () => requestAnimationFrame(fitAlbumBoxToTwoRows));
 
-    // 트랙리스트 박스 높이를 "항목 3줄" 높이에 정확히 맞춘다. (고정 px를 쓰면
-    // 폰트 렌더링/줄바꿈 차이로 3번째 줄이 미세하게 잘려 보이는 문제가 있어서,
-    // 앨범 박스와 같은 방식으로 실제 렌더된 항목 높이를 직접 측정해 계산한다.)
-    // (성능) 매번 목록 전체를 getBoundingClientRect()로 훑으면 항목 수가 많을
-    // 때 스크롤/렌더 중 버벅임을 유발할 수 있다. 항목 개수가 그대로면 굳이
-    // 다시 잴 필요가 없으므로, 마지막으로 잰 결과를 캐시해두고 항목 개수가
-    // 바뀔 때(곡 목록이 실제로 바뀔 때)만 다시 측정한다.
-    function fitTracklistToThreeRows() {
-      const box = document.querySelector('.tracklist-box');
-      if (!box) return;
-      const items = box.querySelectorAll('.track-item, #track-list li');
-      if (items.length === 0) return;
-
-      // 항목이 1~2개뿐이어도(검색 결과가 적어도) 박스 높이는 항상 3줄
-      // 분량을 유지한다 (내용이 적다고 박스가 쪼그라들면 검색할 때마다
-      // 레이아웃이 출렁여서 지저분해 보이므로, 실제 줄 수와 무관하게 고정 3줄).
-      const rowsToShow = 3;
-
-      // (버그 수정) 예전에는 "항목 개수가 같으면" 이전에 측정한 높이를
-      // 재사용하는 캐시를 뒀는데, 검색어가 바뀌어 다른 내용(글자 길이·배지
-      // 유무 등)의 항목이 우연히 같은 개수로 나오면 잘못된(더 작은) 높이를
-      // 재사용해서 박스가 3줄보다 짧아 보이는 문제가 있었다. 항목 수가
-      // 적을수록(1~2개) 이 문제가 더 두드러졌으므로, 캐시 없이 매번 실제
-      // 렌더된 항목을 다시 측정해 항상 정확한 3줄 높이를 보장한다.
-      let maxItemHeight = 0;
-      for (let i = 0; i < items.length; i++) {
-        const h = items[i].getBoundingClientRect().height;
-        if (h > maxItemHeight) maxItemHeight = h;
-      }
-
-      let itemGap = 6;
-      if (items.length > 1) {
-        const r0 = items[0].getBoundingClientRect();
-        const r1 = items[1].getBoundingClientRect();
-        itemGap = r1.top - r0.bottom;
-      }
-
-      box.style.height = `${maxItemHeight * rowsToShow + itemGap * (rowsToShow - 1)}px`;
-    }
-
-    window.addEventListener('resize', () => {
-      requestAnimationFrame(fitTracklistToThreeRows);
-    });
-
-    // ------- 동영상 카드 대각선 리사이즈 -------
-    // 오른쪽 아래 핸들을 잡고 끌면 .charmander-box(동영상 카드) 전체의
-    // 너비를 늘리거나 줄인다. 동영상(.charmander-video)은 width:100%이므로
-    // 카드 크기에 맞춰 자동으로 커지고, aspect-ratio가 걸려있어 비율도 유지된다.
+    // ------- 동영상 카드 대각선 리사이즈 (네 모서리 모두 지원) -------
+    // 네 모서리 핸들 중 아무 곳이나 잡고 끌면 .charmander-box(동영상 카드)
+    // 전체의 너비를 늘리거나 줄인다. 동영상(.charmander-video)은
+    // width:100%이므로 카드 크기에 맞춰 자동으로 커지고, aspect-ratio가
+    // 걸려있어 비율도 유지된다.
     (function setupCharmanderResize() {
-      const handle = document.getElementById('charmander-resize-handle');
       const box = document.getElementById('panel-video');
-      if (!handle || !box) return;
+      if (!box) return;
+      const handles = box.querySelectorAll('.charmander-resize-handle');
+      if (!handles.length) return;
 
       const MIN_WIDTH = 220;
       const MAX_WIDTH = 900;
       let resizing = false;
+      let corner = 'br';
       let startX = 0;
       let startWidth = 0;
 
@@ -4154,7 +4119,10 @@
         if (!resizing) return;
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const delta = clientX - startX;
-        let newWidth = startWidth + delta;
+        // 왼쪽 모서리(tl/bl)를 끌 때는 마우스가 왼쪽으로 갈수록 커져야 하므로
+        // 부호를 뒤집는다. 오른쪽 모서리(tr/br)는 마우스가 오른쪽으로 갈수록 커진다.
+        const sign = (corner === 'tl' || corner === 'bl') ? -1 : 1;
+        let newWidth = startWidth + delta * sign;
         newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
         box.style.width = `${newWidth}px`;
         box.style.maxWidth = 'none';
@@ -4174,6 +4142,7 @@
         e.preventDefault();
         e.stopPropagation();
         resizing = true;
+        corner = e.currentTarget.dataset.corner || 'br';
         box.classList.add('resizing');
         startX = e.touches ? e.touches[0].clientX : e.clientX;
         startWidth = box.getBoundingClientRect().width;
@@ -4183,9 +4152,66 @@
         document.addEventListener('touchend', onUp);
       }
 
-      handle.addEventListener('mousedown', onDown);
-      handle.addEventListener('touchstart', onDown, { passive: false });
+      handles.forEach((handle) => {
+        handle.addEventListener('mousedown', onDown);
+        handle.addEventListener('touchstart', onDown, { passive: false });
+      });
     })();
+
+    // 트랙리스트 박스 높이를 "항목 3줄" 높이에 정확히 맞춘다. (고정 px를 쓰면
+    // 폰트 렌더링/줄바꿈 차이로 3번째 줄이 미세하게 잘려 보이는 문제가 있어서,
+    // 앨범 박스와 같은 방식으로 실제 렌더된 항목 높이를 직접 측정해 계산한다.)
+    // (성능) 매번 목록 전체를 getBoundingClientRect()로 훑으면 항목 수가 많을
+    // 때 스크롤/렌더 중 버벅임을 유발할 수 있다. 항목 개수가 그대로면 굳이
+    // 다시 잴 필요가 없으므로, 마지막으로 잰 결과를 캐시해두고 항목 개수가
+    // 바뀔 때(곡 목록이 실제로 바뀔 때)만 다시 측정한다.
+    let __trackFitCache = { count: -1, maxItemHeight: 0, itemGap: 6 };
+
+    function fitTracklistToThreeRows() {
+      const box = document.querySelector('.tracklist-box');
+      if (!box) return;
+      const items = box.querySelectorAll('.track-item, #track-list li');
+      if (items.length === 0) return;
+
+      // 항목이 1~2개뿐이어도 박스 높이는 항상 3줄 분량을 유지한다
+      // (내용이 적다고 박스가 쪼그라들면 검색할 때마다 레이아웃이
+      // 출렁여서 지저분해 보이므로, 실제 줄 수와 무관하게 고정 3줄).
+      const rowsToShow = 3;
+
+      let maxItemHeight, itemGap;
+      if (__trackFitCache.count === items.length) {
+        // 항목 개수가 그대로면 이전에 측정한 값을 그대로 재사용한다.
+        maxItemHeight = __trackFitCache.maxItemHeight;
+        itemGap = __trackFitCache.itemGap;
+      } else {
+        // 항목마다 실제 높이가 미세하게 다를 수 있다(글자 길이·배지 유무 등).
+        // 목록 전체에서 가장 큰 항목 높이를 기준으로 삼아야 어느 3줄이
+        // 보이든 잘리지 않는다. (개수가 바뀌었을 때만 이 무거운 측정을 한다.)
+        maxItemHeight = 0;
+        for (let i = 0; i < items.length; i++) {
+          const h = items[i].getBoundingClientRect().height;
+          if (h > maxItemHeight) maxItemHeight = h;
+        }
+
+        itemGap = 6;
+        if (items.length > 1) {
+          const r0 = items[0].getBoundingClientRect();
+          const r1 = items[1].getBoundingClientRect();
+          itemGap = r1.top - r0.bottom;
+        }
+
+        __trackFitCache = { count: items.length, maxItemHeight, itemGap };
+      }
+
+      box.style.height = `${maxItemHeight * rowsToShow + itemGap * (rowsToShow - 1)}px`;
+    }
+
+    window.addEventListener('resize', () => {
+      // 창 크기가 바뀌면 줄바꿈 등으로 항목 높이가 달라질 수 있으니
+      // 캐시를 무효화하고 다시 잰다.
+      __trackFitCache.count = -1;
+      requestAnimationFrame(fitTracklistToThreeRows);
+    });
 
     // 마우스 휠로 스크롤할 때 한 번에 여러 줄이 훅 넘어가지 않고
     // 정확히 한 줄(카드 한 행)씩만, 트랙리스트와 동일하게 "즉시(instant)"
