@@ -894,6 +894,8 @@
       display: flex;
       justify-content: space-between;
       align-items: center;
+      height: 40px;
+      box-sizing: border-box;
       padding: 9px 12px;
       border-radius: 8px;
       font-size: 13px;
@@ -3997,37 +3999,50 @@
     window.addEventListener('resize', () => requestAnimationFrame(fitTracklistToThreeRows));
 
     // 마우스 휠로 스크롤할 때 한 번에 여러 줄이 훅 넘어가지 않고
-    // 정확히 한 줄(카드 높이 + 줄 간격)씩만 이동하도록 한다.
+    // 정확히 한 줄(카드 한 행)씩만, 트랙리스트와 동일하게 "즉시(instant)"
+    // 딱딱 끊어지듯 직관적으로 이동하도록 한다. (예전의 'smooth' 애니메이션은
+    // 200~400ms에 걸쳐 서서히 움직여서 휠을 빠르게 여러 번 굴리면 반응이
+    // 굼뜨고 밀리는 느낌이 있었다.)
     ;(function setupAlbumWheelScroll() {
       const box = document.getElementById('album-select-container');
       if (!box) return;
 
-      // 트랙리스트 휠 스크롤과 같은 이유로, 진행 중인 smooth 스크롤 애니메이션이
-      // 끝나기 전까지는 추가 휠 입력을 무시한다.
-      let wheelBusy = false;
-
       box.addEventListener('wheel', (e) => {
-        const cards = box.querySelectorAll('.album-card-item');
+        const cards = Array.from(box.querySelectorAll('.album-card-item'));
         if (cards.length === 0) return;
 
         e.preventDefault();
-        if (wheelBusy) return;
-        wheelBusy = true;
 
-        const firstCardRect = cards[0].getBoundingClientRect();
-        let rowGap = 6;
-        for (let i = 1; i < cards.length; i++) {
-          const r = cards[i].getBoundingClientRect();
-          if (Math.abs(r.top - firstCardRect.top) > 1) {
-            rowGap = r.top - firstCardRect.bottom;
-            break;
+        const boxTop = box.getBoundingClientRect().top;
+        const currentTop = box.scrollTop;
+
+        // 카드들을 "같은 행(같은 top)"끼리 묶어서 각 행의 실제 위치(top)를 구한다.
+        const rowTops = [];
+        let lastTop = null;
+        cards.forEach((card) => {
+          const relTop = card.getBoundingClientRect().top - boxTop + currentTop;
+          if (lastTop === null || Math.abs(relTop - lastTop) > 1) {
+            rowTops.push(relTop);
+            lastTop = relTop;
           }
+        });
+
+        const direction = e.deltaY > 0 ? 1 : -1;
+
+        // 지금 맨 위에 걸쳐있는(스크롤로 이미 지나간) 행의 인덱스를 찾는다.
+        let idx = 0;
+        for (let i = 0; i < rowTops.length; i++) {
+          if (rowTops[i] <= currentTop + 1) idx = i;
+          else break;
         }
-        const rowStep = firstCardRect.height + rowGap;
 
-        box.scrollBy({ top: e.deltaY > 0 ? rowStep : -rowStep, behavior: 'smooth' });
+        let targetIdx = idx + direction;
+        targetIdx = Math.max(0, Math.min(rowTops.length - 1, targetIdx));
 
-        setTimeout(() => { wheelBusy = false; }, 200);
+        // 이미 맨 위/맨 아래라 더 이동할 곳이 없으면 아무 것도 하지 않는다.
+        if (targetIdx === idx) return;
+
+        box.scrollTo({ top: rowTops[targetIdx], behavior: 'auto' });
       }, { passive: false });
     })();
 
