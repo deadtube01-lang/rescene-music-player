@@ -6131,7 +6131,7 @@
       function playRandomCry(onCry) {
         const idx = Math.floor(Math.random() * CRY_SOUNDS.length);
         const src = CRY_SOUNDS[idx];
-        const text = src.indexOf('oishi') !== -1 ? '오이쉬!' : '우이!';
+        const text = src.indexOf('oishi') !== -1 ? '오이쉬에~' : '우이!';
         const audio = new Audio(src);
         audio.play().catch((err) => {
           console.warn('[wild-charmander] 울음소리 재생 실패:', src, err);
