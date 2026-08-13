@@ -2295,13 +2295,13 @@
   <div id="bg-layers" class="bg-layers"></div>
 
   <!-- 몬스터볼 소환 버튼 (왼쪽 아래 고정) -->
-  <button id="pokeball-spawn-btn" class="pokeball-spawn-btn" title="몬스터볼 던지기 놀이">
+  <button id="pokeball-spawn-btn" class="pokeball-spawn-btn" title="">
     <img src="POKEMON/POKEBALL.png" alt="몬스터볼" class="pokeball-spawn-btn-icon">
   </button>
 
   <!-- 몬스터볼 장난감: 버튼을 누르면 나타나 위에서 떨어지고, 잡아서 던지면 중력을
        받아 벽/바닥에 튕겨 다닌다. 다시 버튼을 누르면 사라진다. -->
-  <img id="pokeball-toy" class="pokeball-toy" src="POKEMON/POKEBALL.png" alt="몬스터볼" ondragstart="return false;" title="잡아서 던져보세요" style="display: none;">
+  <img id="pokeball-toy" class="pokeball-toy" src="POKEMON/POKEBALL.png" alt="몬스터볼" ondragstart="return false;" title="" style="display: none;">
 
   <!-- 포획된 포켓몬 버튼: 처음엔 숨겨져 있다가 하나라도 포획하면 나타난다. -->
   <button id="captured-list-btn" class="pokeball-spawn-btn captured-list-btn" title="포획된 포켓몬" style="display:none;">📦</button>
@@ -6352,7 +6352,7 @@
       // 같은 SPRITE_WIDTH로 표시하면 걷는 파이리보다 작아 보인다. 화면에 보이는
       // 실제 크기를 걷는 파이리와 맞추기 위한 배율 -- 실제로 보면서 숫자만
       // 조절해서 맞추면 된다.
-      const FIRE_SPRITE_SCALE = 1.4;
+      const FIRE_SPRITE_SCALE = 3.2;
       // 몬스터볼이 파이리에게 맞았을 때, 이 확률로 포획 연출 대신 불을 뿜어
       // 몬스터볼을 튕겨낸다(나머지 확률은 기존처럼 포획 연출 진행).
       const FIRE_COUNTER_CHANCE = 0.3;
@@ -6874,8 +6874,14 @@
         document.body.appendChild(fireImg);
 
         playSound(FIRE_SOUND_SRC);
-        // 몬스터볼은 이 반격에 맞아 멀리 날아가며 사라진다(이번에 던진 볼은 다시 못 씀).
-        window.__pokeballFlyOff && window.__pokeballFlyOff(ballSide === 'left' ? -1 : 1);
+        // 불을 뿜는 이미지가 화면에 나오고 나서(입에서 불이 보이기 시작할 시간을
+        // 준 뒤) 몬스터볼이 맞아서 날아가도록, 몬스터볼 반격은 살짝 늦게 시작한다.
+        // (몬스터볼이 불을 맞기도 전에 먼저 날아가 버리는 문제 방지)
+        const FIRE_BREATH_DELAY_MS = 400;
+        setTimeout(() => {
+          // 몬스터볼은 이 반격에 맞아 멀리 날아가며 사라진다(이번에 던진 볼은 다시 못 씀).
+          window.__pokeballFlyOff && window.__pokeballFlyOff(ballSide === 'left' ? -1 : 1);
+        }, FIRE_BREATH_DELAY_MS);
 
         setTimeout(() => {
           fireImg.remove();
@@ -6888,7 +6894,7 @@
           wildState.despawnTimer = setTimeout(() => {
             if (wildState && !wildState.capturing) despawnWild();
           }, 60000);
-        }, 850);
+        }, FIRE_BREATH_DELAY_MS + 900);
       }
 
       // step: 1, 2, 3 (몇 번째 흔들림인지)
