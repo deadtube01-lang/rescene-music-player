@@ -6014,10 +6014,8 @@
     // 반전(scaleX(-1))만 적용해서 같은 영상을 재사용한다.
     // ----------------------------------
     ;(function setupWildCharmanderEasterEgg() {
-      const WALK_SRC = 'POKEMON/야생의 우로 걷는 파이리.webp'; // 기본이 오른쪽을 보고 걷는 영상
+      const WALK_SRC = 'POKEMON/야생의 우로 걷는 파이리.mp4'; // 기본이 오른쪽을 보고 걷는 영상
       const SPRITE_WIDTH = 150;
-      const BLACK_CUTOFF = 26;   // 이 밝기(R+G+B) 이하는 완전 투명
-      const BLACK_SOFT_EDGE = 60; // 이 밝기까지는 서서히 투명도가 올라옴(경계 부드럽게)
       const STORAGE_KEY = 'rescene_captured_charmanders';
       const MAX_CAPTURED = 6; // 포획 가능한 최대 파이리 수
       const CRY_SOUNDS = [
@@ -6034,131 +6032,40 @@
         });
       }
 
-      // 영상은 하나만 재생해두고, 이동 방향이 왼쪽일 때만 캔버스에 그릴 때
-      // 좌우로 뒤집어서(scaleX(-1)) 그린다. 오른쪽으로 갈 땐 원본 그대로.
+      // 이제 웹에서 이미 배경이 제거된(알파 채널 있는) 애니메이션 webp를 그대로
+      // <img> 태그로 재생한다. 예전처럼 <video>를 <canvas>에 매 프레임 그려서
+      // 실시간으로 크로마키 처리하던 로직은 더 이상 필요 없다. 왼쪽으로 이동할
+      // 때는 CSS scaleX(-1)로 좌우 반전만 적용해서 같은 이미지를 재사용한다.
       function createCharmanderSprite() {
-        const video = document.createElement('video');
-        video.muted = true;
-        video.loop = true;
-        video.playsInline = true;
-        video.autoplay = true;
-        video.style.display = 'none';
-        document.body.appendChild(video);
-        video.src = WALK_SRC;
-        video.addEventListener('error', () => {
-          console.error('[wild-charmander] 영상 로드 실패:', video.currentSrc || WALK_SRC, video.error);
-        });
-        video.play().catch((err) => {
-          console.warn('[wild-charmander] 영상 재생 실패(자동재생 차단 등):', err);
-        });
-
-        const canvas = document.createElement('canvas');
-        canvas.className = 'wild-charmander-canvas';
-        canvas.style.pointerEvents = 'auto';
-        canvas.style.cursor = 'pointer';
-        canvas.addEventListener('click', () => {
+        const img = document.createElement('img');
+        img.className = 'wild-charmander-canvas';
+        img.style.width = SPRITE_WIDTH + 'px';
+        img.style.height = 'auto';
+        img.style.pointerEvents = 'auto';
+        img.style.cursor = 'pointer';
+        img.style.display = 'block';
+        img.addEventListener('click', () => {
           playRandomCry();
         });
-        document.body.appendChild(canvas);
-        const ctx = canvas.getContext('2d', { willReadFrequently: true });
-
-        // 실제 표시 크기(SPRITE_WIDTH)보다 내부 해상도를 더 높게 그린 뒤
-        // CSS로 축소 표시하면, 원본 영상이 저해상도라도 훨씬 부드럽고 덜
-        // 깨져 보인다(계단현상/블록 노이즈 완화).
-        const RENDER_SCALE = 2;
+        img.addEventListener('error', () => {
+          console.error('[wild-charmander] 이미지 로드 실패:', img.currentSrc || WALK_SRC);
+        });
+        img.src = WALK_SRC;
+        document.body.appendChild(img);
 
         let dir = 'right';
-        let sized = false;
-        let rafId = null;
 
-        function ensureSize() {
-          if (video.videoWidth) {
-            const w = SPRITE_WIDTH * RENDER_SCALE;
-            const h = Math.round(w * video.videoHeight / video.videoWidth);
-            canvas.width = w;
-            canvas.height = h;
-            canvas.style.width = SPRITE_WIDTH + 'px';
-            canvas.style.height = (h / RENDER_SCALE) + 'px';
-            sized = true;
-          }
+        function applyTransform(x, y) {
+          const flip = dir === 'left' ? ' scaleX(-1)' : '';
+          img.style.transform = `translate(${x}px, ${y}px)${flip}`;
         }
-
-        function draw() {
-          if (!sized) ensureSize();
-          if (sized && video.readyState >= 2) {
-            // 크로마키 판정을 위한 색상 샘플링은 스무딩을 끄고 원본 그대로
-            // 가져와야 한다. 스무딩을 켠 채로 그리면 검은 배경 픽셀과
-            // 캐릭터 픽셀이 서로 섞여서(안티앨리어싱) 배경의 밝기가 올라가
-            // 크로마키가 안 지워지거나, 반대로 캐릭터 안의 어두운 부분이
-            // 밝게 섞여 뿌옇게 보이는 문제가 생긴다. 최종 화면 표시는 어차피
-            // CSS로 축소(width/height)되면서 브라우저가 자연스럽게 부드럽게
-            // 보여주므로, 여기서는 색상 정확도를 우선한다.
-            ctx.imageSmoothingEnabled = false;
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            ctx.save();
-            if (dir === 'left') {
-              // 좌우 반전: 오른쪽을 보는 원본 영상을 거울처럼 뒤집어서
-              // 왼쪽을 보고 걷는 것처럼 보이게 한다.
-              ctx.translate(canvas.width, 0);
-              ctx.scale(-1, 1);
-            }
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            ctx.restore();
-            const w = canvas.width, h = canvas.height;
-            const frame = ctx.getImageData(0, 0, w, h);
-            const d = frame.data;
-            const alpha = new Uint8ClampedArray(w * h);
-            for (let i = 0, p = 0; i < d.length; i += 4, p++) {
-              const brightness = d[i] + d[i + 1] + d[i + 2];
-              let a = 255;
-              if (brightness < BLACK_CUTOFF) {
-                a = 0;
-              } else if (brightness < BLACK_SOFT_EDGE) {
-                a = Math.round((brightness - BLACK_CUTOFF) / (BLACK_SOFT_EDGE - BLACK_CUTOFF) * 255);
-              }
-              alpha[p] = a;
-            }
-            // 경계를 부드럽게(계단/블록처럼 깨져 보이는 것 완화)하기 위해
-            // 알파 채널에 가벼운 3x3 박스 블러를 한 번 적용한다.
-            for (let y = 0; y < h; y++) {
-              for (let x = 0; x < w; x++) {
-                const p = y * w + x;
-                const a0 = alpha[p];
-                if (a0 === 0 || a0 === 255) {
-                  // 완전 투명/불투명 내부는 블러할 필요 없음(성능 절약),
-                  // 가장자리(중간값)만 블러링 대상으로 삼는다.
-                  const left = x > 0 ? alpha[p - 1] : a0;
-                  const right = x < w - 1 ? alpha[p + 1] : a0;
-                  const up = y > 0 ? alpha[p - w] : a0;
-                  const down = y < h - 1 ? alpha[p + w] : a0;
-                  if (a0 === left && a0 === right && a0 === up && a0 === down) continue;
-                }
-                const x0 = Math.max(0, x - 1), x1 = Math.min(w - 1, x + 1);
-                const y0 = Math.max(0, y - 1), y1 = Math.min(h - 1, y + 1);
-                let sum = 0, count = 0;
-                for (let yy = y0; yy <= y1; yy++) {
-                  for (let xx = x0; xx <= x1; xx++) {
-                    sum += alpha[yy * w + xx];
-                    count++;
-                  }
-                }
-                d[p * 4 + 3] = Math.round(sum / count);
-              }
-            }
-            ctx.putImageData(frame, 0, 0);
-          }
-          rafId = requestAnimationFrame(draw);
-        }
-        draw();
 
         return {
-          canvas,
+          canvas: img,
           setDirection(d) { dir = d; },
+          applyTransform,
           destroy() {
-            if (rafId) cancelAnimationFrame(rafId);
-            video.pause();
-            video.remove();
-            canvas.remove();
+            img.remove();
           }
         };
       }
@@ -6198,7 +6105,7 @@
           }
           state.x = x; state.y = y;
           state.h = sprite.canvas.height || SPRITE_WIDTH;
-          sprite.canvas.style.transform = `translate(${x}px, ${y}px)`;
+          sprite.applyTransform(x, y);
           requestAnimationFrame(frame);
         }
         requestAnimationFrame(frame);
