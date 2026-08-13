@@ -120,6 +120,19 @@
       box-shadow: 0 0 0 2px rgba(252, 111, 207, 0.4), 0 4px 15px rgba(0, 0, 0, 0.3);
     }
 
+    /* 몬스터볼을 다 써서(포획 성공) 더 이상 던질 수 없는 상태 */
+    .pokeball-spawn-btn.pokeball-spawn-btn-disabled,
+    .pokeball-spawn-btn:disabled {
+      opacity: 0.35;
+      cursor: not-allowed;
+      filter: grayscale(1);
+    }
+    .pokeball-spawn-btn.pokeball-spawn-btn-disabled:hover,
+    .pokeball-spawn-btn:disabled:hover {
+      transform: none;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    }
+
     .pokeball-spawn-btn-icon {
       width: 26px;
       height: 26px;
@@ -208,56 +221,56 @@
       filter: drop-shadow(0 0 10px #ffffff) drop-shadow(0 0 22px #ffffff) brightness(2.4);
     }
 
-    /* 파이리가 울 때 머리 위에 뜨는 말풍선 */
+    /* 파이리가 울 때 머리 위에 뜨는 말풍선 (좀 더 작고 여백을 줄인 버전) */
     .wild-charmander-bubble {
       position: absolute;
       left: 50%;
-      top: -14px;
+      top: -8px;
       transform: translate(-50%, -100%);
       background: #ffffff;
       color: #2a2a2a;
       font-weight: 700;
-      font-size: 14px;
-      padding: 5px 11px;
-      border-radius: 14px;
-      border: 2px solid #2a2a2a;
+      font-size: 12px;
+      padding: 3px 8px;
+      border-radius: 10px;
+      border: 1.5px solid #2a2a2a;
       white-space: nowrap;
       pointer-events: none;
       opacity: 0;
-      transition: opacity 0.25s ease, transform 0.25s ease;
-      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.25);
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.25);
     }
 
     .wild-charmander-bubble::after {
       content: '';
       position: absolute;
       left: 50%;
-      bottom: -7px;
+      bottom: -5px;
       transform: translateX(-50%);
       width: 0;
       height: 0;
-      border-left: 7px solid transparent;
-      border-right: 7px solid transparent;
-      border-top: 8px solid #2a2a2a;
+      border-left: 5px solid transparent;
+      border-right: 5px solid transparent;
+      border-top: 6px solid #2a2a2a;
     }
 
     .wild-charmander-bubble::before {
       content: '';
       position: absolute;
       left: 50%;
-      bottom: -4.5px;
+      bottom: -3px;
       transform: translateX(-50%);
       width: 0;
       height: 0;
-      border-left: 5.5px solid transparent;
-      border-right: 5.5px solid transparent;
-      border-top: 6px solid #ffffff;
+      border-left: 3.5px solid transparent;
+      border-right: 3.5px solid transparent;
+      border-top: 4px solid #ffffff;
       z-index: 1;
     }
 
     .wild-charmander-bubble.show {
       opacity: 1;
-      transform: translate(-50%, -112%);
+      transform: translate(-50%, -108%);
     }
 
     #pokeball-toy.capture-light {
@@ -5907,6 +5920,13 @@
           vy = 0;
           rafId = null;
           lastTime = null;
+          // 몬스터볼이 완전히 바닥에 떨어져 멈춘 시점: 파이리를 맞춰서 대기 중이던
+          // 포획 흔들림 연출이 있다면 이제 시작한다.
+          if (window.__pokeballOnGroundedCapture) {
+            const cb = window.__pokeballOnGroundedCapture;
+            window.__pokeballOnGroundedCapture = null;
+            cb();
+          }
         } else {
           rafId = requestAnimationFrame(stepPhysics);
         }
@@ -5942,6 +5962,7 @@
       }
 
       spawnBtn.addEventListener('click', () => {
+        if (spawnBtn.disabled) return;
         spawnBtn.classList.toggle('active', !active);
         if (active) {
           despawnBall();
@@ -5949,6 +5970,23 @@
           spawnBall();
         }
       });
+
+      // 포획에 성공해서 몬스터볼을 다 쓴 경우: 화면에서 완전히 치우고,
+      // 새로 던지지 못하도록 소환 버튼도 비활성화한다.
+      window.__pokeballConsumeOnCapture = function () {
+        despawnBall();
+        spawnBtn.disabled = true;
+        spawnBtn.classList.remove('active');
+        spawnBtn.classList.add('pokeball-spawn-btn-disabled');
+        spawnBtn.title = '몬스터볼이 없습니다';
+      };
+
+      // 새로운 야생 포켓몬이 등장하는 등, 다시 몬스터볼을 쓸 수 있게 되는 시점에 호출.
+      window.__pokeballResetAvailability = function () {
+        spawnBtn.disabled = false;
+        spawnBtn.classList.remove('pokeball-spawn-btn-disabled');
+        spawnBtn.title = '몬스터볼 던지기 놀이';
+      };
 
       ball.addEventListener('mousedown', (e) => {
         if (!active) return;
@@ -6136,16 +6174,18 @@
         audio.play().catch((err) => {
           console.warn('[wild-charmander] 울음소리 재생 실패:', src, err);
         });
-        if (onCry) onCry(text);
+        if (onCry) onCry(text, audio);
       }
 
       // 이제 웹에서 이미 배경이 제거된(알파 채널 있는) 애니메이션 webp를 그대로
       // <img> 태그로 재생한다. 예전처럼 <video>를 <canvas>에 매 프레임 그려서
       // 실시간으로 크로마키 처리하던 로직은 더 이상 필요 없다. 왼쪽으로 이동할
       // 때는 CSS scaleX(-1)로 좌우 반전만 적용해서 같은 이미지를 재사용한다.
-      function createCharmanderSprite() {
-        // 위치 이동은 래퍼(wrapper)에 적용하고, 좌우 반전은 안쪽 이미지에만
-        // 적용해서 말풍선(bubble)은 뒤집히지 않고 항상 똑바로 보이게 한다.
+      //
+      // opts.draggable: true로 주면 마우스/터치로 직접 끌어서 옮길 수 있다.
+      // (포획해서 "꺼내기"한 파이리에만 사용. 야생 파이리는 그대로 자동 이동만 한다.)
+      function createCharmanderSprite(opts) {
+        opts = opts || {};
         const wrapper = document.createElement('div');
         wrapper.className = 'wild-charmander-wrapper';
 
@@ -6154,15 +6194,20 @@
         img.style.width = SPRITE_WIDTH + 'px';
         img.style.height = 'auto';
         img.style.pointerEvents = 'auto';
-        img.style.cursor = 'pointer';
+        img.style.cursor = opts.draggable ? 'grab' : 'pointer';
         img.style.display = 'block';
 
         let bubbleEl = null;
         let bubbleHideTimer = null;
-        function showBubble(text) {
+        let bubbleAudioCleanup = null;
+        function showBubble(text, audioEl) {
           if (bubbleHideTimer) {
             clearTimeout(bubbleHideTimer);
             bubbleHideTimer = null;
+          }
+          if (bubbleAudioCleanup) {
+            bubbleAudioCleanup();
+            bubbleAudioCleanup = null;
           }
           if (!bubbleEl) {
             bubbleEl = document.createElement('div');
@@ -6174,13 +6219,29 @@
           bubbleEl.classList.remove('show');
           void bubbleEl.offsetWidth;
           bubbleEl.classList.add('show');
-          // 울음소리 재생 시간과 비슷하게 1.4초 정도 붙어다니다가 사라진다.
-          bubbleHideTimer = setTimeout(() => {
+
+          function hide() {
             if (bubbleEl) bubbleEl.classList.remove('show');
-          }, 1400);
+          }
+          if (audioEl) {
+            // mp3 재생이 끝나는 시점에 맞춰 말풍선도 같이 사라지게 한다.
+            const onEnded = () => hide();
+            audioEl.addEventListener('ended', onEnded);
+            audioEl.addEventListener('error', onEnded);
+            bubbleAudioCleanup = () => {
+              audioEl.removeEventListener('ended', onEnded);
+              audioEl.removeEventListener('error', onEnded);
+            };
+            // 혹시 'ended'가 발생하지 않는 예외 상황을 대비한 안전장치.
+            bubbleHideTimer = setTimeout(hide, 4000);
+          } else {
+            bubbleHideTimer = setTimeout(hide, 1400);
+          }
         }
 
+        let suppressClick = false;
         img.addEventListener('click', () => {
+          if (suppressClick) { suppressClick = false; return; }
           playRandomCry(showBubble);
         });
         img.addEventListener('error', () => {
@@ -6191,18 +6252,73 @@
         document.body.appendChild(wrapper);
 
         let dir = 'right';
+        let controllerRef = null; // bindController()로 이동 컨트롤러를 나중에 연결
 
         function applyTransform(x, y) {
           wrapper.style.transform = `translate(${x}px, ${y}px)`;
           img.style.transform = dir === 'left' ? 'scaleX(-1)' : '';
         }
 
+        // ------- 드래그 이동 (포획한 파이리 전용) -------
+        if (opts.draggable) {
+          let dragging = false;
+          let moved = false;
+          let offsetX = 0, offsetY = 0;
+
+          function getPoint(e) {
+            if (e.touches && e.touches[0]) return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+            return { x: e.clientX, y: e.clientY };
+          }
+          function onDown(e) {
+            dragging = true;
+            moved = false;
+            if (controllerRef) controllerRef.pause();
+            const rect = controllerRef ? controllerRef.getRect() : { x: 0, y: 0 };
+            const p = getPoint(e);
+            offsetX = p.x - rect.x;
+            offsetY = p.y - rect.y;
+            img.style.cursor = 'grabbing';
+            window.addEventListener('mousemove', onMove);
+            window.addEventListener('mouseup', onUp);
+            window.addEventListener('touchmove', onMove, { passive: false });
+            window.addEventListener('touchend', onUp);
+            e.preventDefault();
+          }
+          function onMove(e) {
+            if (!dragging) return;
+            moved = true;
+            const p = getPoint(e);
+            const maxX = Math.max(0, innerWidth - SPRITE_WIDTH);
+            const maxY = Math.max(0, innerHeight - SPRITE_WIDTH);
+            const nx = Math.min(Math.max(p.x - offsetX, 0), maxX);
+            const ny = Math.min(Math.max(p.y - offsetY, 0), maxY);
+            applyTransform(nx, ny);
+            if (controllerRef) controllerRef.setPosition(nx, ny);
+            if (e.cancelable) e.preventDefault();
+          }
+          function onUp() {
+            if (!dragging) return;
+            dragging = false;
+            img.style.cursor = 'grab';
+            window.removeEventListener('mousemove', onMove);
+            window.removeEventListener('mouseup', onUp);
+            window.removeEventListener('touchmove', onMove);
+            window.removeEventListener('touchend', onUp);
+            if (moved) suppressClick = true; // 드래그 직후엔 클릭(울음소리)이 발동하지 않게 한다.
+            if (controllerRef) controllerRef.resume();
+          }
+          img.addEventListener('mousedown', onDown);
+          img.addEventListener('touchstart', onDown, { passive: false });
+        }
+
         return {
           canvas: img,
           setDirection(d) { dir = d; },
           applyTransform,
+          bindController(c) { controllerRef = c; },
           destroy() {
             if (bubbleHideTimer) clearTimeout(bubbleHideTimer);
+            if (bubbleAudioCleanup) bubbleAudioCleanup();
             wrapper.remove();
           }
         };
@@ -6221,6 +6337,7 @@
         let vx = 0, vy = 0;
         let lastTime = null;
         let stopped = false;
+        let paused = false; // 드래그하는 동안 잠시 멈춰두는 용도 (stop과 달리 다시 이어서 움직일 수 있음)
         let nextTurnAt = 0;
         const minX = 0;
         const maxX = Math.max(0, innerWidth - SPRITE_WIDTH);
@@ -6240,7 +6357,7 @@
         pickDirection();
 
         function frame(ts) {
-          if (stopped) return;
+          if (stopped || paused) return;
           if (lastTime === null) lastTime = ts;
           const dt = Math.min((ts - lastTime) / 1000, 0.05);
           lastTime = ts;
@@ -6271,7 +6388,21 @@
 
         return {
           getRect() { return state; },
-          stop() { stopped = true; }
+          stop() { stopped = true; },
+          // 드래그 시작 시 자동 이동을 잠시 멈춘다.
+          pause() { paused = true; },
+          // 드래그가 끝나면 (놓은 위치에서 이어서) 다시 자동 이동을 시작한다.
+          resume() {
+            if (stopped || !paused) return;
+            paused = false;
+            lastTime = null;
+            requestAnimationFrame(frame);
+          },
+          // 드래그 중 실시간으로 현재 위치를 갱신한다.
+          setPosition(nx, ny) {
+            x = nx; y = ny;
+            state.x = x; state.y = y;
+          }
         };
       }
 
@@ -6326,13 +6457,14 @@
           releasedSprites[id].sprite.destroy();
           delete releasedSprites[id];
         } else {
-          const sprite = createCharmanderSprite();
+          const sprite = createCharmanderSprite({ draggable: true });
           const remembered = lastReleasedPos[id];
           const controller = startWandering(sprite, {
             speed: 55,
             startX: remembered ? remembered.x : undefined,
             startY: remembered ? remembered.y : undefined
           });
+          sprite.bindController(controller);
           releasedSprites[id] = { sprite, controller };
         }
         renderCapturedListUI();
@@ -6357,13 +6489,15 @@
           const charCx = rect.x + rect.w / 2;
           const charCy = rect.y + rect.h * 0.65;
           const dist = Math.hypot(ballCx - charCx, ballCy - charCy);
-          if (dist < 46) startCaptureSequence();
+          if (dist < 46) hitWildCharmander();
         };
       }
 
       function spawnWildCharmander(opts) {
         if (wildState) return;
         if (capturedList.length >= MAX_CAPTURED) return; // 이미 최대치를 포획했으면 더 이상 등장하지 않음
+        // 새 야생 파이리가 등장하면, 지난번에 몬스터볼을 다 썼더라도 이번 인카운터용으로 다시 쓸 수 있게 한다.
+        window.__pokeballResetAvailability && window.__pokeballResetAvailability();
         const sprite = createCharmanderSprite();
         // 명시적으로 opts에 좌표가 지정되지 않았다면, 마지막으로 있던 좌표에서 이어서 등장시킨다.
         const baseOpts = { speed: 110 };
@@ -6392,8 +6526,8 @@
         wildState = null;
       }
 
-      // 포획 시퀀스 전체 길이는 3.5초:
-      //  0~0.5초  : 파이리가 하얀 빛에 휩싸여 몬스터볼 안으로 들어감 (인트로)
+      // 포획 시퀀스 전체 길이는 3.5초(몬스터볼이 바닥에 완전히 떨어진 뒤부터 계산):
+      //  0~0.5초  : 파이리가 하얀 빛에 휩싸여 몬스터볼 안으로 들어감 (인트로, 맞는 즉시 시작)
       //  0.5~1.5초: 1번째 흔들림 (좌우로 한 번) -> 실패 판정 가능
       //  1.5~2.5초: 2번째 흔들림 (좌우로 한 번) -> 실패 판정 가능
       //  2.5~3.5초: 3번째 흔들림 (좌우로 한 번) -> 무조건 성공
@@ -6402,7 +6536,11 @@
       // 1번째/2번째 흔들림 뒤 실패할 확률 (3번째는 절대 실패하지 않음).
       const CAPTURE_FAIL_CHANCE = 0.35;
 
-      function startCaptureSequence() {
+      // 몬스터볼이 파이리에게 맞은 순간 호출된다. 파이리는 그 자리에서 바로
+      // 하얀 빛에 휩싸이며 사라지지만(몬스터볼 안으로 빨려들어감), 실제 좌우
+      // 흔들림 연출은 몬스터볼이 "바닥에 완전히 떨어져 멈출 때"까지 기다렸다가
+      // 시작한다 (window.__pokeballOnGroundedCapture 훅으로 연결).
+      function hitWildCharmander() {
         if (!wildState || wildState.capturing) return;
         wildState.capturing = true;
         window.__wildCollisionCheck = null;
@@ -6410,15 +6548,24 @@
         wildState.controller.stop();
 
         const sprite = wildState.sprite;
-        // 1) 하얀 광선에 휩싸이며 몬스터볼 안으로 빨려들어가는 연출 (0~0.5초).
         sprite.canvas.classList.add('capture-flash');
         setTimeout(() => {
           sprite.canvas.style.opacity = '0';
         }, CAPTURE_INTRO_MS * 0.6);
         setTimeout(() => {
           sprite.destroy();
-          runShakeStep(1);
         }, CAPTURE_INTRO_MS);
+
+        const beginShaking = () => runShakeStep(1);
+        window.__pokeballOnGroundedCapture = beginShaking;
+        // 혹시 몬스터볼이 이미 바닥에 멈춰있어 'settled' 이벤트가 다시 발생하지
+        // 않는 예외적인 경우를 대비한 안전장치.
+        setTimeout(() => {
+          if (window.__pokeballOnGroundedCapture === beginShaking) {
+            window.__pokeballOnGroundedCapture = null;
+            beginShaking();
+          }
+        }, 3000);
       }
 
       // step: 1, 2, 3 (몇 번째 흔들림인지)
@@ -6452,6 +6599,11 @@
             saveCapturedList(capturedList);
             renderCapturedListUI();
             wildState = null;
+            // 몬스터를 잡는 데 이 몬스터볼을 다 썼으니, 초록빛 연출이 끝나면
+            // 화면에서 완전히 사라지고 다시 던지기 버튼도 비활성화한다.
+            setTimeout(() => {
+              window.__pokeballConsumeOnCapture && window.__pokeballConsumeOnCapture();
+            }, 700);
           };
           if (window.__pokeballLockIn) {
             window.__pokeballLockIn(lockAndFinish);
