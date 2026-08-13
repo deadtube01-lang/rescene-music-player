@@ -1122,7 +1122,7 @@
       align-items: center;
       /* 박스 테두리 여백을 최소한으로 줄여서, 그만큼 아낀 공간을 전부
          동영상 크기를 키우는 데 쓴다. */
-      padding: 6px;
+      padding: calc(6px * var(--ui-scale, 1));
     }
 
     .charmander-container {
@@ -1173,12 +1173,16 @@
       position: relative;
       width: 100%;
       box-sizing: border-box;
+      /* 리사이즈 핸들로 카드 크기를 조절할 때, 안쪽 패딩/버튼/글자 크기가
+         전부 같은 비율로 커지고 작아지도록 하는 배율 값. JS(setupCharmanderResize)가
+         새 너비 / 기준 너비 비율을 계산해서 여기 넣어준다. 기본값 1은 원래 크기. */
+      --ui-scale: 1;
     }
 
     .charmander-resize-handle {
       position: absolute;
-      width: 20px;
-      height: 20px;
+      width: clamp(16px, calc(20px * var(--ui-scale, 1)), 32px);
+      height: clamp(16px, calc(20px * var(--ui-scale, 1)), 32px);
       z-index: 5;
       touch-action: none;
     }
@@ -1214,15 +1218,15 @@
          하단 가운데에 나타나도록 한다. */
       position: absolute;
       left: 50%;
-      bottom: 8px;
+      bottom: calc(8px * var(--ui-scale, 1));
       transform: translateX(-50%);
       display: flex;
       flex-direction: row;
       align-items: center;
-      gap: 6px;
+      gap: calc(6px * var(--ui-scale, 1));
       background: rgba(13, 17, 23, 0.55);
-      padding: 5px 10px;
-      border-radius: 20px;
+      padding: calc(5px * var(--ui-scale, 1)) calc(10px * var(--ui-scale, 1));
+      border-radius: calc(20px * var(--ui-scale, 1));
       border: 1px solid rgba(255, 255, 255, 0.2);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
       width: auto;
@@ -1243,8 +1247,8 @@
       background: none;
       color: currentColor;
       border: none;
-      width: 18px;
-      height: 18px;
+      width: calc(18px * var(--ui-scale, 1));
+      height: calc(18px * var(--ui-scale, 1));
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1257,8 +1261,8 @@
       /* (변경) 하단 가로 배치에 맞춰 슬라이더도 다시 가로 방향으로. */
       writing-mode: horizontal-tb;
       direction: ltr;
-      width: 70px;
-      height: 4px;
+      width: calc(70px * var(--ui-scale, 1));
+      height: calc(4px * var(--ui-scale, 1));
       flex: none;
       -webkit-appearance: none;
       appearance: none;
@@ -1269,7 +1273,7 @@
     }
 
     .charmander-volume-value {
-      font-size: 10px;
+      font-size: calc(10px * var(--ui-scale, 1));
       color: #c5cbd3;
       text-align: center;
       flex-shrink: 0;
@@ -1278,21 +1282,21 @@
     .charmander-action-buttons {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      margin-top: 6px;
+      gap: calc(6px * var(--ui-scale, 1));
+      margin-top: calc(6px * var(--ui-scale, 1));
       width: 100%;
       justify-content: center;
     }
 
     .charmander-act-btn {
       flex: 1 1 auto;
-      min-width: 88px;
+      min-width: calc(88px * var(--ui-scale, 1));
       background: rgba(13, 17, 23, 0.5);
       color: #c5cbd3;
       border: 1px solid rgba(255, 255, 255, 0.2);
-      padding: 6px 8px;
-      border-radius: 12px;
-      font-size: 12px;
+      padding: calc(6px * var(--ui-scale, 1)) calc(8px * var(--ui-scale, 1));
+      border-radius: calc(12px * var(--ui-scale, 1));
+      font-size: calc(12px * var(--ui-scale, 1));
       font-weight: 600;
       cursor: pointer;
       /* 위 .charmander-control-bar와 같은 이유로 backdrop-filter는 제거.
@@ -1308,7 +1312,7 @@
          버튼들을 위해 그대로 남겨둔다. */
       flex: 0 0 auto;
       min-width: 0;
-      padding: 6px 12px;
+      padding: calc(6px * var(--ui-scale, 1)) calc(12px * var(--ui-scale, 1));
     }
 
     .charmander-act-btn.active {
@@ -4110,10 +4114,21 @@
 
       const MIN_WIDTH = 220;
       const MAX_WIDTH = 900;
+      // 카드가 처음 렌더링된 너비를 "1배(원래 크기)" 기준으로 삼는다.
+      // 이후 카드 너비가 이 기준보다 커지거나 작아진 비율만큼 안쪽 패딩/버튼/
+      // 글자 크기(--ui-scale)도 같이 커지거나 작아지게 한다.
+      const BASE_WIDTH = box.getBoundingClientRect().width || 340;
+      const MIN_SCALE = 0.6;
+      const MAX_SCALE = 1.8;
       let resizing = false;
       let corner = 'br';
       let startX = 0;
       let startWidth = 0;
+
+      function applyScale(width) {
+        const scale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, width / BASE_WIDTH));
+        box.style.setProperty('--ui-scale', scale);
+      }
 
       function onMove(e) {
         if (!resizing) return;
@@ -4126,6 +4141,7 @@
         newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
         box.style.width = `${newWidth}px`;
         box.style.maxWidth = 'none';
+        applyScale(newWidth);
       }
 
       function onUp() {
