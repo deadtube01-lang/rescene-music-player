@@ -833,6 +833,8 @@
      overflow-y도 auto가 아니라 scroll로 고정해서 스크롤바 공간을 항상
      미리 확보해둔다 — 그래야 앨범 개수가 늘어 스크롤바가 나타나도
      카드들이 갑자기 좁아지지 않는다. */
+  width: 100%;
+  box-sizing: border-box;
   height: 216px;
   overflow-y: scroll;
   overflow-x: hidden;
@@ -845,6 +847,8 @@
       display: grid;
       grid-template-columns: repeat(4, 1fr);
       gap: 6px;
+      width: 100%;
+      box-sizing: border-box;
     }
 
     .album-card-item:nth-child(4n+1) {
@@ -949,6 +953,8 @@
       /* 높이는 fitTracklistToThreeRows()가 실제 렌더된 항목 크기를 측정해서
          "정확히 3줄"만큼만 동적으로 맞춘다. 아래 값은 JS 실행 전 잠깐 보일
          초기값(대략 3줄 분량)일 뿐이다. */
+      width: 100%;
+      box-sizing: border-box;
       height: 138px;
       overflow-y: scroll;
       overflow-x: hidden;
@@ -1889,14 +1895,29 @@
       padding: 6px 6px;
       white-space: pre-line;
       cursor: pointer;
-      transition: color 0.25s ease, transform 0.25s ease, text-shadow 0.25s ease;
+      transition: color 0.25s ease, transform 0.25s ease, text-shadow 0.25s ease, opacity 0.35s ease;
+      /* 기본적으로는 안 보이게(투명) 해두고, 현재 줄/앞뒤 줄에만 아래에서
+         opacity를 다시 켜준다. 나머지 줄들은 화면에는 없지만 레이아웃 공간은
+         그대로 차지하고 있어서(스크롤 위치 계산이 흐트러지지 않게) display:none
+         대신 opacity로 숨긴다. */
+      opacity: 0;
+    }
+
+    .lyrics-line.lyrics-adjacent {
+      opacity: 0.45;
     }
 
     .lyrics-line.active {
+      opacity: 1;
       color: #ffffff;
       font-weight: 700;
       transform: scale(1.05);
       text-shadow: 0 0 12px rgba(252, 111, 207, 0.55), 0 0 2px rgba(255, 255, 255, 0.6);
+    }
+
+    /* 안내 문구("가사 창")는 항상 보여야 하므로 위 기본 opacity:0 규칙에서 제외 */
+    .lyrics-line.lyrics-placeholder {
+      opacity: 1;
     }
 
     .lyrics-placeholder {
@@ -3846,11 +3867,33 @@
       if (currentLyricsIdx >= 0 && lyricsLineEls[currentLyricsIdx]) {
         lyricsLineEls[currentLyricsIdx].classList.remove('active');
       }
+      // 이전에 붙여둔 "앞/뒤 줄" 표시도 같이 지운다.
+      lyricsLineEls.forEach(el => el.classList.remove('lyrics-adjacent'));
+
       currentLyricsIdx = newIdx;
       if (currentLyricsIdx >= 0 && lyricsLineEls[currentLyricsIdx]) {
         const activeEl = lyricsLineEls[currentLyricsIdx];
         activeEl.classList.add('active');
-        activeEl.scrollIntoView({ block: 'center', behavior: 'smooth' });
+        // 현재 줄의 바로 앞/뒤 줄만 살짝 보이게(페이드) 표시. 나머지 줄은
+        // CSS 기본값(opacity:0)에 의해 보이지 않는다.
+        if (lyricsLineEls[currentLyricsIdx - 1]) {
+          lyricsLineEls[currentLyricsIdx - 1].classList.add('lyrics-adjacent');
+        }
+        if (lyricsLineEls[currentLyricsIdx + 1]) {
+          lyricsLineEls[currentLyricsIdx + 1].classList.add('lyrics-adjacent');
+        }
+
+        // (버그 수정) activeEl.scrollIntoView({block:'center'})는 .lyrics-box
+        // 내부뿐 아니라 그 바깥의 스크롤 가능한 조상(문서 전체 등)까지 함께
+        // 스크롤시켜서, 가사가 넘어갈 때마다 화면 전체가 아래로 밀려 상단 UI가
+        // 잘려 보이는 원인이 됐다. 대신 .lyrics-box의 scrollTop만 직접 계산해서
+        // 옮기면 다른 요소에는 영향을 주지 않는다.
+        const box = document.getElementById('lyrics-box');
+        if (box) {
+          const targetScrollTop =
+            activeEl.offsetTop - (box.clientHeight / 2) + (activeEl.offsetHeight / 2);
+          box.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+        }
       }
     }
 
@@ -5156,6 +5199,20 @@
       }
     });
 
+    // 카테고리를 바꾸면 ALBUM/TRACKLIST 박스의 실제 렌더 높이가 바뀌는데,
+    // ResizeObserver의 디바운스(90ms)/쿨다운 타이밍과 겹치면 전체 화면
+    // 자동맞춤(scale)이 옛 값에 멈춰 있다가 이후 카테고리를 다시 눌러도
+    // 박스들이 좁아진(축소된) 상태로 굳어버리는 경우가 있었다. 렌더링과
+    // 높이 재계산(rAF)이 모두 끝난 다음 프레임에 자동맞춤을 한 번 더 확실히
+    // 강제로 재실행해서 이 문제를 막는다.
+    function forceRefitAfterCategoryChange() {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          if (typeof scheduleFitPlayerWrapper === 'function') scheduleFitPlayerWrapper();
+        });
+      });
+    }
+
     document.querySelectorAll('.cat-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -5184,6 +5241,7 @@
         
         renderAlbumSelectUI(activeCategory);
         renderTrackListUI();
+        forceRefitAfterCategoryChange();
       });
     });
 
@@ -5272,6 +5330,7 @@
         }
         renderAlbumSelectUI(activeCategory);
         renderTrackListUI();
+        forceRefitAfterCategoryChange();
       });
     }
 
