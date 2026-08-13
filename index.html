@@ -7026,7 +7026,7 @@
         // 불뿜기 이미지가 이미 재생 중이던 걸 즉시 보여주는 방식으로 바뀌어
         // 더 이상 화면에 나오길 기다릴 필요가 없으므로, 몬스터볼이 튕겨
         // 나가는 반격 타이밍도 훨씬 빠르게 당긴다.
-        const FIRE_BREATH_DELAY_MS = 1620; // 1.5초 늦춤 (기존 120ms + 1500ms)
+        const FIRE_BREATH_DELAY_MS = 1000; //
         setTimeout(() => {
           // 몬스터볼은 이 반격에 맞아 멀리 날아가며 사라진다(이번에 던진 볼은 다시 못 씀).
           window.__pokeballFlyOff && window.__pokeballFlyOff(ballSide === 'left' ? -1 : 1);
