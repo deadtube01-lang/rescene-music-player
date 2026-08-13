@@ -335,16 +335,22 @@
     }
 
     /* Q 단축키로 UI를 단계별로 숨김/표시 토글
-       1단계: 좌측 상단 컨트롤 버튼(테마/초기화/배경화면) 숨김
+       1단계: 좌측 상단 컨트롤 버튼(테마/초기화/배경화면) + 몬스터볼 + 가방(포획 목록) 버튼 숨김
        2단계: 왼쪽 패널(CATEGORY/ALBUM/TRACKLIST/파이리 영상) 숨김
        3단계: 오른쪽 패널(뮤직플레이어/재생목록) 숨김
        4단계(다시 Q): 전체 원상복구 */
     body.ui-hide-step-1 #theme-toggle-btn,
     body.ui-hide-step-1 .wallpaper-controls,
+    body.ui-hide-step-1 #pokeball-toy,
+    body.ui-hide-step-1 #captured-list-btn,
     body.ui-hide-step-2 #theme-toggle-btn,
     body.ui-hide-step-2 .wallpaper-controls,
+    body.ui-hide-step-2 #pokeball-toy,
+    body.ui-hide-step-2 #captured-list-btn,
     body.ui-hide-step-3 #theme-toggle-btn,
-    body.ui-hide-step-3 .wallpaper-controls {
+    body.ui-hide-step-3 .wallpaper-controls,
+    body.ui-hide-step-3 #pokeball-toy,
+    body.ui-hide-step-3 #captured-list-btn {
       display: none !important;
     }
 
@@ -1247,6 +1253,16 @@
          .card-box 안에서 blur가 두 겹으로 겹치면서 마우스를 갖다 대거나
          재합성될 때마다 버튼 사이/모서리에 흰 줄이 보이던 원인이었다. */
       text-align: center;
+    }
+
+    .charmander-act-btn.compact {
+      /* 텍스트가 짧은데도 다른 버튼처럼 flex-grow로 남은 줄 공간을 다
+         채워버려서 좌우 여백이 불필요하게 길어 보였다. 이 버튼만 내용
+         크기만큼만 차지하게 하고, 비워진 공간은 나중에 추가할 다른
+         버튼들을 위해 그대로 남겨둔다. */
+      flex: 0 0 auto;
+      min-width: 0;
+      padding: 6px 12px;
     }
 
     .charmander-act-btn.active {
@@ -2413,7 +2429,7 @@
             <button class="charmander-act-btn" data-src="불뿜는파이리,거제야호.mp4">불꽃세례(feat.거제야호)</button>
             <button class="charmander-act-btn" data-src="오이쉬 파이리.mp4">오이쉬</button>
             <button class="charmander-act-btn" data-src="MAY_ONEHAND_STAR.mkv">메이 개인기</button>
-            <button class="charmander-act-btn" data-src="YOU_AND_ME.mkv">너도? 나도!</button>
+            <button class="charmander-act-btn compact" data-src="YOU_AND_ME.mkv">너도? 나도!</button>
           </div>
         </div>
 
@@ -2534,7 +2550,7 @@
           </div>
         </div>
         <ul id="current-playlist">
-          <li class="track-placeholder">재생목록이 비어있습니다. 트랙리스트에서 곡을 추가해주세요.</li>
+          <li class="track-placeholder">트랙리스트에서 곡을 추가해주세요.</li>
         </ul>
       </div>
 
@@ -4045,7 +4061,10 @@
       const items = box.querySelectorAll('.track-item, #track-list li');
       if (items.length === 0) return;
 
-      const rowsToShow = Math.min(3, items.length);
+      // 항목이 1~2개뿐이어도 박스 높이는 항상 3줄 분량을 유지한다
+      // (내용이 적다고 박스가 쪼그라들면 검색할 때마다 레이아웃이
+      // 출렁여서 지저분해 보이므로, 실제 줄 수와 무관하게 고정 3줄).
+      const rowsToShow = 3;
 
       let maxItemHeight, itemGap;
       if (__trackFitCache.count === items.length) {
@@ -4405,7 +4424,7 @@
       if (currentPlaylist.length === 0) {
         const li = document.createElement('li');
         li.className = 'track-placeholder';
-        li.innerText = '재생목록이 비어있습니다. 트랙리스트에서 곡을 추가해주세요.';
+        li.innerText = '트랙리스트에서 곡을 추가해주세요.';
         currentPlaylistEl.appendChild(li);
         return;
       }
