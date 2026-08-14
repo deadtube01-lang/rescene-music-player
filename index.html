@@ -4522,8 +4522,10 @@
       requestAnimationFrame(fitAlbumBoxToTwoRows);
     }
 
-    // 앨범 박스 높이를 "카드 2줄" 높이에 정확히 맞춘다. 카드 실제 렌더 크기(패널을
-    // 드래그해서 폭이 달라진 경우 등)를 직접 측정해서 계산하므로 고정 px보다 정확하다.
+    // 앨범 박스 높이를 "카드 2줄" 높이로 항상 고정한다. 앨범이 1줄뿐인
+    // 카테고리(EP/OST 등)여도 다른 카테고리(ALL 등)와 박스 크기가 똑같아야
+    // 하므로, 실제로 몇 줄이 렌더링됐는지와 상관없이 "카드 1개 높이 * 2"를
+    // 항상 그대로 박스 높이로 쓴다.
     function fitAlbumBoxToTwoRows() {
       const box = document.getElementById('album-select-container');
       if (!box) return;
@@ -4535,43 +4537,31 @@
       // 있을 때 호출하면 "축소된" 값을 그대로 읽어오게 된다. 그 축소된 값을 다시
       // (scale이 적용되지 않는) box.style.maxHeight에 그대로 대입하면 박스가 이중으로
       // 축소되어, 카테고리를 다시 누를 때마다 앨범 박스/스크롤바가 계속 작아지는
-      // 문제가 있었다. offsetTop/offsetHeight는 transform의 영향을 받지 않는
-      // "원본(비축소) 레이아웃" 좌표이므로 이 값으로 측정해야 항상 같은 결과가 나온다.
-      // (버그 수정) "줄 높이 * 2"를 곱셈으로 어림잡으면 소수점 반올림 오차가
-      // 누적되어 실제 카드 2줄 높이보다 박스가 살짝 커지거나(3번째 줄이
-      // 일부 비쳐 보임) 앨범이 1줄뿐인 카테고리(EP/OST 등)에서도 항상
-      // "2줄 분량" 높이를 확보해 아래에 불필요한 빈 공간이 남는 문제가
-      // 있었다. 대신 실제로 렌더링된 카드들 중 "최대 2번째 줄까지"에서
-      // 가장 아래쪽 카드의 실제 하단 위치(offsetTop + offsetHeight)를 직접
-      // 측정해서 그 값을 그대로 박스 높이로 사용한다 — 줄이 1개면 1줄
-      // 높이만, 2개 이상이면 정확히 2줄 높이만 확보된다.
-      // (버그 수정) card.offsetTop은 card 바로 위 부모가 아니라, position이
-      // 지정된 가장 가까운 조상(offsetParent) — 여기서는 박스 바깥의
-      // #panel-album 카드 전체 — 기준의 좌표다. 그래서 card.offsetTop을
-      // 그대로 박스 높이로 쓰면 "ALBUM" 제목 등 박스 위쪽 요소들의 높이까지
-      // 합쳐진 값이 되어 박스가 실제 카드 2줄 높이보다 훨씬 커지고, 그 결과
-      // 3번째 줄이 아래로 상당히 비쳐 보이는 원인이 됐다. box도 카드와 같은
-      // offsetParent를 공유하므로, card.offsetTop에서 box.offsetTop을 빼면
-      // "박스 기준" 상대 위치를 정확히 구할 수 있다.
+      // 문제가 있었다. offsetHeight는 transform의 영향을 받지 않는 "원본(비축소)
+      // 레이아웃" 값이므로 이 값으로 측정해야 항상 같은 결과가 나온다.
+      const rowHeight = cards[0].offsetHeight;
+
+      // 줄 사이 간격(row-gap)은 카드가 2줄 이상 있을 때만 실제로 측정할 수
+      // 있다. (버그 수정) card.offsetTop은 card 바로 위 부모가 아니라 position이
+      // 지정된 가장 가까운 조상(offsetParent) — 여기서는 박스 바깥의 #panel-album
+      // 카드 전체 — 기준 좌표라서, box.offsetTop을 빼서 "박스 기준" 상대 좌표로
+      // 바꿔야 정확하다. 2줄 미만이면 grid CSS의 row-gap(0)을 그대로 쓴다.
+      let rowGap = 0;
       const boxOffsetTop = box.offsetTop;
       const firstTop = cards[0].offsetTop - boxOffsetTop;
-      const rowTops = [firstTop];
-      for (let i = 1; i < cards.length && rowTops.length < 2; i++) {
+      for (let i = 1; i < cards.length; i++) {
         const top = cards[i].offsetTop - boxOffsetTop;
-        if (Math.abs(top - rowTops[rowTops.length - 1]) > 1) {
-          rowTops.push(top);
-        }
-      }
-      const lastRowTop = rowTops[rowTops.length - 1];
-      let lastRowBottom = 0;
-      for (const card of cards) {
-        const top = card.offsetTop - boxOffsetTop;
-        if (Math.abs(top - lastRowTop) <= 1) {
-          lastRowBottom = Math.max(lastRowBottom, top + card.offsetHeight);
+        if (Math.abs(top - firstTop) > 1) {
+          rowGap = top - (firstTop + rowHeight);
+          break;
         }
       }
 
-      box.style.maxHeight = `${Math.max(0, Math.floor(lastRowBottom) - 2)}px`;
+      const topPadding = parseFloat(getComputedStyle(box).paddingTop) || 0;
+      // 소수점 반올림 오차로 3번째 줄이 미세하게 비치는 것을 막기 위해 1px만 뺀다.
+      const targetHeight = topPadding + rowHeight * 2 + rowGap - 1;
+      box.style.height = `${Math.max(0, Math.floor(targetHeight))}px`;
+      box.style.maxHeight = `${Math.max(0, Math.floor(targetHeight))}px`;
     }
 
     window.addEventListener('resize', () => requestAnimationFrame(fitAlbumBoxToTwoRows));
