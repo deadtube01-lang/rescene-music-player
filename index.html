@@ -5,6 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Music Player</title>
   <link rel="icon" href="logo.ico" type="image/x-icon">
+
+  <!-- 카카오톡 등에서 링크 공유 시 미리보기에 쓰이는 Open Graph 태그.
+       이게 없으면 카톡 크롤러가 페이지 안의 첫 이미지(몬스터볼 아이콘)를
+       임의로 가져다 쓰기 때문에, 명시적으로 logo.ico를 지정해준다. -->
+  <meta property="og:title" content="Music Player">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="logo.ico">
   <style>
     * {
       box-sizing: border-box;
@@ -2065,6 +2072,30 @@
       text-align: right;
     }
 
+    /* 모든 볼륨/슬라이더 손잡이(thumb)를 PC와 모바일에서 동일하게 둥근 원형으로 통일.
+       기기별 기본(네이티브) 슬라이더 모양 대신 항상 이 스타일이 적용된다. */
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #38d8f6;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+    }
+
+    input[type="range"]::-moz-range-thumb {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #ffffff;
+      border: 2px solid #38d8f6;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+      cursor: pointer;
+    }
+
     .sound-sub-controls {
       display: flex;
       flex-direction: column;
@@ -2623,6 +2654,13 @@
       input[type="range"]::-webkit-slider-thumb {
         width: 20px;
         height: 20px;
+        border-radius: 50%;
+      }
+
+      input[type="range"]::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
       }
 
       /* 트랙/앨범 목록은 화면 안에서 세로 스크롤로 보기 좋게 높이 제한 */
@@ -2942,7 +2980,7 @@
         <span>배경화면 선택</span>
         <button class="wallpaper-reset-btn-small" id="wallpaper-reset-btn" title="배경화면 초기화">초기화</button>
       </div>
-      <div class="yt-modal-msg">원하는 배경화면을 최대 4장까지 골라 함께 띄울 수 있어요.</div>
+      <div class="yt-modal-msg" id="wallpaper-max-msg">원하는 배경화면을 최대 4장까지 골라 함께 띄울 수 있어요.</div>
       <div class="wallpaper-multi-hint">썸네일을 클릭해서 선택/해제하세요 (최대 4장, 화면에 나란히 표시)<br> 배경 이미지에 마우스를 대고 드래그하면 좌우로 움직일 수 있어요.</div>
       <div id="wallpaper-grid" class="wallpaper-grid"></div>
     </div>
@@ -3385,7 +3423,12 @@
     ---------------------------------- */
     let currentBgIndex = -1;
     let activeBackgrounds = []; // 각 항목: { url, offsetX, offsetY } — offsetX는 화면 기준 절대 left(px)
-    const MAX_ACTIVE_BACKGROUNDS = 4;
+    // 모바일(화면 폭 768px 이하)에서는 배경화면을 1장만 겹쳐 쓸 수 있도록 제한한다.
+    // (데스크탑 자유배치 드래그는 모바일에서 의미가 없고, 여러 장을 겹치면
+    //  좁은 화면에서 오히려 지저분해 보이기 때문)
+    function getMaxActiveBackgrounds() {
+      return window.innerWidth <= 768 ? 1 : 4;
+    }
 
     // 배경화면 잠금 상태: 켜져 있으면 배경화면의 변경(선택/이전/다음/랜덤)과
     // 마우스 드래그 이동을 모두 막는다. 새로고침해도 유지되도록 저장한다.
@@ -3417,7 +3460,7 @@
         if (!Array.isArray(parsed)) return [];
         return parsed
           .filter(item => item && typeof item.url === 'string')
-          .slice(0, MAX_ACTIVE_BACKGROUNDS)
+          .slice(0, getMaxActiveBackgrounds())
           .map(item => ({
             url: item.url,
             offsetX: typeof item.offsetX === 'number' ? item.offsetX : null,
@@ -3562,12 +3605,12 @@
     function showWallpaperLimitHint() {
       const hintEl = document.querySelector('.wallpaper-multi-hint');
       if (!hintEl) return;
-      if (!hintEl.dataset.defaultText) hintEl.dataset.defaultText = hintEl.innerText;
-      hintEl.innerText = `⚠️ 배경화면은 최대 ${MAX_ACTIVE_BACKGROUNDS}장까지만 함께 띄울 수 있어요. 먼저 하나를 해제해주세요.`;
+      if (!hintEl.dataset.defaultText) hintEl.dataset.defaultText = hintEl.innerHTML;
+      hintEl.innerText = `⚠️ 배경화면은 최대 ${getMaxActiveBackgrounds()}장까지만 함께 띄울 수 있어요. 먼저 하나를 해제해주세요.`;
       hintEl.classList.add('warn');
       clearTimeout(wallpaperHintTimer);
       wallpaperHintTimer = setTimeout(() => {
-        hintEl.innerText = hintEl.dataset.defaultText;
+        hintEl.innerHTML = hintEl.dataset.defaultText;
         hintEl.classList.remove('warn');
       }, 1800);
     }
@@ -3579,7 +3622,7 @@
       if (idx >= 0) {
         activeBackgrounds.splice(idx, 1);
       } else {
-        if (activeBackgrounds.length >= MAX_ACTIVE_BACKGROUNDS) {
+        if (activeBackgrounds.length >= getMaxActiveBackgrounds()) {
           showWallpaperLimitHint();
           return;
         }
@@ -5863,7 +5906,7 @@
 ];
 
     const BAM_BAM_BAM_LYRICS = [
-  { time: 12.73, text: 'I started dreaming' },
+  { time: 12.53, text: 'I started dreaming' },
   { time: 13.61, text: '유성처럼 내게 반짝인 너' },
   { time: 15.87, text: 'Daydream, it’s like a fairytale' },
   { time: 18.95, text: 'When I close my eyes' },
@@ -5875,7 +5918,7 @@
   { time: 31.50, text: 'You got me with that' },
   { time: 32.64, text: 'You’re dancing under the moonlight' },
   { time: 35.97, text: '네가 보고 싶은 밤 밤 밤이야' },
-  { time: 39.04, text: '터질 듯한 feeling, bomb bomb bomb 이야' },
+  { time: 39.04, text: '터질 듯한 feeling, \n bomb bomb bomb 이야' },
   { time: 42.10, text: '밤새도록 I need you right now' },
   { time: 44.43, text: '널 향해 fall in to you' },
   { time: 47.80, text: '달빛 아래 널 그려봐' },
@@ -5897,7 +5940,7 @@
   { time: 81.14, text: 'Oh whoa oh oh,' },
   { time: 82.06, text: 'We’re dancing up to the moonlight' },
   { time: 85.25, text: '네가 보고 싶은 밤 밤 밤이야' },
-  { time: 88.34, text: '터질 듯한 feeling, bomb bomb bomb 이야' },
+  { time: 88.34, text: '터질 듯한 feeling, \n bomb bomb bomb 이야' },
   { time: 91.47, text: '밤새도록 I need you right now' },
   { time: 93.62, text: '널 향해 fall in to you' },
   { time: 97.01, text: '달빛 아래 널 그려봐' },
@@ -5919,7 +5962,7 @@
   { time: 146.11, text: 'What you gonna do?' },
   { time: 147.09, text: 'It’s starry night' },
   { time: 148.01, text: '밤 밤 밤이야' },
-  { time: 149.85, text: '터질 듯한 feeling, bomb bomb bomb 이야' },
+  { time: 149.85, text: '터질 듯한 feeling, \n bomb bomb bomb 이야' },
   { time: 152.91, text: '밤새도록 I need you right now' },
   { time: 155.19, text: '널 향해 fall in to you' },
   { time: 158.48, text: '달빛 아래 널 그려봐' },
@@ -5937,6 +5980,7 @@
   { time: 190.59, text: '우리 둘만의 밤' },
   { time: 195.56, text: '' },
 ];
+
 
     // key = 트랙의 유튜브 영상 ID(track.src)
     const LYRICS_BY_TRACK = {
@@ -6111,7 +6155,7 @@
       if (!box || !activeEl) return;
       const targetScrollTop =
         activeEl.offsetTop - (box.clientHeight / 2) + (activeEl.offsetHeight / 2);
-      markLyricsAutoScroll(700);
+      markLyricsAutoScroll(targetScrollTop);
       box.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
     }
 
@@ -6128,12 +6172,41 @@
 
     // box.scrollTo(...)를 우리가 직접 호출한 프로그램적 스크롤은 "사용자가
     // 스크롤 중"인 게 아니므로 구분해서 표시해둔다.
-    function markLyricsAutoScroll(durationMs) {
+    // (버그 수정) 예전에는 고정된 시간(700ms/500ms)이 지나면 무조건
+    // lyricsAutoScrolling을 꺼버렸는데, smooth 스크롤이 그보다 오래 걸리는
+    // 경우(느린 기기, 먼 거리 이동 등) 애니메이션이 아직 끝나지 않았는데도
+    // 그 이후에 남아서 발생하는 scroll 이벤트가 "사용자가 직접 스크롤"로
+    // 오인되어 enterLyricsManualScroll()이 실행됐다. 그 결과 다음/다다음 줄이
+    // 잠깐 옅게 더 보였다가, manualScroll의 1.2초 비활성 타이머가 끝나면서
+    // 다시 3줄 기본 상태로 스냅되어 "떴다가 사라지는" 것처럼 보였다. 이제는
+    // 목표 scrollTop에 실제로 도달(안정화)할 때까지 rAF로 확인하고, 혹시
+    // 도달하지 못하는 경우를 대비해 최대 대기시간(safetyMs)만 안전장치로 둔다.
+    function markLyricsAutoScroll(targetScrollTop, safetyMs) {
+      const box = document.getElementById('lyrics-box');
       lyricsAutoScrolling = true;
       clearTimeout(lyricsAutoScrollTimer);
       lyricsAutoScrollTimer = setTimeout(() => {
         lyricsAutoScrolling = false;
-      }, durationMs);
+      }, safetyMs || 1500);
+
+      if (!box || typeof targetScrollTop !== 'number') return;
+      let settledFrames = 0;
+      const TOLERANCE = 2; // px
+      const checkSettled = () => {
+        if (!lyricsAutoScrolling) return; // 이미 안전장치로 종료됨
+        if (Math.abs(box.scrollTop - targetScrollTop) <= TOLERANCE) {
+          settledFrames++;
+          if (settledFrames >= 2) {
+            lyricsAutoScrolling = false;
+            clearTimeout(lyricsAutoScrollTimer);
+            return;
+          }
+        } else {
+          settledFrames = 0;
+        }
+        requestAnimationFrame(checkSettled);
+      };
+      requestAnimationFrame(checkSettled);
     }
 
     function enterLyricsManualScroll() {
@@ -6150,6 +6223,13 @@
     function updateLyricsScrollFade() {
       const box = document.getElementById('lyrics-box');
       if (!box || !lyricsLineEls.length) return;
+      // (버그 수정) 패널을 드래그로 잡거나 옮기는 중에는 레이아웃이 강제로
+      // 리플로우되면서 박스의 clientHeight가 한 프레임 동안 0으로 측정되는
+      // 순간이 있었다. 그 상태에서 스크롤 기준 opacity를 계산하면 모든 줄이
+      // "화면 중앙에서 아주 멀다"고 잘못 판단되어 가사 전체가 잠깐 사라져
+      // 보였다. clientHeight가 아직 0이면 계산을 건너뛰고 이전 상태를 그대로
+      // 유지한다.
+      if (box.clientHeight === 0) return;
 
       // 기본 상태: 이전 가사 / 현재 가사 / 다음 가사 딱 세 줄만 보인다.
       if (!lyricsManualScroll) {
@@ -6203,7 +6283,7 @@
       if (!box || !el) return;
       const targetScrollTop =
         el.offsetTop - (box.clientHeight / 2) + (el.offsetHeight / 2);
-      markLyricsAutoScroll(500);
+      markLyricsAutoScroll(targetScrollTop);
       box.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
     }
 
@@ -6930,7 +7010,7 @@
         // (없으면 기본값)를 그대로 써서 박스 높이가 출렁이지 않게 한다.
         const fallbackHeight = __trackFitCache.maxItemHeight || 40;
         const fallbackGap = __trackFitCache.itemGap || 6;
-        box.style.height = `${fallbackHeight * rowsToShow + fallbackGap * (rowsToShow - 1) + 6}px`;
+        box.style.height = `${fallbackHeight * rowsToShow + fallbackGap * (rowsToShow - 1)}px`;
         return;
       }
 
@@ -6967,11 +7047,12 @@
         __trackFitCache = { count: items.length, maxItemHeight, itemGap };
       }
 
-      // 여유 공간을 넉넉히(6px) 더한다. 기존에는 서브픽셀 반올림 방지용으로만
-      // 1px을 더했는데, 그러면 3번째 줄이 박스 바닥에 딱 붙어서(여백이 전혀
-      // 없어서) 마치 줄이 잘린 것처럼 보였다. 실제로 텍스트가 잘리진 않지만
-      // 시각적으로 여유가 있어야 자연스럽다.
-      box.style.height = `${maxItemHeight * rowsToShow + itemGap * (rowsToShow - 1) + 6}px`;
+      // (버그 수정) 예전에는 여유 공간으로 6px를 더 더했는데, 그 6px가 3번째
+      // 줄 다음 gap(간격)만으로는 다 흡수되지 않아 4번째 줄 버튼의 윗부분이
+      // 스크롤 영역 안으로 살짝 넘어와 보이는 문제가 있었다. 3줄 + 그 사이
+      // 간격 2개만큼만 정확히 높이를 맞추면 다음(4번째) 항목이 전혀 보이지
+      // 않으면서도, 3번째 줄 자체는 잘리지 않고 온전히 다 보인다.
+      box.style.height = `${maxItemHeight * rowsToShow + itemGap * (rowsToShow - 1)}px`;
     }
 
     window.addEventListener('resize', () => {
@@ -7898,6 +7979,16 @@
 
     function openWallpaperModal() {
       renderWallpaperGrid();
+      // 화면 폭에 맞춰 "최대 N장" 안내 문구를 갱신 (모바일 1장 / 데스크탑 4장)
+      const maxN = getMaxActiveBackgrounds();
+      const maxMsgEl = document.getElementById('wallpaper-max-msg');
+      if (maxMsgEl) maxMsgEl.innerText = `원하는 배경화면을 최대 ${maxN}장까지 골라 함께 띄울 수 있어요.`;
+      const hintEl = document.querySelector('.wallpaper-multi-hint');
+      if (hintEl) {
+        const defaultText = `썸네일을 클릭해서 선택/해제하세요 (최대 ${maxN}장, 화면에 나란히 표시)<br> 배경 이미지에 마우스를 대고 드래그하면 좌우로 움직일 수 있어요.`;
+        hintEl.innerHTML = defaultText;
+        hintEl.dataset.defaultText = defaultText;
+      }
       if (wallpaperModal) wallpaperModal.classList.add('open');
     }
 
