@@ -2947,6 +2947,14 @@
         /* 여기서는 플레이어에 아무 명령도 보내지 않는다.
            실제 로드/재생 요청은 play()에서 한 번만 발생한다. */
         this._videoId = videoId;
+        // (버그 수정) 이전에는 새로 고른 곡의 videoId가 "지금 유튜브
+        // 플레이어에 이미 로드돼 있던 영상"과 우연히 같으면(재생목록에서
+        // 지웠다가 같은 곡을 다시 담아 재생하거나, 초기화 후 같은 곡을 다시
+        // 재생하는 경우) play()가 _loadAndPlay()를 건너뛰고 그냥
+        // playVideo()만 호출해서 예전에 멈췄던 위치부터 이어 재생됐다.
+        // src가 새로 설정될 때마다(같은 곡이어도) _activeVideoId를 지워서
+        // 다음 play() 호출이 항상 loadVideoById로 처음부터 새로 불러오게 한다.
+        this._activeVideoId = null;
       }
 
       get src() {
@@ -3851,6 +3859,15 @@
       const bottomSpacer = document.createElement('div');
       bottomSpacer.className = 'lyrics-spacer';
       box.appendChild(bottomSpacer);
+
+      // 아직 재생 전이라 활성 줄이 없어도, 첫 줄을 미리 박스 정중앙에 배치해둔다.
+      // (스크롤 기본값 0으로 그냥 두면 topSpacer 높이가 박스 절반 높이와
+      // 정확히 안 맞아서 첫 줄이 중앙보다 살짝 아래로 보였다.)
+      if (lyricsLineEls.length) {
+        const firstEl = lyricsLineEls[0];
+        firstEl.classList.add('lyrics-adjacent');
+        box.scrollTop = firstEl.offsetTop - (box.clientHeight / 2) + (firstEl.offsetHeight / 2);
+      }
     }
 
     function updateLyricsHighlight(currentTime) {
@@ -4543,7 +4560,7 @@
         // (없으면 기본값)를 그대로 써서 박스 높이가 출렁이지 않게 한다.
         const fallbackHeight = __trackFitCache.maxItemHeight || 40;
         const fallbackGap = __trackFitCache.itemGap || 6;
-        box.style.height = `${fallbackHeight * rowsToShow + fallbackGap * (rowsToShow - 1) + 1}px`;
+        box.style.height = `${fallbackHeight * rowsToShow + fallbackGap * (rowsToShow - 1) + 6}px`;
         return;
       }
 
@@ -4572,9 +4589,11 @@
         __trackFitCache = { count: items.length, maxItemHeight, itemGap };
       }
 
-      // 살짝 여유(1px)를 더해 서브픽셀 반올림 때문에 마지막 줄 하단이
-      // 미세하게 잘려 보이는 문제를 방지한다.
-      box.style.height = `${maxItemHeight * rowsToShow + itemGap * (rowsToShow - 1) + 1}px`;
+      // 여유 공간을 넉넉히(6px) 더한다. 기존에는 서브픽셀 반올림 방지용으로만
+      // 1px을 더했는데, 그러면 3번째 줄이 박스 바닥에 딱 붙어서(여백이 전혀
+      // 없어서) 마치 줄이 잘린 것처럼 보였다. 실제로 텍스트가 잘리진 않지만
+      // 시각적으로 여유가 있어야 자연스럽다.
+      box.style.height = `${maxItemHeight * rowsToShow + itemGap * (rowsToShow - 1) + 6}px`;
     }
 
     window.addEventListener('resize', () => {
