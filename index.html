@@ -4545,10 +4545,19 @@
       // 가장 아래쪽 카드의 실제 하단 위치(offsetTop + offsetHeight)를 직접
       // 측정해서 그 값을 그대로 박스 높이로 사용한다 — 줄이 1개면 1줄
       // 높이만, 2개 이상이면 정확히 2줄 높이만 확보된다.
-      const firstTop = cards[0].offsetTop;
+      // (버그 수정) card.offsetTop은 card 바로 위 부모가 아니라, position이
+      // 지정된 가장 가까운 조상(offsetParent) — 여기서는 박스 바깥의
+      // #panel-album 카드 전체 — 기준의 좌표다. 그래서 card.offsetTop을
+      // 그대로 박스 높이로 쓰면 "ALBUM" 제목 등 박스 위쪽 요소들의 높이까지
+      // 합쳐진 값이 되어 박스가 실제 카드 2줄 높이보다 훨씬 커지고, 그 결과
+      // 3번째 줄이 아래로 상당히 비쳐 보이는 원인이 됐다. box도 카드와 같은
+      // offsetParent를 공유하므로, card.offsetTop에서 box.offsetTop을 빼면
+      // "박스 기준" 상대 위치를 정확히 구할 수 있다.
+      const boxOffsetTop = box.offsetTop;
+      const firstTop = cards[0].offsetTop - boxOffsetTop;
       const rowTops = [firstTop];
       for (let i = 1; i < cards.length && rowTops.length < 2; i++) {
-        const top = cards[i].offsetTop;
+        const top = cards[i].offsetTop - boxOffsetTop;
         if (Math.abs(top - rowTops[rowTops.length - 1]) > 1) {
           rowTops.push(top);
         }
@@ -4556,15 +4565,20 @@
       const lastRowTop = rowTops[rowTops.length - 1];
       let lastRowBottom = 0;
       for (const card of cards) {
-        if (Math.abs(card.offsetTop - lastRowTop) <= 1) {
-          lastRowBottom = Math.max(lastRowBottom, card.offsetTop + card.offsetHeight);
+        const top = card.offsetTop - boxOffsetTop;
+        if (Math.abs(top - lastRowTop) <= 1) {
+          lastRowBottom = Math.max(lastRowBottom, top + card.offsetHeight);
         }
       }
 
-      box.style.maxHeight = `${Math.ceil(lastRowBottom)}px`;
+      box.style.maxHeight = `${Math.max(0, Math.floor(lastRowBottom) - 2)}px`;
     }
 
     window.addEventListener('resize', () => requestAnimationFrame(fitAlbumBoxToTwoRows));
+    // (안전망) 실제 앨범 커버 이미지(jpg/webp)가 로드되면서 레이아웃이 아주
+    // 미세하게 재계산되는 경우까지 대비해, 페이지의 모든 리소스가 완전히
+    // 로드된 뒤에도 한 번 더 정확히 다시 맞춘다.
+    window.addEventListener('load', () => requestAnimationFrame(fitAlbumBoxToTwoRows));
 
     // ------- 동영상 카드 대각선 리사이즈 (네 모서리 모두 지원) -------
     // 네 모서리 핸들 중 아무 곳이나 잡고 끌면 .charmander-box(동영상 카드)
