@@ -149,6 +149,16 @@
       font-size: 20px;
     }
 
+    .wild-toggle-btn {
+      left: 120px;
+    }
+
+    /* 이스터에그가 꺼져있을 때는 흐릿하게(비활성) 표시 */
+    .wild-toggle-btn.wild-toggle-off {
+      opacity: 0.35;
+      filter: grayscale(1);
+    }
+
     .captured-list-panel {
       position: fixed;
       left: 16px;
@@ -362,16 +372,19 @@
     body.ui-hide-step-1 #pokeball-toy,
     body.ui-hide-step-1 #pokeball-spawn-btn,
     body.ui-hide-step-1 #captured-list-btn,
+    body.ui-hide-step-1 #wild-toggle-btn,
     body.ui-hide-step-2 #theme-toggle-btn,
     body.ui-hide-step-2 .wallpaper-controls,
     body.ui-hide-step-2 #pokeball-toy,
     body.ui-hide-step-2 #pokeball-spawn-btn,
     body.ui-hide-step-2 #captured-list-btn,
+    body.ui-hide-step-2 #wild-toggle-btn,
     body.ui-hide-step-3 #theme-toggle-btn,
     body.ui-hide-step-3 .wallpaper-controls,
     body.ui-hide-step-3 #pokeball-toy,
     body.ui-hide-step-3 #pokeball-spawn-btn,
-    body.ui-hide-step-3 #captured-list-btn {
+    body.ui-hide-step-3 #captured-list-btn,
+    body.ui-hide-step-3 #wild-toggle-btn {
       display: none !important;
     }
 
@@ -841,7 +854,6 @@
   overflow-x: hidden;
   padding-right: 2px;
   padding-top: 6px;
-  scroll-snap-type: y mandatory;
 }
 
     .album-grid-container {
@@ -1874,18 +1886,41 @@
       width: 100%;
       height: 190px;
       overflow-y: auto;
-      background: rgba(90, 98, 112, 0.4);
-      backdrop-filter: blur(20px) saturate(180%);
-      -webkit-backdrop-filter: blur(20px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.32);
+      overflow-x: hidden;
+      isolation: isolate;
+      background-color: rgba(18, 22, 28, 0.22);
+      backdrop-filter: blur(26px) saturate(180%);
+      -webkit-backdrop-filter: blur(26px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.25);
       border-radius: 16px;
       padding: 0 10px;
       scroll-behavior: smooth;
       box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3),
-                  inset 0 1px 0 rgba(255, 255, 255, 0.18),
-                  inset 0 0 20px rgba(255, 255, 255, 0.05);
+                  inset 0 1px 0 rgba(255, 255, 255, 0.22),
+                  inset 0 0 20px rgba(255, 255, 255, 0.06);
+      transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
       position: relative;
       box-sizing: border-box;
+    }
+
+    .lyrics-box::after {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 45%;
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.10), rgba(255, 255, 255, 0));
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    body.light-mode .lyrics-box {
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.85);
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08),
+                  inset 0 0 20px rgba(255, 255, 255, 0.45),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(36px) saturate(220%);
+      -webkit-backdrop-filter: blur(36px) saturate(220%);
     }
 
     /* 곡이 선택되지 않아 안내 문구만 보여줄 때는 패딩 없이 박스 정중앙에 배치 */
@@ -1912,13 +1947,14 @@
     }
 
     .lyrics-line {
-      font-size: 15px;
+      font-size: 17px;
       line-height: 1.6;
       color: rgba(255, 255, 255, 0.85);
       text-align: center;
       padding: 6px 6px;
       white-space: pre-line;
       cursor: pointer;
+      text-shadow: 0 1px 4px rgba(0, 0, 0, 0.45);
       transition: color 0.25s ease, transform 0.25s ease, text-shadow 0.25s ease, opacity 0.35s ease;
       /* 기본적으로는 안 보이게(투명) 해두고, 현재 줄/앞뒤 줄에만 아래에서
          opacity를 다시 켜준다. 나머지 줄들은 화면에는 없지만 레이아웃 공간은
@@ -1945,7 +1981,7 @@
     }
 
     .lyrics-placeholder {
-      font-size: 14px;
+      font-size: 17px;
       color: #ffffff;
       font-weight: 600;
       letter-spacing: 0.5px;
@@ -2592,6 +2628,11 @@
   <!-- 포획된 포켓몬 버튼: 처음엔 숨겨져 있다가 하나라도 포획하면 나타난다. -->
   <button id="captured-list-btn" class="pokeball-spawn-btn captured-list-btn" title="포획된 포켓몬" style="display:none;">📦</button>
   <div id="captured-list-panel" class="captured-list-panel" style="display:none;"></div>
+
+  <!-- 야생 파이리 이스터에그 on/off 토글 버튼 -->
+  <button id="wild-toggle-btn" class="pokeball-spawn-btn wild-toggle-btn active" title="야생 파이리 이스터에그 켜기/끄기">
+    <img src="POKEMON/포획된파이리.png" alt="야생 파이리" class="pokeball-spawn-btn-icon">
+  </button>
 
   <!-- 최상단 왼쪽 테마 토글 버튼 (기본 상태 라이트 모드) -->
   <button id="theme-toggle-btn" class="theme-toggle-btn">
@@ -3946,6 +3987,47 @@
         }
       }
     }
+
+    // 가사창을 마우스 휠로 직접 스크롤할 때는, 재생 중인 현재 줄의 바로 앞/뒤
+    // 한 줄만 보이는 게 아니라 스크롤한 만큼 더 먼 과거/미래 가사도 점점
+    // 옅어지며 보이게 한다. box의 scrollTop을 기준으로 각 줄이 중앙에서
+    // 얼마나 떨어져 있는지를 계산해 opacity를 실시간으로 준다.
+    // rAF로 스로틀링해서 휠을 빠르게 굴려도 버벅이지 않게 한다.
+    let __lyricsFadeRAF = null;
+    function updateLyricsScrollFade() {
+      const box = document.getElementById('lyrics-box');
+      if (!box || !lyricsLineEls.length) return;
+      const centerY = box.scrollTop + box.clientHeight / 2;
+      for (let i = 0; i < lyricsLineEls.length; i++) {
+        const el = lyricsLineEls[i];
+        const elCenter = el.offsetTop + el.offsetHeight / 2;
+        const rowH = el.offsetHeight || 40;
+        const rows = Math.abs(elCenter - centerY) / rowH;
+        let opacity;
+        if (i === currentLyricsIdx) {
+          opacity = 1;
+        } else if (rows < 0.6) {
+          opacity = 1;
+        } else if (rows < 4) {
+          opacity = Math.max(0.12, 0.85 - (rows - 0.6) * 0.22);
+        } else {
+          opacity = 0;
+        }
+        el.style.opacity = opacity;
+      }
+    }
+    function scheduleLyricsScrollFade() {
+      if (__lyricsFadeRAF) return;
+      __lyricsFadeRAF = requestAnimationFrame(() => {
+        __lyricsFadeRAF = null;
+        updateLyricsScrollFade();
+      });
+    }
+    ;(function setupLyricsWheelFade() {
+      const box = document.getElementById('lyrics-box');
+      if (!box) return;
+      box.addEventListener('scroll', scheduleLyricsScrollFade, { passive: true });
+    })();
 
     showLyricsEmptyState();
     const statusDot = document.getElementById('status-dot');
@@ -5467,11 +5549,24 @@
         
         if (lpRecord) {
           lpRecord.classList.remove('spinning');
+          // LP판 회전을 원래(0deg) 위치로 되돌린다. class만 제거하면
+          // animation-play-state가 paused로 바뀔 뿐, 멈춰있던 각도 그대로
+          // 남아있어 "원래 위치로 복귀"가 안 됐다. animation을 잠깐 끊고
+          // 강제로 리플로우시킨 뒤 다시 원래 규칙을 적용하면 spin
+          // 애니메이션이 0deg(from)부터 다시 시작(하지만 paused)하는
+          // 상태로 리셋된다.
+          lpRecord.style.animation = 'none';
+          void lpRecord.offsetWidth;
+          lpRecord.style.animation = '';
         }
 
         if (songTitle) songTitle.innerText = '곡을 선택하세요';
         if (albumName) albumName.innerText = '앨범 이름';
         if (albumCover) albumCover.src = INITIAL_IMAGE;
+
+        // 가사 창도 완전히 초기화해서 아무 가사도 보이지 않는 안내 상태로 되돌린다.
+        lyricsTrackLoaded = false;
+        showLyricsEmptyState();
 
         renderCurrentPlaylistUI();
         updateLpFavButtonUI();
@@ -7018,6 +7113,23 @@
       const WALK_RIGHT_SRC = 'POKEMON/야생의 우로 걷는 파이리.webp';
       const WALK_LEFT_SRC = 'POKEMON/야생의 좌로 걷는 파이리.webp';
 
+      // (성능) 이 webp 원본들은 2160x720짜리 큰 애니메이션이라, 파이리가 처음
+      // 소환되는 그 순간 <img>를 새로 만들어 src를 지정하면 브라우저가 그제서야
+      // 파일을 받고 디코딩을 시작해서 그 프레임에 버벅임(스터터)이 생겼다.
+      // 페이지 로드 시점에 미리 백그라운드로 한 번 받아서 디코딩까지 끝내
+      // 두면(HTTP + 디코드 캐시에 실림), 실제 소환 시에는 이미 준비된 걸
+      // 그대로 재사용하게 되어 첫 프레임이 즉시 뜬다.
+      function warmUpImage(src) {
+        const warm = new Image();
+        warm.decoding = 'async';
+        warm.src = src;
+        if (warm.decode) {
+          warm.decode().catch(() => {}); // 디코드 실패해도 조용히 무시(치명적이지 않음)
+        }
+      }
+      warmUpImage(WALK_RIGHT_SRC);
+      warmUpImage(WALK_LEFT_SRC);
+
       // 4개의 webp 원본은 전부 2160x720 캔버스 크기로 맞춰져 있지만, 실제
       // 캐릭터는 그 안의 일부 영역에만 작게 그려져 있다(캔버스 전체를 그대로
       // SPRITE_WIDTH로 줄이면 캐릭터가 아주 작게 보임). 그래서 실제 캐릭터가
@@ -7180,10 +7292,13 @@
         function makeDirImg(d) {
           const el = document.createElement('img');
           el.className = 'wild-charmander-img';
+          el.decoding = 'async';
+          el.loading = 'eager';
           el.style.position = 'absolute';
           el.style.width = FULL_IMG_WIDTH + 'px';
           el.style.height = 'auto';
           el.style.pointerEvents = 'none';
+          el.style.willChange = 'transform';
           const cropX = d === 'left' ? WALK_CROP_X.left : WALK_CROP_X.right;
           el.style.left = (-cropX * SPRITE_SCALE) + 'px';
           el.style.top = (-WALK_CROP_Y * SPRITE_SCALE) + 'px';
@@ -7553,6 +7668,29 @@
       let wildState = null; // { sprite, controller, capturing, despawnTimer }
       let lastWildPos = null; // 야생 파이리가 마지막으로 있던 좌표 (재등장 시 이어서 시작)
 
+      // 야생 파이리 이스터에그 on/off 토글. localStorage에 저장해서 새로고침해도 유지된다.
+      let wildEncounterEnabled = (localStorage.getItem('wildEncounterEnabled') !== 'off');
+      const wildToggleBtn = document.getElementById('wild-toggle-btn');
+      function renderWildToggleBtnUI() {
+        if (!wildToggleBtn) return;
+        wildToggleBtn.classList.toggle('wild-toggle-off', !wildEncounterEnabled);
+        wildToggleBtn.title = wildEncounterEnabled
+          ? '야생 파이리 이스터에그 끄기'
+          : '야생 파이리 이스터에그 켜기';
+      }
+      renderWildToggleBtnUI();
+      if (wildToggleBtn) {
+        wildToggleBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          wildEncounterEnabled = !wildEncounterEnabled;
+          localStorage.setItem('wildEncounterEnabled', wildEncounterEnabled ? 'on' : 'off');
+          renderWildToggleBtnUI();
+          if (!wildEncounterEnabled && wildState && !wildState.capturing) {
+            despawnWild();
+          }
+        });
+      }
+
       function makeCollisionChecker() {
         return function (ballCx, ballCy) {
           if (!wildState || wildState.capturing) return;
@@ -7565,6 +7703,7 @@
       }
 
       function spawnWildCharmander(opts) {
+        if (!wildEncounterEnabled) return;
         if (wildState) return;
         if (capturedList.length >= MAX_CAPTURED) return; // 이미 최대치를 포획했으면 더 이상 등장하지 않음
         // 새 야생 파이리가 등장하면, 지난번에 몬스터볼을 다 썼더라도 이번 인카운터용으로 다시 쓸 수 있게 한다.
