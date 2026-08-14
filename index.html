@@ -5204,13 +5204,23 @@
     // 자동맞춤(scale)이 옛 값에 멈춰 있다가 이후 카테고리를 다시 눌러도
     // 박스들이 좁아진(축소된) 상태로 굳어버리는 경우가 있었다. 렌더링과
     // 높이 재계산(rAF)이 모두 끝난 다음 프레임에 자동맞춤을 한 번 더 확실히
-    // 강제로 재실행해서 이 문제를 막는다.
+    // 강제로 재실행해서 이 문제를 막는다. rAF 체인만으로는 여전히 레이아웃이
+    // 완전히 안정되기 전(폰트/이미지 리플로우 등)에 측정될 수 있어서,
+    // 조금 뒤(200ms)에 한 번 더 - 이번엔 suppressAutoFit/쿨다운 상태와
+    // 무관하게 fitPlayerWrapperToViewport를 직접 호출하는 안전망을 둔다.
     function forceRefitAfterCategoryChange() {
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           if (typeof scheduleFitPlayerWrapper === 'function') scheduleFitPlayerWrapper();
         });
       });
+
+      setTimeout(() => {
+        if (globalMouseButtonDown) return; // 그 사이 실제로 드래그가 시작됐으면 건너뛴다.
+        suppressAutoFit = false;
+        autoFitCooldownUntil = 0;
+        if (typeof fitPlayerWrapperToViewport === 'function') fitPlayerWrapperToViewport();
+      }, 200);
     }
 
     document.querySelectorAll('.cat-btn').forEach(btn => {
