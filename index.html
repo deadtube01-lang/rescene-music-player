@@ -4940,31 +4940,33 @@
       const box = document.getElementById('album-select-container');
       if (!box) return;
 
+      // (버그 수정) getBoundingClientRect() + scale 보정 방식은 패널이 축소
+      // 표시되는 상황이나 서브픽셀 반올림에 따라 행 경계 계산이 아주 살짝
+      // 어긋날 수 있었고, 그 오차 때문에 휠로 넘길 때 목표 행 바로 앞의
+      // 여백(gap)에 먼저 멈췄다가 다시 움직이는 것처럼 보이는 원인이 됐다.
+      // offsetTop은 스크롤 위치나 transform: scale의 영향을 전혀 받지 않는
+      // 순수 레이아웃 값이라, 첫 카드의 offsetTop을 기준(0)으로 상대 위치만
+      // 구하면 훨씬 더 정확하고 안정적으로 행 경계를 잡을 수 있다.
       function getRowTops() {
         const cards = Array.from(box.querySelectorAll('.album-card-item'));
-        const panelScale = getAncestorPanelScale(box);
-        const boxTop = box.getBoundingClientRect().top;
-        const currentTop = box.scrollTop;
-        // 박스의 padding-top만큼 카드 실제 위치가 항상 밀려있으므로, 그만큼
-        // 빼줘야 "맨 처음(0번째) 행"의 스크롤 목표가 정확히 0이 된다. 이걸
-        // 빼지 않으면 첫 행의 목표 위치가 padding-top만큼(예: 6px) 밀려서
-        // 계산되고, 한 번이라도 스크롤했다가 다시 맨 위로 돌아왔을 때 항상
-        // 그 padding만큼 밀린 채로 멈춰(스크롤 0으로 못 돌아옴) 첫 행 위쪽이
-        // 살짝 잘려 보이는 원인이 됐다.
-        const paddingTop = parseFloat(getComputedStyle(box).paddingTop) || 0;
+        if (!cards.length) return [];
+        const base = cards[0].offsetTop;
         const rowTops = [];
         let lastTop = null;
         cards.forEach((card) => {
-          const relTop = (card.getBoundingClientRect().top - boxTop) / panelScale + currentTop - paddingTop;
-          const clamped = Math.max(0, relTop);
-          if (lastTop === null || Math.abs(clamped - lastTop) > 1) {
-            rowTops.push(clamped);
-            lastTop = clamped;
+          const rel = card.offsetTop - base;
+          if (lastTop === null || Math.abs(rel - lastTop) > 4) {
+            rowTops.push(rel);
+            lastTop = rel;
           }
         });
         return rowTops;
       }
 
+      // 트랙리스트와 동일하게, 휠을 굴리면 부드러운 애니메이션 없이 즉시
+      // 딱 한 줄만큼 스크롤바가 바로 이동한다(behavior: 'auto'). 이전에
+      // 'smooth' + 잠금 방식은 이동이 느릿하게 보여 오히려 버벅이는
+      // 느낌을 줬다.
       box.addEventListener('wheel', (e) => {
         const cards = Array.from(box.querySelectorAll('.album-card-item'));
         if (cards.length === 0) return;
@@ -5491,8 +5493,15 @@
       }
       if (currentPlayIndex < currentPlaylist.length - 1) {
         playTrackByListIndex(currentPlayIndex + 1, true);
-      } else {
+      } else if (repeatMode === 'all') {
         playTrackByListIndex(0, true);
+      } else {
+        // 반복 버튼을 켜지 않았다면 마지막 곡이 끝난 뒤 처음 곡으로 자동
+        // 재생하지 않고 그대로 멈춘다.
+        audio.pause();
+        if (playIcon) playIcon.innerHTML = playSvg;
+        if (lpRecord) lpRecord.classList.remove('spinning');
+        if (statusDot) statusDot.classList.remove('playing');
       }
     }
 
@@ -5724,6 +5733,11 @@
           audio.pause();
           audio.src = '';
         }
+        // 재생 바(진행 슬라이더)와 시간 표시도 처음(0) 상태로 되돌린다.
+        if (progressSlider) progressSlider.value = 0;
+        updateProgressTrack(0);
+        if (currentTimeEl) currentTimeEl.innerText = '0:00';
+        if (durationTimeEl) durationTimeEl.innerText = '0:00';
         if (playIcon) playIcon.innerHTML = playSvg;
         if (statusDot) statusDot.classList.remove('playing');
         
