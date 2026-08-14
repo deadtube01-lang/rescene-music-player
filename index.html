@@ -6130,7 +6130,19 @@
         if (lyricsLineEls[1]) {
           lyricsLineEls[1].classList.add('lyrics-adjacent');
         }
-        box.scrollTop = firstEl.offsetTop - (box.clientHeight / 2) + (firstEl.offsetHeight / 2);
+        // (버그 수정) box.scrollTop을 그냥 대입하면 이 대입 자체가 'scroll'
+        // 이벤트를 발생시키고, 그 이벤트 리스너는 프로그램이 스크롤시킨 것인지
+        // 사용자가 직접 스크롤한 것인지 구분하지 못해 enterLyricsManualScroll()을
+        // 실행시켜버렸다. 그 결과 트랙을 전환할 때마다 "현재 줄 + 다음 줄" 2줄만
+        // 보여야 하는데 스크롤 위치 기준 계산(updateLyricsScrollFade의 manual
+        // 분기)으로 넘어가면서 더 먼 줄까지 잠깐 보였다 사라지거나, 계산에 쓰인
+        // 스크롤 값이 아직 안정되지 않은 상태라 모든 줄이 화면 중앙에서 멀다고
+        // 판단되어 가사 전체가 아예 안 보이는 상태가 되기도 했다. 다른 프로그램적
+        // 스크롤(recenterLyricsToActive 등)과 동일하게 markLyricsAutoScroll로
+        // 먼저 표시해서 이 scroll 이벤트가 '사용자 스크롤'로 오인되지 않게 한다.
+        const targetScrollTop = firstEl.offsetTop - (box.clientHeight / 2) + (firstEl.offsetHeight / 2);
+        markLyricsAutoScroll(targetScrollTop);
+        box.scrollTop = targetScrollTop;
       }
       lyricsManualScroll = false;
       updateLyricsScrollFade();
