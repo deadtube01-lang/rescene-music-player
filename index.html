@@ -2578,8 +2578,14 @@
          모바일에서는 항상 보이고 눌릴 수 있어야 한다. */
       body.ui-hide-step-1 .ui-hide-toggle-btn,
       body.ui-hide-step-2 .ui-hide-toggle-btn,
-      body.ui-hide-step-3 .ui-hide-toggle-btn {
+      body.ui-hide-step-3 .ui-hide-toggle-btn,
+      body.ui-hide-step-1 .theme-toggle-row,
+      body.ui-hide-step-2 .theme-toggle-row,
+      body.ui-hide-step-3 .theme-toggle-row {
         display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        pointer-events: auto !important;
       }
 
       .wallpaper-controls {
@@ -6198,6 +6204,23 @@
         if (!lyricsManualScroll) {
           recenterLyricsToActive();
         }
+      } else if (currentLyricsIdx === -1) {
+        // (버그 수정) 재생 중 첫 가사 시점보다 앞으로 되감으면(처음으로 이동 등)
+        // newIdx가 -1이 되는데, 예전에는 이 분기가 아무것도 하지 않아서 첫 줄의
+        // 타임스탬프에 다시 도달할 때까지 가사창이 완전히 텅 비어 보였다.
+        // renderLyrics() 최초 렌더링 때와 동일하게 첫 줄/다음 줄을 미리
+        // 흐릿하게 보여주는 대기 상태로 되돌린다.
+        if (lyricsLineEls[0]) lyricsLineEls[0].classList.add('lyrics-adjacent');
+        if (lyricsLineEls[1]) lyricsLineEls[1].classList.add('lyrics-adjacent');
+        if (!lyricsManualScroll && lyricsLineEls[0]) {
+          const box = document.getElementById('lyrics-box');
+          if (box) {
+            const targetScrollTop =
+              lyricsLineEls[0].offsetTop - (box.clientHeight / 2) + (lyricsLineEls[0].offsetHeight / 2);
+            markLyricsAutoScroll(targetScrollTop);
+            box.scrollTo({ top: targetScrollTop, behavior: 'smooth' });
+          }
+        }
       }
       updateLyricsScrollFade();
       updateLyricsActiveBg();
@@ -6224,6 +6247,7 @@
     let lyricsManualScrollTimer = null;
     let lyricsAutoScrolling = false;
     let lyricsAutoScrollTimer = null;
+    let __lastLyricsAutoScrollTarget = null;
 
     // box.scrollTo(...)를 우리가 직접 호출한 프로그램적 스크롤은 "사용자가
     // 스크롤 중"인 게 아니므로 구분해서 표시해둔다.
@@ -6239,6 +6263,7 @@
     function markLyricsAutoScroll(targetScrollTop, safetyMs) {
       const box = document.getElementById('lyrics-box');
       lyricsAutoScrolling = true;
+      __lastLyricsAutoScrollTarget = targetScrollTop;
       clearTimeout(lyricsAutoScrollTimer);
       lyricsAutoScrollTimer = setTimeout(() => {
         lyricsAutoScrolling = false;
@@ -6247,11 +6272,23 @@
       if (!box || typeof targetScrollTop !== 'number') return;
       let settledFrames = 0;
       const TOLERANCE = 2; // px
+      // (버그 수정) box.scrollTop을 직접 대입하는 경우(스무스 애니메이션이
+      // 아닌 즉시 이동) settledFrames 조건이 너무 빨리(1~2 프레임 만에)
+      // 충족되어 lyricsAutoScrolling이 꺼져버렸는데, 그 대입으로 인해
+      // 브라우저가 비동기로 발생시키는 'scroll' 이벤트는 그보다 늦게 도착할
+      // 때가 있었다. 그 시점엔 이미 lyricsAutoScrolling이 false라서 그 scroll
+      // 이벤트가 "사용자가 직접 스크롤"로 오인되어 enterLyricsManualScroll()이
+      // 실행됐고, 그 결과 몇 줄 더 먼(예: 세 번째) 가사 줄까지 옅게 보였다가
+      // manualScroll 타이머(1.2초)가 끝나면서 다시 기본 상태로 스냅되어
+      // "잠깐 나타났다가 사라지는" 것처럼 보였다. 최소 유예 시간을 두어
+      // 그 비동기 scroll 이벤트가 도착할 시간을 확보한 뒤에만 꺼지도록 한다.
+      const MIN_SETTLE_MS = 180;
+      const startedAt = performance.now();
       const checkSettled = () => {
         if (!lyricsAutoScrolling) return; // 이미 안전장치로 종료됨
         if (Math.abs(box.scrollTop - targetScrollTop) <= TOLERANCE) {
           settledFrames++;
-          if (settledFrames >= 2) {
+          if (settledFrames >= 2 && (performance.now() - startedAt) >= MIN_SETTLE_MS) {
             lyricsAutoScrolling = false;
             clearTimeout(lyricsAutoScrollTimer);
             return;
@@ -6363,7 +6400,15 @@
       // 스크롤바를 직접 드래그하는 경우를 포함해, 우리가 만든 프로그램적
       // 스크롤이 아닌 모든 scroll 이벤트를 "사용자가 스크롤 중"으로 취급한다.
       box.addEventListener('scroll', () => {
-        if (!lyricsAutoScrolling) {
+        // (버그 수정) lyricsAutoScrolling 플래그가 이미 꺼진 뒤에도, 우리가
+        // 마지막으로 프로그램적으로 스크롤시킨 목표 위치와 지금 scrollTop이
+        // 거의 같다면(오차범위 내) 이건 사용자가 직접 스크롤한 게 아니라
+        // 그 프로그램적 스크롤이 뒤늦게 발생시킨 이벤트일 뿐이므로 무시한다.
+        const box2 = document.getElementById('lyrics-box');
+        const nearLastAutoTarget =
+          box2 && typeof __lastLyricsAutoScrollTarget === 'number' &&
+          Math.abs(box2.scrollTop - __lastLyricsAutoScrollTarget) <= 2;
+        if (!lyricsAutoScrolling && !nearLastAutoTarget) {
           enterLyricsManualScroll();
         }
         scheduleLyricsScrollFade();
