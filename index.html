@@ -846,7 +846,13 @@
     .album-grid-container {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
+      column-gap: 6px;
+      /* (버그 수정) row-gap이 있으면 그 틈으로 부모(.album-select-box)의
+         배경색이 그대로 비쳐 보여서, 앨범 커버 이미지들 사이에 얇은
+         가로줄(라이트 모드에서는 흰색, 다크 모드에서는 회색)이 보이는
+         문제가 있었다. 세로 간격은 없애 카드가 서로 맞닿게 하고, 대신
+         카드 자체의 border로 구분되게 한다. */
+      row-gap: 0;
       width: 100%;
       box-sizing: border-box;
     }
@@ -3883,11 +3889,16 @@
       // 재생 전(0초)에는 첫 줄이 아직 시작되지 않은 상태이므로, 활성(밝게)이
       // 아니라 흐릿한 대기 상태로 박스 정중앙에 미리 배치해둔다. 실제로
       // 첫 줄의 타임스탬프에 도달하면 updateLyricsHighlight가 밝게 바꿔준다.
+      // 이때 바로 다음 줄도 같이 흐릿하게 보여줘야, 곡이 시작되기 전에도
+      // "다음 가사"를 미리 확인할 수 있다.
       // (스크롤 기본값 0으로 그냥 두면 topSpacer 높이가 박스 절반 높이와
       // 정확히 안 맞아서 첫 줄이 중앙보다 살짝 아래로 보였다.)
       if (lyricsLineEls.length) {
         const firstEl = lyricsLineEls[0];
         firstEl.classList.add('lyrics-adjacent');
+        if (lyricsLineEls[1]) {
+          lyricsLineEls[1].classList.add('lyrics-adjacent');
+        }
         box.scrollTop = firstEl.offsetTop - (box.clientHeight / 2) + (firstEl.offsetHeight / 2);
       }
     }
