@@ -1848,7 +1848,7 @@
 
     .lyrics-box {
       width: 100%;
-      height: 230px;
+      height: 140px;
       overflow-y: auto;
       background: rgba(18, 22, 28, 0.32);
       backdrop-filter: blur(20px) saturate(180%);
@@ -1874,7 +1874,7 @@
     /* 첫 줄/마지막 줄도 박스 정중앙까지 스크롤될 수 있도록 위아래에
        박스 절반 높이만큼 여백을 만들어주는 스페이서 */
     .lyrics-spacer {
-      height: 100px;
+      height: 60px;
       flex-shrink: 0;
     }
 
@@ -6251,6 +6251,21 @@
 
     function fitPlayerWrapperToViewport() {
       if (!playerWrapperEl) return;
+      // (버그 수정) 768px 이하 좁은 화면에서는 CSS 미디어쿼리가 .player-wrapper를
+      // position:static 세로 스택 레이아웃으로 바꾼다. 이 모드에서는 원래
+      // 세로 스크롤로 보여주면 되는데, 아래 scale 계산 로직이 "뷰포트 높이에
+      // 안 맞으면 화면 전체를 축소"해버려서 카테고리를 바꿔 박스 높이가 조금만
+      // 달라져도 전체 UI(가로 폭 포함)가 줄어들었고, 그 축소된 scale이
+      // 되돌아오지 못해 ALBUM/TRACKLIST 박스가 계속 좁아진 채로 남는 문제가
+      // 있었다. 모바일 레이아웃에서는 이 스케일 로직을 아예 건너뛰고 항상
+      // scale(1)(=CSS 그대로, 세로 스크롤)로 둔다.
+      if (window.matchMedia && window.matchMedia('(max-width: 768px)').matches) {
+        if (playerWrapperEl.style.transform) playerWrapperEl.style.transform = '';
+        document.querySelectorAll('.draggable-panel[data-panel-fixed="1"]').forEach((panelEl) => {
+          panelEl.style.transform = '';
+        });
+        return;
+      }
       // 드래그를 막 시작하기 직전에(예: 버튼 위에서 마우스를 움직이다가 hover
       // 효과로 레이아웃이 미세하게 바뀌어 ResizeObserver가 이미 재계산을 예약해둔
       // 상태였다면), 그 예약된 rAF 콜백은 suppressAutoFit이 true가 된 뒤에도
@@ -6262,6 +6277,7 @@
       if (suppressAutoFit || globalMouseButtonDown || performance.now() < autoFitCooldownUntil) return;
 
       const SAFE_MARGIN = 12;
+
 
       /* 진짜 이전 scale값은 여기서, transform을 scale(1)로 덮어쓰기 전에
          미리 저장해둬야 한다. (이전 버그: 이 저장을 스킵하고 나중에
