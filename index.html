@@ -5740,6 +5740,10 @@
     function resetPlaybackToIdle() {
       if (audio) {
         audio.pause();
+        // src를 비우기 전에 currentTime을 먼저 0으로 되돌려서, 혹시 남아있던
+        // timeupdate 이벤트가 뒤늦게 한 번 더 발생하더라도 0:00이 아닌 이전
+        // 재생 시간으로 다시 덮어써지지 않도록 한다.
+        try { audio.currentTime = 0; } catch (err) {}
         audio.src = '';
       }
       // 재생 바(진행 슬라이더)와 시간 표시도 처음(0) 상태로 되돌린다.
@@ -5945,6 +5949,7 @@
 
     if (audio) {
       audio.addEventListener('timeupdate', () => {
+        if (!audio.src) return; // 재생목록 초기화 등으로 src가 비워진 뒤 뒤늦게 들어온 이벤트는 무시
         if (!isDraggingProgress && audio.duration) {
           const pct = (audio.currentTime / audio.duration) * 100;
           if (progressSlider) progressSlider.value = pct;
