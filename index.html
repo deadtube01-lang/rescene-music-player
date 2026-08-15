@@ -914,6 +914,7 @@
     }
 
     .album-card-item:hover {
+      border-width: 3px;
       border-color: rgba(252, 111, 207, 0.7);
       background: rgba(252, 111, 207, 0.15);
       transform: translateY(-1px);
@@ -6988,7 +6989,14 @@
 
         card.addEventListener('click', (e) => {
           e.stopPropagation();
-          selectedAlbum = album;
+          // 이미 선택된 앨범을 다시 누르면 선택을 취소한다(토글).
+          // 취소되면 selectedAlbum이 null이 되어, renderTrackListUI()가
+          // 자동으로 현재 카테고리(activeCategory) 전체 트랙리스트를 보여준다.
+          if (selectedAlbum && selectedAlbum.id === album.id) {
+            selectedAlbum = null;
+          } else {
+            selectedAlbum = album;
+          }
           isShowingFavoritesOnly = false;
           if (favoritesTabBtn) {
             favoritesTabBtn.classList.remove('active');
