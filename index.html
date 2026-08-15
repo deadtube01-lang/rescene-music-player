@@ -2302,6 +2302,13 @@
       min-width: 56px;
       text-align: right;
     }
+    .track-view-icon {
+      display: inline-block;
+      margin-right: 2px;
+    }
+    .track-view-number {
+      display: inline-block;
+    }
     body.light-mode .track-view-count-text {
       color: #d6249f;
     }
@@ -2627,6 +2634,10 @@
       }
       .track-view-count-text {
         min-width: 0 !important;
+      }
+      .track-view-icon {
+        margin-right: 1px !important;
+        font-size: 11px !important;
       }
 
 
@@ -7883,7 +7894,7 @@
       if (viewCount != null) {
         const viewSpan = document.createElement('span');
         viewSpan.className = 'track-view-count-text';
-        viewSpan.innerText = `👁 ${formatViewCount(viewCount)}`;
+        viewSpan.innerHTML = `<span class="track-view-icon">👁</span><span class="track-view-number">${formatViewCount(viewCount)}</span>`;
         rightGroup.appendChild(viewSpan);
       }
       rightGroup.appendChild(durationSpan);
