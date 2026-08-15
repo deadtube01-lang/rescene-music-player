@@ -9639,30 +9639,30 @@
       // SPRITE_WIDTH로 줄이면 캐릭터가 아주 작게 보임). 그래서 실제 캐릭터가
       // 차지하는 영역(x,y,w,h — 여유 패딩 포함, 전 프레임 기준으로 측정)만큼만
       // "창(window)"으로 오려내 확대해서 보여준다.
-      const SPRITE_NATURAL_W = 2160;
-      const SPRITE_NATURAL_H = 720;
-      // 걷는 두 webp: 크기(w,h)는 같고 캐릭터가 위치한 x좌표만 다르다.
-      // NOTE(2026-08-13): 기존 크롭 박스(598x547, y=115, x={769,932})가 실제
-      // 걷기 애니메이션의 최대 보폭(특히 꼬리가 뒤로 크게 젖혀지는 프레임)을
-      // 다 담지 못해서, 그 프레임에서 꼬리가 창 밖으로 잘려나가고 그게
-      // "제자리 걸음/백스텝"처럼 보이는 원인이었다. 원본 캔버스(2160x720)에는
-      // 여유 공간이 충분하므로(크로마키 배경이라 더 넓게 잘라도 다른 그림이
-      // 섞여 들어올 위험이 없음) 중심은 그대로 두고 사방으로 여백을 더 넉넉히
-      // 잡아 클리핑을 방지한다.
-      const WALK_CROP_W = 758;   // 598 + 80*2
-      const WALK_CROP_H = 627;   // 547 + 40*2
-      const WALK_CROP_Y = 75;    // 115 - 40 (중심 y=388.5 유지)
-      const WALK_CROP_X = { right: 689, left: 852 }; // 각각 769-80, 932-80 (중심 유지)
-      // 불뿜는 두 webp: 불꽃까지 포함해 더 넓은 영역을 차지한다.
-      const FIRE_CROP_W = 1238;
-      const FIRE_CROP_H = 552;
-      const FIRE_CROP_Y = 109;
-      const FIRE_CROP_X = { right: 781, left: 300 };
+      // (2026-08-15) webp 원본을 2160x720 풀캔버스 대신, 실제 캐릭터가 차지하는
+      // 영역만 미리 크롭 + 리사이즈해서 새로 인코딩했다(디코딩 부하를 크게 줄여
+      // 소환/드래그 중 렉을 없애기 위함). 이제 파일 자체가 곧 "창"이라 별도로
+      // 큰 원본에서 잘라낼 필요가 없다 -- CROP_X/Y는 모두 0, CROP_W/H가 곧
+      // 새 원본 이미지 크기다. 걷기용과 불뿜기용 webp는 서로 크기가 다르다.
+      const WALK_NATURAL_W = 300;
+      const WALK_NATURAL_H = 248;
+      const WALK_CROP_W = 300;
+      const WALK_CROP_H = 248;
+      const WALK_CROP_Y = 0;
+      const WALK_CROP_X = { right: 0, left: 0 };
+      const FIRE_NATURAL_W = 490;
+      const FIRE_NATURAL_H = 218;
+      const FIRE_CROP_W = 490;
+      const FIRE_CROP_H = 218;
+      const FIRE_CROP_Y = 0;
+      const FIRE_CROP_X = { right: 0, left: 0 };
 
       const SPRITE_WIDTH = 150; // 화면에 보이는 걷는 파이리의 가로 크기
       const SPRITE_SCALE = SPRITE_WIDTH / WALK_CROP_W;
       const SPRITE_HEIGHT = WALK_CROP_H * SPRITE_SCALE; // 걷는 파이리의 화면 표시 세로 크기
-      const FULL_IMG_WIDTH = SPRITE_NATURAL_W * SPRITE_SCALE; // <img> 자체는 원본 캔버스 전체 크기로 키운 뒤 창 밖은 overflow:hidden으로 가림
+      // 걷기/불뿜기 원본 크기가 서로 달라졌으므로 <img> 확대 폭도 각각 따로 계산한다.
+      const FULL_IMG_WIDTH = WALK_NATURAL_W * SPRITE_SCALE;      // 걷는 파이리 <img> 폭
+      const FIRE_FULL_IMG_WIDTH = FIRE_NATURAL_W * SPRITE_SCALE; // 불뿜는 파이리 <img> 폭
       const FIRE_WINDOW_WIDTH = FIRE_CROP_W * SPRITE_SCALE;
       const FIRE_WINDOW_HEIGHT = FIRE_CROP_H * SPRITE_SCALE;
       const STORAGE_KEY = 'rescene_captured_charmanders';
@@ -9716,7 +9716,7 @@
         img.style.position = 'absolute';
         img.style.left = (-FIRE_CROP_X.left * SPRITE_SCALE) + 'px';
         img.style.top = (-FIRE_CROP_Y * SPRITE_SCALE) + 'px';
-        img.style.width = FULL_IMG_WIDTH + 'px';
+        img.style.width = FIRE_FULL_IMG_WIDTH + 'px';
         img.style.height = 'auto';
         img.style.display = 'block';
         img.src = FIRE_LEFT_SRC;
@@ -10477,8 +10477,8 @@
         __debugUncropped = !__debugUncropped;
         if (__debugUncropped) {
           win.dataset.prevOutline = win.style.outline || '';
-          win.style.width = SPRITE_NATURAL_W * SPRITE_SCALE + 'px';
-          win.style.height = SPRITE_NATURAL_H * SPRITE_SCALE + 'px';
+          win.style.width = WALK_NATURAL_W * SPRITE_SCALE + 'px';
+          win.style.height = WALK_NATURAL_H * SPRITE_SCALE + 'px';
           win.style.outline = '2px solid lime';
           img.style.width = FULL_IMG_WIDTH + 'px';
           img.style.left = '0px';
