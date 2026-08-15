@@ -153,6 +153,59 @@
       font-size: 20px;
     }
 
+    /* 홀로카드 뽑기 버튼: 포획 버튼 옆에 같은 줄로 배치 */
+    .photocard-gacha-btn {
+      left: 120px;
+      font-size: 19px;
+    }
+
+    .photocard-gacha-modal-bg {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 99999;
+      background: rgba(6, 4, 12, 0.82);
+      backdrop-filter: blur(4px);
+      align-items: center;
+      justify-content: center;
+    }
+    .photocard-gacha-modal-bg.show { display: flex; }
+
+    .photocard-gacha-modal-box {
+      position: relative;
+      width: min(760px, 94vw);
+      height: min(880px, 92vh);
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 30px 80px -20px rgba(0,0,0,0.7);
+      border: 1px solid rgba(255,255,255,0.12);
+    }
+    .photocard-gacha-modal-box iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #0c0a16;
+    }
+    .photocard-gacha-close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 2;
+      width: 34px;
+      height: 34px;
+      border-radius: 50%;
+      border: 1px solid rgba(255,255,255,0.3);
+      background: rgba(12,10,22,0.6);
+      backdrop-filter: blur(8px);
+      color: #f4eefb;
+      font-size: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .photocard-gacha-close-btn:hover { background: rgba(12,10,22,0.85); }
+
     .wild-toggle-btn {
       /* 파이리(야생 이스터에그) 버튼은 몬스터볼 버튼 옆이 아니라 그 위쪽에
          같은 x축(left)으로 쌓이도록 배치한다. */
@@ -2759,6 +2812,38 @@
   <!-- 포획된 포켓몬 버튼: 처음엔 숨겨져 있다가 하나라도 포획하면 나타난다. -->
   <button id="captured-list-btn" class="pokeball-spawn-btn captured-list-btn" title="포획된 포켓몬" style="display:none;">📦</button>
   <div id="captured-list-panel" class="captured-list-panel" style="display:none;"></div>
+
+  <!-- 홀로카드 뽑기 버튼 -->
+  <button id="photocard-gacha-btn" class="pokeball-spawn-btn photocard-gacha-btn" title="홀로카드 뽑기">🃏</button>
+  <div id="photocard-gacha-modal-bg" class="photocard-gacha-modal-bg">
+    <div class="photocard-gacha-modal-box">
+      <button id="photocard-gacha-close-btn" class="photocard-gacha-close-btn" title="닫기">✕</button>
+      <iframe id="photocard-gacha-iframe" src="" title="RESCENE 홀로카드 뽑기"></iframe>
+    </div>
+  </div>
+  <script>
+    (function(){
+      var btn = document.getElementById('photocard-gacha-btn');
+      var modalBg = document.getElementById('photocard-gacha-modal-bg');
+      var closeBtn = document.getElementById('photocard-gacha-close-btn');
+      var iframe = document.getElementById('photocard-gacha-iframe');
+      var loaded = false;
+      btn.addEventListener('click', function(){
+        if(!loaded){
+          // 같은 폴더에 holo_photocard_gacha.html 파일을 함께 두세요.
+          iframe.src = 'holo_photocard_gacha.html';
+          loaded = true;
+        }
+        modalBg.classList.add('show');
+      });
+      closeBtn.addEventListener('click', function(){
+        modalBg.classList.remove('show');
+      });
+      modalBg.addEventListener('click', function(e){
+        if(e.target === modalBg) modalBg.classList.remove('show');
+      });
+    })();
+  </script>
 
   <!-- 야생 파이리 이스터에그 on/off 토글 버튼 -->
   <button id="wild-toggle-btn" class="pokeball-spawn-btn wild-toggle-btn active" title="야생 파이리 이스터에그 켜기/끄기">
