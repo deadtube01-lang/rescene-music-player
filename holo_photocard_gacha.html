@@ -448,7 +448,7 @@ function doPull(){
     snd.play().catch(err=>{ console.warn('[gacha sfx] 재생 실패:', err.name, err.message); });
   }catch(e){}
 
-  const revealDelay = Math.max(300, (isFinite(snd.duration) && snd.duration > 0 ? snd.duration*1000 : (isHighTier ? 4070 : 3310)) - 120);
+  const revealDelay = 900; // 효과음 재생 0.9초 시점에 카드 공개
 
   setTimeout(()=>{
     const isNew = !owned[picked.id];
