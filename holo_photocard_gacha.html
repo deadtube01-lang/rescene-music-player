@@ -312,7 +312,7 @@
     </div>
 
     <button class="pull-btn" id="pullBtn">팩 개봉하기</button>
-    <div class="pull-hint">1회 뽑기 · 확률 N 58% · R 27% · SR 12% · SSR 3%</div>
+    <div class="pull-hint">1회 뽑기 · 확률 N 40% · R 30% · SR 20% · SSR 10%</div>
   </div>
 
   <div class="section-head">
@@ -373,7 +373,7 @@ document.querySelectorAll('#statUnique,#gridCount').forEach(()=>{});
 document.getElementById('statUnique').textContent = '0 / ' + CARDS.length;
 document.getElementById('gridCount').textContent = '0 / ' + CARDS.length + ' 수집';
 
-const RARITY_WEIGHT = {N:58, R:27, SR:12, SSR:3};
+const RARITY_WEIGHT = {N:40, R:30, SR:20, SSR:10};
 const RARITY_LABEL = {N:'노멀', R:'레어', SR:'슈퍼레어', SSR:'시크릿'};
 
 let owned = {}; // id -> count
