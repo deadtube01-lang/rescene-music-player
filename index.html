@@ -2849,7 +2849,7 @@
       btn.addEventListener('click', function(){
         if(!loaded){
           // 같은 폴더에 holo_photocard_gacha.html 파일을 함께 두세요.
-          iframe.src = 'holo_photocard_gacha.html';
+          iframe.src = 'holo_photocard_gacha.html?v=' + Date.now();
           loaded = true;
         }
         modalBg.classList.add('show');
