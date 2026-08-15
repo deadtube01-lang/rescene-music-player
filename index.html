@@ -3469,8 +3469,12 @@
       "background/RESCENE_MAY_Wallpaper.jpg",
       "background/RESCENE_MINAMI_Wallpaper.jpg",
       "background/RESCENE_WONI_Wallpaper.jpg",
-      "background/RESCENE_ZENA_Wallpaper.jpg"
+      "background/RESCENE_ZENA_Wallpaper.jpg",
+      "background/음악중심 트리플 크라운 축하 이미지.png"
     ];
+
+    // 저장된 배경이 없을 때(첫 방문) 기본으로 보여줄 배경화면
+    const DEFAULT_BACKGROUND = "background/음악중심 트리플 크라운 축하 이미지.png";
 
     /* ----------------------------------
        여러 배경화면 동시 표시 (최대 4장) + 자유 2D 드래그
@@ -8516,7 +8520,12 @@
       activeBackgrounds = savedActiveBackgrounds;
       renderBackgroundLayers();
     } else {
-      changeRandomBackground();
+      const defaultIdx = backgrounds.indexOf(DEFAULT_BACKGROUND);
+      if (defaultIdx >= 0) {
+        setSingleBackgroundByIndex(defaultIdx);
+      } else {
+        changeRandomBackground();
+      }
     }
     refreshBackgroundsFromGitHubPages();
 
