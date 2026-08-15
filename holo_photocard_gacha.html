@@ -132,9 +132,13 @@
   /* ---------- Card ---------- */
   .card-stand{
     width:230px;height:356px;perspective:900px;
-    display:none;
+    visibility:hidden;
+    pointer-events:none;
   }
-  .card-stand.show{display:block;}
+  .card-stand.show{
+    visibility:visible;
+    pointer-events:auto;
+  }
   .card{
     width:100%;height:100%;border-radius:16px;position:relative;
     transform-style:preserve-3d;
@@ -206,9 +210,9 @@
   .tag.SSR{color:var(--ssr);}
 
   .reveal-caption{
-    display:none;text-align:center;margin-top:16px;
+    visibility:hidden;text-align:center;margin-top:16px;
   }
-  .reveal-caption.show{display:block;animation:fadeup .5s ease both;}
+  .reveal-caption.show{visibility:visible;animation:fadeup .5s ease both;}
   @keyframes fadeup{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
   .reveal-caption .rarity-line{font-size:12px;letter-spacing:.14em;color:var(--ink-dim);}
   .reveal-caption .card-name{font-family:Georgia,serif;font-style:italic;font-size:22px;margin:2px 0 4px;}
