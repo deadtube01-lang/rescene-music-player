@@ -168,8 +168,8 @@
 
     .captured-list-panel {
       position: fixed;
-      left: 16px;
-      bottom: 68px;
+      left: 120px;
+      bottom: 16px;
       z-index: 9998;
       background: rgba(18, 22, 28, 0.85);
       border: 1px solid rgba(255, 255, 255, 0.25);
@@ -10159,10 +10159,20 @@
       }
 
       if (listBtn) {
-        listBtn.addEventListener('click', () => {
+        listBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
           listPanel.style.display = listPanel.style.display === 'none' ? 'block' : 'none';
         });
       }
+
+      // 가방(포획 목록) 패널이 열려있는 상태에서 패널/버튼 바깥(바탕화면 등)을
+      // 클릭하면 패널이 닫히도록 한다.
+      document.addEventListener('click', (e) => {
+        if (!listPanel || listPanel.style.display === 'none') return;
+        if (listPanel.contains(e.target)) return;
+        if (listBtn && listBtn.contains(e.target)) return;
+        listPanel.style.display = 'none';
+      });
 
       renderCapturedListUI();
 
