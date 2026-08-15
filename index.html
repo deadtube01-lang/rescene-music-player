@@ -1047,19 +1047,19 @@
     }
 
     .album-card-name-container.overflowing .album-card-marquee-track {
-      animation: albumMarquee 6s linear infinite;
+      animation: albumMarquee linear infinite alternate;
+      animation-duration: var(--marquee-duration, 3s);
       animation-play-state: paused;
     }
 
     .album-card-item:hover .album-card-name-container.overflowing .album-card-marquee-track,
     .album-card-item.selected .album-card-name-container.overflowing .album-card-marquee-track {
       animation-play-state: running;
-      animation-duration: 2s;
     }
 
     @keyframes albumMarquee {
-      0% { transform: translateX(0%); }
-      100% { transform: translateX(-50%); }
+      0% { transform: translateX(0); }
+      100% { transform: translateX(var(--marquee-shift, 0px)); }
     }
 
     .tracklist-box {
@@ -2271,7 +2271,8 @@
     }
 
     .playlist-item-container.overflowing .playlist-marquee-track {
-      animation: smooth-marquee-playlist 2s linear infinite alternate;
+      animation: smooth-marquee-playlist linear infinite alternate;
+      animation-duration: var(--marquee-duration, 2s);
     }
 
     @keyframes smooth-marquee-playlist {
@@ -2290,12 +2291,16 @@
       font-size: 13px;
       color: #a5b1c2;
       flex-shrink: 0;
+      min-width: 34px;
+      text-align: right;
     }
     .track-view-count-text {
       font-size: 12px;
       color: #FC6FCF;
       flex-shrink: 0;
       white-space: nowrap;
+      min-width: 56px;
+      text-align: right;
     }
     body.light-mode .track-view-count-text {
       color: #d6249f;
@@ -2615,6 +2620,16 @@
        - 버튼/슬라이더 등 터치 조작 영역을 더 크게
     ---------------------------------- */
     @media (max-width: 768px) {
+      /* 좁은 화면에서는 좋아요/조회수/재생시간 사이 간격이 과하게
+         넓어 보이므로 모바일에서만 간격을 줄인다 */
+      .track-right-group {
+        gap: 5px !important;
+      }
+      .track-view-count-text {
+        min-width: 0 !important;
+      }
+
+
       body {
         flex-direction: column;
         align-items: stretch;
@@ -7103,6 +7118,11 @@
     }
 
     function updateMarqueeEffect() {
+      // 텍스트 길이와 무관하게 체감 속도가 동일하도록,
+      // 픽셀/초 기준 고정 속도로 이동 거리에 맞춰 애니메이션 시간을 계산한다.
+      const MARQUEE_SPEED_PX_PER_SEC = 40;
+      const MIN_MARQUEE_DURATION = 1.2;
+
       const container = document.querySelector('.title-container');
       const track = document.querySelector('.marquee-track');
 
@@ -7111,9 +7131,12 @@
         if (overflowAmount > 0) {
           container.classList.add('overflowing');
           track.style.setProperty('--marquee-shift', `${-overflowAmount}px`);
+          const duration = Math.max(MIN_MARQUEE_DURATION, overflowAmount / MARQUEE_SPEED_PX_PER_SEC);
+          track.style.setProperty('--marquee-duration', `${duration}s`);
         } else {
           container.classList.remove('overflowing');
           track.style.removeProperty('--marquee-shift');
+          track.style.removeProperty('--marquee-duration');
         }
       }
 
@@ -7124,9 +7147,12 @@
           if (overflowAmount > 0) {
             itemContainer.classList.add('overflowing');
             itemTrack.style.setProperty('--marquee-shift', `${-overflowAmount}px`);
+            const duration = Math.max(MIN_MARQUEE_DURATION, overflowAmount / MARQUEE_SPEED_PX_PER_SEC);
+            itemTrack.style.setProperty('--marquee-duration', `${duration}s`);
           } else {
             itemContainer.classList.remove('overflowing');
             itemTrack.style.removeProperty('--marquee-shift');
+            itemTrack.style.removeProperty('--marquee-duration');
           }
         }
       });
@@ -7134,10 +7160,16 @@
       document.querySelectorAll('.album-card-name-container').forEach(cardContainer => {
         const cardTrack = cardContainer.querySelector('.album-card-marquee-track');
         if (cardTrack && cardContainer) {
-          if (cardTrack.scrollWidth > cardContainer.clientWidth) {
+          const overflowAmount = Math.ceil(cardTrack.scrollWidth - cardContainer.clientWidth);
+          if (overflowAmount > 0) {
             cardContainer.classList.add('overflowing');
+            cardTrack.style.setProperty('--marquee-shift', `${-overflowAmount}px`);
+            const duration = Math.max(MIN_MARQUEE_DURATION, overflowAmount / MARQUEE_SPEED_PX_PER_SEC);
+            cardTrack.style.setProperty('--marquee-duration', `${duration}s`);
           } else {
             cardContainer.classList.remove('overflowing');
+            cardTrack.style.removeProperty('--marquee-shift');
+            cardTrack.style.removeProperty('--marquee-duration');
           }
         }
       });
