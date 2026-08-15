@@ -9609,13 +9609,16 @@
     // scaleX(-1) 좌우 반전으로 한쪽 이미지를 재사용하지 않는다.
     // ----------------------------------
     ;(function setupWildCharmanderEasterEgg() {
-      // 오른쪽/왼쪽을 보고 걷는 각각의 애니메이션 webp. 이제는 두 방향 모두
-      // 실제 촬영된(반전이 아닌) 원본 파일을 그대로 쓰기 때문에, 더 이상
-      // scaleX(-1) 좌우 반전을 걸 필요가 없다.
-      const WALK_RIGHT_SRC = 'POKEMON/야생의 우로 걷는 파이리.webp';
+      // (성능 개선) 기존에는 좌/우 각각 실제 촬영된 원본 webp(걷기 2장 + 불뿜기
+      // 2장 = 총 4장, 그중 불뿜기는 각 11MB짜리 43프레임)를 전부 동시에 계속
+      // 재생시켜 놨었는데, 이 무거운 애니메이션 webp가 늘 background에서
+      // 4개나 재생되고 있는 것 자체가 지속적인 렉의 원인이었다. 오른쪽을
+      // 보는 그림은 왼쪽 그림을 CSS로 좌우 반전(scaleX(-1))해서 그대로
+      // 재사용하면 시각적으로 동일하게 보이므로, 실제로 디코딩/재생해야 하는
+      // webp를 걷기 1장 + 불뿜기 1장, 총 2장으로 절반 줄인다.
       const WALK_LEFT_SRC = 'POKEMON/야생의 좌로 걷는 파이리.webp';
 
-      // (성능) 이 webp 원본들은 2160x720짜리 큰 애니메이션이라, 파이리가 처음
+      // (성능) 이 webp 원본은 2160x720짜리 큰 애니메이션이라, 파이리가 처음
       // 소환되는 그 순간 <img>를 새로 만들어 src를 지정하면 브라우저가 그제서야
       // 파일을 받고 디코딩을 시작해서 그 프레임에 버벅임(스터터)이 생겼다.
       // 페이지 로드 시점에 미리 백그라운드로 한 번 받아서 디코딩까지 끝내
@@ -9629,7 +9632,6 @@
           warm.decode().catch(() => {}); // 디코드 실패해도 조용히 무시(치명적이지 않음)
         }
       }
-      warmUpImage(WALK_RIGHT_SRC);
       warmUpImage(WALK_LEFT_SRC);
 
       // 4개의 webp 원본은 전부 2160x720 캔버스 크기로 맞춰져 있지만, 실제
@@ -9674,26 +9676,29 @@
 
       // ------- 이스터에그: 몬스터볼을 맞고 "불뿜기 반격"으로 튕겨내기 -------
       // 파이리 기준으로 몬스터볼이 왼쪽에서 날아왔으면 왼쪽을 향해, 오른쪽에서
-      // 날아왔으면 오른쪽을 향해 불을 뿜는 이미지를 사용한다.
+      // 날아왔으면 오른쪽을 향해 불을 뿜는 이미지를 사용한다. (성능) 오른쪽
+      // 방향은 별도 webp를 디코딩하지 않고, 왼쪽 원본을 CSS로 좌우 반전해서
+      // 만든다.
       const FIRE_LEFT_SRC = 'POKEMON/좌로 불뿜는 야생파이리.webp';
-      const FIRE_RIGHT_SRC = 'POKEMON/우로 불뿜는 야생파이리.webp';
       const FIRE_SOUND_SRC = 'POKEMON/fire.mp3';
       // 몬스터볼이 파이리에게 맞았을 때, 이 확률로 포획 연출 대신 불을 뿜어
       // 몬스터볼을 튕겨낸다(나머지 확률은 기존처럼 포획 연출 진행).
       const FIRE_COUNTER_CHANCE = 0.6;
 
-      // 불뿜기 webp(각 11MB, 43프레임)를 반격이 실제로 일어나는 시점에 처음
+      // 불뿜기 webp(11MB, 43프레임)를 반격이 실제로 일어나는 시점에 처음
       // 만들면 그때부터 다운로드+디코딩이 시작돼서, 지난번에 미리 로드는
       // 해놨지만 그래도 "새 <img> 엘리먼트"를 만들어 src를 대입하는 순간
       // 다시 첫 프레임을 그리는 데 시간이 걸려 몬스터볼이 이미 날아간
       // 뒤에야 불이 보이는 지연이 남아있었다.
       //
-      // 그래서 걷는 파이리와 같은 방식으로: 좌/우 불뿜기 창(window+img)을
-      // 페이지가 열릴 때 딱 한 번만 만들어서 화면 밖(opacity:0)에서부터
-      // 계속 재생시켜 놓는다. 실제 반격이 일어나면 이 엘리먼트를 새로
-      // 만들지 않고 위치만 옮기고 opacity만 1로 바꿔서 "이미 재생 중이던"
-      // 영상을 그대로 보여주기만 하므로 지연이 사실상 0에 가깝다.
-      function makeFireAsset(side) {
+      // 그래서 걷는 파이리와 같은 방식으로: 불뿜기 창(window+img)을
+      // 페이지가 열릴 때 딱 한 번만(왼쪽 원본 하나만) 만들어서 화면 밖
+      // (opacity:0)에서부터 계속 재생시켜 놓는다. 실제 반격이 일어나면 이
+      // 엘리먼트를 새로 만들지 않고 위치만 옮기고 opacity만 1로 바꿔서
+      // "이미 재생 중이던" 영상을 그대로 보여주기만 하므로 지연이 사실상
+      // 0에 가깝다. 오른쪽으로 반격할 때는 이 같은 창을 CSS scaleX(-1)로
+      // 반전해서 보여준다 (두 번째 11MB webp를 따로 재생할 필요가 없다).
+      function makeFireAsset() {
         const win = document.createElement('div');
         win.style.position = 'fixed';
         win.style.left = '-9999px';
@@ -9709,19 +9714,18 @@
         const img = document.createElement('img');
         img.alt = '불뿜는 야생 파이리';
         img.style.position = 'absolute';
-        const cropX = side === 'left' ? FIRE_CROP_X.left : FIRE_CROP_X.right;
-        img.style.left = (-cropX * SPRITE_SCALE) + 'px';
+        img.style.left = (-FIRE_CROP_X.left * SPRITE_SCALE) + 'px';
         img.style.top = (-FIRE_CROP_Y * SPRITE_SCALE) + 'px';
         img.style.width = FULL_IMG_WIDTH + 'px';
         img.style.height = 'auto';
         img.style.display = 'block';
-        img.src = side === 'left' ? FIRE_LEFT_SRC : FIRE_RIGHT_SRC;
+        img.src = FIRE_LEFT_SRC;
 
         win.appendChild(img);
         document.body.appendChild(win);
         return { win, img };
       }
-      const fireAssets = { left: makeFireAsset('left'), right: makeFireAsset('right') };
+      const fireAsset = makeFireAsset();
 
 
       // 자주 재생되는 효과음들은 미리 만들어 둬서(브라우저가 미리 내려받아 두도록)
@@ -9782,25 +9786,17 @@
         // 방향 전환마다 img.src를 새로 대입하면 브라우저가 애니메이션 webp를
         // 처음부터 다시 디코딩/재생해서, 걷는 중간(예: 다리가 뒤로 뻗은 프레임)에
         // 갑자기 1번 프레임으로 뚝 끊기고 재시작하는 문제가 있었다 -- 이게
-        // "제자리 걸음/백스텝"처럼 보인 진짜 원인이었다(실제 원본 웹툰/webp
-        // 프레임 자체는 189프레임 전체가 정상적인 걷기 루프였음, 크롭 범위도
-        // 이상 없었음). startWandering이 0.5~2초마다 무작위로 방향을 다시
-        // 고르기 때문에 이 리셋이 매우 자주 발생했었다.
+        // "제자리 걸음/백스텝"처럼 보인 진짜 원인이었다.
         //
-        // 해결: 좌/우 webp 두 장을 처음부터 둘 다 만들어서 동시에 계속
-        // 재생시켜 놓고(둘 다 src를 딱 한 번만 지정), 방향이 바뀔 때는 어느
-        // 쪽을 보여줄지만 opacity로 토글한다. 이러면 src를 다시 대입하는
-        // 일이 없으니 애니메이션이 절대 리셋되지 않는다.
-        //
-        // (성능) 이 원본 webp는 2160x720짜리 큰 애니메이션이라 <img> 엘리먼트를
-        // 새로 만들어 src를 지정할 때마다 디코딩이 다시 일어나 소환 순간에
-        // 렉(버벅임)이 생겼다. opts.reusePool로 이미 디코딩이 끝난 <img>
-        // 엘리먼트 한 쌍을 재사용할 수 있게 해서, 같은 파이리가 사라졌다
-        // 다시 나타날 때는 새로 디코딩하지 않고 그대로 이어서 쓴다.
-        function makeDirImg(d) {
+        // (성능 개선) 예전에는 좌/우 각각 실제 원본 webp를 만들어 둘 다 항상
+        // 재생시켜 놓고 opacity로만 토글했는데, 무거운 애니메이션 webp가 늘
+        // 2개씩 background에서 재생되고 있어서 그 자체가 지속적인 렉의
+        // 원인이었다. 이제는 왼쪽 원본 <img> 딱 하나만 계속 재생시켜 두고,
+        // 오른쪽을 보여줄 때는 이 창(windowEl) 자체를 CSS scaleX(-1)로
+        // 좌우 반전한다. 실제로 디코딩/재생해야 하는 webp가 절반으로 줄어든다.
+        function makeDirImg() {
           const el = document.createElement('img');
           el.className = 'wild-charmander-img';
-          el.dataset.dir = d;
           el.decoding = 'async';
           el.loading = 'eager';
           el.style.position = 'absolute';
@@ -9808,20 +9804,13 @@
           el.style.height = 'auto';
           el.style.pointerEvents = 'none';
           el.style.willChange = 'transform';
-          const cropX = d === 'left' ? WALK_CROP_X.left : WALK_CROP_X.right;
-          el.style.left = (-cropX * SPRITE_SCALE) + 'px';
+          el.style.left = (-WALK_CROP_X.left * SPRITE_SCALE) + 'px';
           el.style.top = (-WALK_CROP_Y * SPRITE_SCALE) + 'px';
-          el.src = d === 'left' ? WALK_LEFT_SRC : WALK_RIGHT_SRC;
+          el.src = WALK_LEFT_SRC;
           return el;
         }
         const pool = opts.reusePool;
-        const imgRight = (pool && pool.imgRight) || makeDirImg('right');
-        const imgLeft = (pool && pool.imgLeft) || makeDirImg('left');
-        imgRight.style.opacity = '1';
-        imgLeft.style.opacity = '0';
-        // 기존 코드 곳곳에서 쓰던 img.src / img.addEventListener('error') 등
-        // 접근을 그대로 지원하기 위한 하위호환용 참조 (오른쪽 이미지를 대표로 사용).
-        const img = imgRight;
+        const img = (pool && pool.img) || makeDirImg();
 
         let bubbleEl = null;
         let bubbleHideTimer = null;
@@ -9870,11 +9859,8 @@
           if (suppressClick) { suppressClick = false; return; }
           playRandomCry(showBubble);
         });
-        imgRight.addEventListener('error', () => {
-          console.error('[wild-charmander] 이미지 로드 실패:', imgRight.currentSrc || WALK_RIGHT_SRC);
-        });
-        imgLeft.addEventListener('error', () => {
-          console.error('[wild-charmander] 이미지 로드 실패:', imgLeft.currentSrc || WALK_LEFT_SRC);
+        img.addEventListener('error', () => {
+          console.error('[wild-charmander] 이미지 로드 실패:', img.currentSrc || WALK_LEFT_SRC);
         });
         // 파이리를 누르는 순간, 배경화면 드래그(문서 전체에 걸린 mousedown 리스너)로
         // 이벤트가 같이 전파되지 않도록 막는다. 이게 없으면 파이리를 클릭/드래그할 때
@@ -9883,12 +9869,12 @@
         windowEl.addEventListener('mousedown', (e) => e.stopPropagation());
         windowEl.addEventListener('touchstart', (e) => e.stopPropagation(), { passive: true });
 
-        windowEl.appendChild(imgRight);
-        windowEl.appendChild(imgLeft);
+        windowEl.appendChild(img);
         wrapper.appendChild(windowEl);
         document.body.appendChild(wrapper);
 
         let dir = 'right';
+        windowEl.style.transform = 'scaleX(-1)';
         let controllerRef = null; // bindController()로 이동 컨트롤러를 나중에 연결
 
         function applyTransform(x, y) {
@@ -9964,15 +9950,10 @@
           setDirection(d) {
             if (dir === d) return;
             dir = d;
-            // src는 절대 건드리지 않고 보이는 쪽만 바꾼다 -- 두 이미지 모두
-            // 처음부터 계속 재생 중이므로 애니메이션이 리셋되지 않는다.
-            if (d === 'left') {
-              imgLeft.style.opacity = '1';
-              imgRight.style.opacity = '0';
-            } else {
-              imgRight.style.opacity = '1';
-              imgLeft.style.opacity = '0';
-            }
+            // 이미지는 왼쪽 원본 하나뿐이므로, 오른쪽을 보여줘야 할 때는
+            // 창 자체를 좌우 반전(scaleX(-1))한다. src는 전혀 건드리지
+            // 않으므로 애니메이션도 리셋되지 않는다.
+            windowEl.style.transform = d === 'right' ? 'scaleX(-1)' : '';
           },
           applyTransform,
           bindController(c) { controllerRef = c; },
@@ -9983,8 +9964,7 @@
             // 디코딩된 상태 그대로 숨겨진 보관소로 되돌려서 다음 소환 때
             // 다시 디코딩하지 않도록 한다.
             if (pool && pool.holder) {
-              pool.holder.appendChild(imgRight);
-              pool.holder.appendChild(imgLeft);
+              pool.holder.appendChild(img);
             }
             wrapper.remove();
           }
@@ -10243,12 +10223,11 @@
           const holder = document.createElement('div');
           holder.style.cssText = 'position:fixed;width:0;height:0;overflow:hidden;pointer-events:none;';
           document.body.appendChild(holder);
-          window.__wildImgPool = { imgRight: null, imgLeft: null, holder };
+          window.__wildImgPool = { img: null, holder };
         }
         const sprite = createCharmanderSprite({ reusePool: window.__wildImgPool });
         // 새로 만들어진 이미지라면(처음 소환) 풀에 저장해서 다음부터 재사용한다.
-        window.__wildImgPool.imgRight = sprite.canvas.querySelector('.wild-charmander-img[data-dir="right"]') || window.__wildImgPool.imgRight;
-        window.__wildImgPool.imgLeft = sprite.canvas.querySelector('.wild-charmander-img[data-dir="left"]') || window.__wildImgPool.imgLeft;
+        window.__wildImgPool.img = sprite.canvas.querySelector('.wild-charmander-img') || window.__wildImgPool.img;
         // 명시적으로 opts에 좌표가 지정되지 않았다면, 마지막으로 있던 좌표에서 이어서 등장시킨다.
         const baseOpts = { speed: 110 };
         if (lastWildPos) {
@@ -10348,14 +10327,15 @@
         const footY = rect.y + rect.h;
         wildState.sprite.destroy();
 
-        const fireCropX = ballSide === 'left' ? FIRE_CROP_X.left : FIRE_CROP_X.right;
+        const fireCropX = FIRE_CROP_X.left;
 
         // 새 엘리먼트를 만들지 않고, 페이지 로드 때부터 화면 밖에서 계속
         // 재생되고 있던 불뿜기 창을 그대로 가져와 위치만 옮기고 보이게
         // 한다 -- 디코딩/첫 프레임 그리기를 기다릴 필요가 없어서 몬스터볼이
-        // 맞는 즉시(다음 프레임 안에) 불이 나온다.
-        const fireAsset = ballSide === 'left' ? fireAssets.left : fireAssets.right;
+        // 맞는 즉시(다음 프레임 안에) 불이 나온다. 오른쪽으로 반격할 때는
+        // 이 창을 그대로 좌우 반전(scaleX(-1))해서 보여준다.
         const fireWindow = fireAsset.win;
+        fireWindow.style.transform = ballSide === 'right' ? 'scaleX(-1)' : '';
         fireWindow.style.left = (footX - FIRE_WINDOW_WIDTH / 2) + 'px';
         fireWindow.style.top = (footY - FIRE_WINDOW_HEIGHT) + 'px';
         fireWindow.style.opacity = '1';
@@ -10377,7 +10357,7 @@
           window.__wildIsCapturing = false;
           if (!wildState) return; // 연출 도중 도망/정리된 경우 대비
           // 불뿜기 연출이 끝나면 같은 자리에서 다시 걷기 시작.
-          const sprite = createCharmanderSprite();
+          const sprite = createCharmanderSprite({ reusePool: window.__wildImgPool });
           const controller = startWandering(sprite, { speed: 110, startX: rect.x, startY: rect.y });
           wildState = { sprite, controller, capturing: false, despawnTimer: null };
           window.__wildCollisionCheck = makeCollisionChecker();
@@ -10441,7 +10421,7 @@
           // 포획 실패 시에도 몬스터볼은 화면(배경)에서 사라지고, 다시 던지려면
           // 왼쪽 아래 소환 버튼을 눌러 새로 꺼내야 한다(성공 시와 동일한 처리).
           window.__pokeballConsumeOnCapture && window.__pokeballConsumeOnCapture();
-          const sprite = createCharmanderSprite();
+          const sprite = createCharmanderSprite({ reusePool: window.__wildImgPool });
           const controller = startWandering(sprite, {
             speed: 140,
             startX: center ? Math.max(0, center.x - SPRITE_WIDTH / 2) : undefined,
