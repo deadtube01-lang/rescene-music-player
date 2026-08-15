@@ -221,8 +221,8 @@
 
     .captured-list-panel {
       position: fixed;
-      left: 120px;
-      bottom: 16px;
+      left: 68px;
+      bottom: 68px;
       z-index: 9998;
       background: rgba(18, 22, 28, 0.85);
       border: 1px solid rgba(255, 255, 255, 0.25);
@@ -3950,7 +3950,7 @@
        6시간 캐시(VIEW_COUNT_CACHE_MS)까지 걸려 있어서 개인 팬사이트 수준
        트래픽에서는 넉넉하다.
     ---------------------------------- */
-    const YOUTUBE_API_KEY = 'AIzaSyDd4xG4qyhJwUravNrMeYkT5v7EEp1IeU0'; // ← 여기에 발급받은 API 키를 넣으세요 (비워두면 조회수 기능이 안내 메시지만 표시함)
+    const YOUTUBE_API_KEY = 'AIzaSyA2uXByCh3t0KtT8lMZtDIGWNSKFDTEPXk'; // ← 여기에 발급받은 API 키를 넣으세요 (비워두면 조회수 기능이 안내 메시지만 표시함)
 
     let viewCountsData = {}; // videoId -> 조회수(숫자), 메모리 캐시(현재 세션용)
     let viewCountsCache = {}; // videoId -> { count, ts } , localStorage에 영속 저장 (방문자 브라우저별 캐시라 API 호출을 줄여줌)
