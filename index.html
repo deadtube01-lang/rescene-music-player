@@ -812,7 +812,7 @@
 
     .category-buttons {
       display: flex;
-      gap: 6px;
+      gap: 4px;
       flex-wrap: wrap;
     }
 
@@ -820,14 +820,15 @@
       background: rgba(13, 17, 23, 0.35);
       color: #c5cbd3;
       border: 1px solid rgba(255, 255, 255, 0.15);
-      padding: 7px 14px;
+      padding: 6px 9px;
       border-radius: 20px;
-      font-size: 14px;
+      font-size: 12.5px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
       outline: none;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+      white-space: nowrap;
     }
 
     .cat-btn:hover {
@@ -3796,11 +3797,28 @@
     /* ----------------------------------
        "조회수" 카테고리: 유튜브 실제 조회수 순으로 음원 정렬
        YouTube Data API v3 (videos.list, part=statistics)를 사용한다.
-       API 키는 사용자가 직접 발급받아 최초 1회 입력하면 로컬에 저장해두고 재사용한다.
-       (Google Cloud Console에서 무료로 발급 가능, 일일 무료 할당량 안에서 충분히 사용 가능)
+
+       *** 이 사이트를 운영하는 사람만 아래 한 줄을 채우면 됩니다 ***
+       방문자마다 API 키를 입력하게 할 수는 없으므로, 운영자가 자기 키를
+       여기 한 번만 넣어두고 모든 방문자가 같은 키를 공유해서 쓴다.
+
+       키 발급 방법:
+       1) https://console.cloud.google.com 접속 → 프로젝트 생성
+       2) "API 및 서비스 > 라이브러리"에서 "YouTube Data API v3" 사용 설정
+       3) "API 및 서비스 > 사용자 인증 정보"에서 API 키 발급
+       4) 발급된 키를 클릭 → "애플리케이션 제한사항"을 HTTP 리퍼러(웹사이트)로 설정하고
+          이 사이트 도메인(예: https://내도메인.com/*)만 등록해두면, 코드에 키가
+          그대로 노출되어도 다른 사이트에서는 이 키로 요청을 보낼 수 없다.
+       5) 아래 YOUTUBE_API_KEY 상수에 붙여넣기.
+
+       무료 할당량은 하루 10,000유닛이고, 이 조회는 호출당 1유닛만 쓰며
+       6시간 캐시(VIEW_COUNT_CACHE_MS)까지 걸려 있어서 개인 팬사이트 수준
+       트래픽에서는 넉넉하다.
     ---------------------------------- */
+    const YOUTUBE_API_KEY = ''; // ← 여기에 발급받은 API 키를 넣으세요 (비워두면 조회수 기능이 안내 메시지만 표시함)
+
     let viewCountsData = {}; // videoId -> 조회수(숫자), 메모리 캐시(현재 세션용)
-    let viewCountsCache = {}; // videoId -> { count, ts } , localStorage에 영속 저장
+    let viewCountsCache = {}; // videoId -> { count, ts } , localStorage에 영속 저장 (방문자 브라우저별 캐시라 API 호출을 줄여줌)
     try {
       const savedViews = localStorage.getItem('rescene_yt_view_counts');
       if (savedViews) viewCountsCache = JSON.parse(savedViews);
@@ -3814,20 +3832,7 @@
     let viewsRenderRequestId = 0; // 조회수 로딩 도중 다른 카테고리로 바뀌면 이전 요청 결과를 무시하기 위한 값
 
     function getYoutubeApiKey() {
-      let key = '';
-      try { key = localStorage.getItem('rescene_yt_api_key') || ''; } catch (e) {}
-      if (key) return key;
-      key = window.prompt(
-        '유튜브 실제 조회수를 불러오려면 YouTube Data API v3 키가 필요합니다.\n' +
-        '(Google Cloud Console → API 및 서비스 → YouTube Data API v3 사용 설정 후 무료로 발급 가능)\n\n' +
-        'API 키를 입력해주세요:'
-      );
-      if (key && key.trim()) {
-        key = key.trim();
-        try { localStorage.setItem('rescene_yt_api_key', key); } catch (e) {}
-        return key;
-      }
-      return '';
+      return YOUTUBE_API_KEY || '';
     }
 
     // videoIds에 대한 조회수를 가져온다. 캐시(6시간 이내)가 있으면 그대로 쓰고,
@@ -7576,7 +7581,7 @@
         trackListUl.innerHTML = '';
         const li = document.createElement('li');
         li.className = 'track-placeholder';
-        li.innerText = 'YouTube API 키가 없어 조회수를 불러올 수 없습니다.';
+        li.innerText = '조회수 기능이 아직 설정되지 않았습니다. (관리자: YOUTUBE_API_KEY를 채워주세요)';
         trackListUl.appendChild(li);
         return;
       }
@@ -7608,17 +7613,6 @@
         li.className = 'track-placeholder';
         li.innerText = `조회수를 불러오지 못했습니다 (${result.error}).`;
         trackListUl.appendChild(li);
-
-        const resetBtn = document.createElement('button');
-        resetBtn.className = 'track-action-btn';
-        resetBtn.style.cssText = 'display:block;margin:10px auto 0;padding:6px 14px;';
-        resetBtn.innerText = 'API 키 다시 입력하기';
-        resetBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          try { localStorage.removeItem('rescene_yt_api_key'); } catch (err) {}
-          renderTrackListUI();
-        });
-        trackListUl.appendChild(resetBtn);
         return;
       }
 
