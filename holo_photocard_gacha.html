@@ -23,6 +23,17 @@
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;background:var(--bg-0);}
+  html,body{
+    scrollbar-width:thin;
+    scrollbar-color:rgba(244,238,251,0.3) rgba(255,255,255,0.03);
+  }
+  ::-webkit-scrollbar{width:6px;height:6px;}
+  ::-webkit-scrollbar-track{background:rgba(255,255,255,0.03);}
+  ::-webkit-scrollbar-thumb{
+    background:rgba(244,238,251,0.28);
+    border-radius:6px;
+  }
+  ::-webkit-scrollbar-thumb:hover{background:rgba(244,238,251,0.45);}
   body{
     font-family:'PretendardV','Pretendard','Noto Sans KR',-apple-system,BlinkMacSystemFont,sans-serif;
     color:var(--ink);
@@ -264,7 +275,7 @@
 <body>
 <div class="wrap">
 
-  <div class="eyebrow">RESCENE OFFICIAL · HOLO PACK</div>
+  <div class="eyebrow">RESCENE FAN MADE · HOLO PACK</div>
   <h1>홀로카드 뽑기</h1>
   <p class="sub">팩을 눌러 카드를 개봉하세요. 카드를 손가락(또는 마우스)으로 움직이면 홀로그램이 살아납니다. 등급은 N · R · SR · SSR 네 단계.</p>
 

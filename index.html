@@ -16,6 +16,15 @@
       padding: 0;
     }
 
+    html, body {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255,255,255,0.3) rgba(255,255,255,0.03);
+    }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(255,255,255,0.03); }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.28); border-radius: 6px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.45); }
+
     body {
       position: relative;
       background-color: #0d1117;
@@ -168,13 +177,19 @@
       backdrop-filter: blur(4px);
       align-items: center;
       justify-content: center;
+      padding: 28px;
     }
     .photocard-gacha-modal-bg.show { display: flex; }
 
+    .photocard-gacha-modal-wrap {
+      position: relative;
+      width: min(760px, 100%);
+      height: min(880px, 100%);
+    }
     .photocard-gacha-modal-box {
       position: relative;
-      width: min(760px, 94vw);
-      height: min(880px, 92vh);
+      width: 100%;
+      height: 100%;
       border-radius: 20px;
       overflow: hidden;
       box-shadow: 0 30px 80px -20px rgba(0,0,0,0.7);
@@ -188,14 +203,14 @@
     }
     .photocard-gacha-close-btn {
       position: absolute;
-      top: 10px;
-      right: 10px;
-      z-index: 2;
+      top: -14px;
+      right: -14px;
+      z-index: 3;
       width: 34px;
       height: 34px;
       border-radius: 50%;
       border: 1px solid rgba(255,255,255,0.3);
-      background: rgba(12,10,22,0.6);
+      background: rgba(12,10,22,0.85);
       backdrop-filter: blur(8px);
       color: #f4eefb;
       font-size: 16px;
@@ -203,8 +218,9 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 6px 18px -4px rgba(0,0,0,0.6);
     }
-    .photocard-gacha-close-btn:hover { background: rgba(12,10,22,0.85); }
+    .photocard-gacha-close-btn:hover { background: rgba(12,10,22,1); }
 
     .wild-toggle-btn {
       /* 파이리(야생 이스터에그) 버튼은 몬스터볼 버튼 옆이 아니라 그 위쪽에
@@ -2816,9 +2832,11 @@
   <!-- 홀로카드 뽑기 버튼 -->
   <button id="photocard-gacha-btn" class="pokeball-spawn-btn photocard-gacha-btn" title="홀로카드 뽑기">🃏</button>
   <div id="photocard-gacha-modal-bg" class="photocard-gacha-modal-bg">
-    <div class="photocard-gacha-modal-box">
+    <div class="photocard-gacha-modal-wrap">
       <button id="photocard-gacha-close-btn" class="photocard-gacha-close-btn" title="닫기">✕</button>
-      <iframe id="photocard-gacha-iframe" src="" title="RESCENE 홀로카드 뽑기" allow="autoplay"></iframe>
+      <div class="photocard-gacha-modal-box">
+        <iframe id="photocard-gacha-iframe" src="" title="RESCENE 홀로카드 뽑기" allow="autoplay"></iframe>
+      </div>
     </div>
   </div>
   <script>
