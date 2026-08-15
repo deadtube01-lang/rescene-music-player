@@ -9791,9 +9791,16 @@
         // 재생시켜 놓고(둘 다 src를 딱 한 번만 지정), 방향이 바뀔 때는 어느
         // 쪽을 보여줄지만 opacity로 토글한다. 이러면 src를 다시 대입하는
         // 일이 없으니 애니메이션이 절대 리셋되지 않는다.
+        //
+        // (성능) 이 원본 webp는 2160x720짜리 큰 애니메이션이라 <img> 엘리먼트를
+        // 새로 만들어 src를 지정할 때마다 디코딩이 다시 일어나 소환 순간에
+        // 렉(버벅임)이 생겼다. opts.reusePool로 이미 디코딩이 끝난 <img>
+        // 엘리먼트 한 쌍을 재사용할 수 있게 해서, 같은 파이리가 사라졌다
+        // 다시 나타날 때는 새로 디코딩하지 않고 그대로 이어서 쓴다.
         function makeDirImg(d) {
           const el = document.createElement('img');
           el.className = 'wild-charmander-img';
+          el.dataset.dir = d;
           el.decoding = 'async';
           el.loading = 'eager';
           el.style.position = 'absolute';
@@ -9807,8 +9814,9 @@
           el.src = d === 'left' ? WALK_LEFT_SRC : WALK_RIGHT_SRC;
           return el;
         }
-        const imgRight = makeDirImg('right');
-        const imgLeft = makeDirImg('left');
+        const pool = opts.reusePool;
+        const imgRight = (pool && pool.imgRight) || makeDirImg('right');
+        const imgLeft = (pool && pool.imgLeft) || makeDirImg('left');
         imgRight.style.opacity = '1';
         imgLeft.style.opacity = '0';
         // 기존 코드 곳곳에서 쓰던 img.src / img.addEventListener('error') 등
@@ -9971,6 +9979,13 @@
           destroy() {
             if (bubbleHideTimer) clearTimeout(bubbleHideTimer);
             if (bubbleAudioCleanup) bubbleAudioCleanup();
+            // (성능) 재사용 풀에서 빌려온 이미지라면 완전히 지우지 않고, 이미
+            // 디코딩된 상태 그대로 숨겨진 보관소로 되돌려서 다음 소환 때
+            // 다시 디코딩하지 않도록 한다.
+            if (pool && pool.holder) {
+              pool.holder.appendChild(imgRight);
+              pool.holder.appendChild(imgLeft);
+            }
             wrapper.remove();
           }
         };
@@ -10220,7 +10235,20 @@
         if (capturedList.length >= MAX_CAPTURED) return; // 이미 최대치를 포획했으면 더 이상 등장하지 않음
         // 새 야생 파이리가 등장하면, 지난번에 몬스터볼을 다 썼더라도 이번 인카운터용으로 다시 쓸 수 있게 한다.
         window.__pokeballResetAvailability && window.__pokeballResetAvailability();
-        const sprite = createCharmanderSprite();
+        // (성능) 야생 파이리는 한 번에 하나만 존재하므로, 걷는 애니메이션 이미지
+        // 한 쌍을 계속 재사용하는 풀을 만들어둔다. 처음 소환될 때만 디코딩이
+        // 일어나고, 그 다음부터는(사라졌다 다시 나타나도) 이미 디코딩된
+        // 이미지를 그대로 이어 써서 소환할 때마다 생기던 렉을 없앤다.
+        if (!window.__wildImgPool) {
+          const holder = document.createElement('div');
+          holder.style.cssText = 'position:fixed;width:0;height:0;overflow:hidden;pointer-events:none;';
+          document.body.appendChild(holder);
+          window.__wildImgPool = { imgRight: null, imgLeft: null, holder };
+        }
+        const sprite = createCharmanderSprite({ reusePool: window.__wildImgPool });
+        // 새로 만들어진 이미지라면(처음 소환) 풀에 저장해서 다음부터 재사용한다.
+        window.__wildImgPool.imgRight = sprite.canvas.querySelector('.wild-charmander-img[data-dir="right"]') || window.__wildImgPool.imgRight;
+        window.__wildImgPool.imgLeft = sprite.canvas.querySelector('.wild-charmander-img[data-dir="left"]') || window.__wildImgPool.imgLeft;
         // 명시적으로 opts에 좌표가 지정되지 않았다면, 마지막으로 있던 좌표에서 이어서 등장시킨다.
         const baseOpts = { speed: 110 };
         if (lastWildPos) {
