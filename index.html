@@ -2214,6 +2214,15 @@
       color: #a5b1c2;
       flex-shrink: 0;
     }
+    .track-view-count-text {
+      font-size: 12px;
+      color: #FC6FCF;
+      flex-shrink: 0;
+      white-space: nowrap;
+    }
+    body.light-mode .track-view-count-text {
+      color: #d6249f;
+    }
     /* ----------------------------------
        유튜브 재생 불가 배지 & 안내 모달
     ---------------------------------- */
@@ -2804,6 +2813,7 @@
           <button class="cat-btn" data-type="ep">EP</button>
           <button class="cat-btn" data-type="ost">OST</button>
           <button class="cat-btn" data-type="favorite">좋아요❤️</button>
+          <button class="cat-btn" data-type="views">👁️ 조회수</button>
         </div>
         <!-- 음원 검색창 -->
         <div class="search-box">
@@ -2924,7 +2934,7 @@
         <!-- LP 회전 속도 조절 슬라이더 바 -->
         <div class="lp-speed-section">
           <span class="lp-speed-label">LP SPEED</span>
-          <input type="range" id="lp-speed-slider" min="0.1" max="20" step="0.1" value="20">
+          <input type="range" id="lp-speed-slider" min="0.1" max="20" step="0.1" value="1">
           <span id="lp-speed-value" class="lp-speed-value">3.0s</span>
         </div>
 
@@ -3781,6 +3791,89 @@
       if (savedFavorites) favoriteTracks = JSON.parse(savedFavorites);
     } catch (e) {
       favoriteTracks = [];
+    }
+
+    /* ----------------------------------
+       "조회수" 카테고리: 유튜브 실제 조회수 순으로 음원 정렬
+       YouTube Data API v3 (videos.list, part=statistics)를 사용한다.
+       API 키는 사용자가 직접 발급받아 최초 1회 입력하면 로컬에 저장해두고 재사용한다.
+       (Google Cloud Console에서 무료로 발급 가능, 일일 무료 할당량 안에서 충분히 사용 가능)
+    ---------------------------------- */
+    let viewCountsData = {}; // videoId -> 조회수(숫자), 메모리 캐시(현재 세션용)
+    let viewCountsCache = {}; // videoId -> { count, ts } , localStorage에 영속 저장
+    try {
+      const savedViews = localStorage.getItem('rescene_yt_view_counts');
+      if (savedViews) viewCountsCache = JSON.parse(savedViews);
+    } catch (e) {
+      viewCountsCache = {};
+    }
+    function saveViewCountsCache() {
+      try { localStorage.setItem('rescene_yt_view_counts', JSON.stringify(viewCountsCache)); } catch (e) {}
+    }
+    const VIEW_COUNT_CACHE_MS = 6 * 60 * 60 * 1000; // 6시간 지나면 다시 불러옴(할당량 절약)
+    let viewsRenderRequestId = 0; // 조회수 로딩 도중 다른 카테고리로 바뀌면 이전 요청 결과를 무시하기 위한 값
+
+    function getYoutubeApiKey() {
+      let key = '';
+      try { key = localStorage.getItem('rescene_yt_api_key') || ''; } catch (e) {}
+      if (key) return key;
+      key = window.prompt(
+        '유튜브 실제 조회수를 불러오려면 YouTube Data API v3 키가 필요합니다.\n' +
+        '(Google Cloud Console → API 및 서비스 → YouTube Data API v3 사용 설정 후 무료로 발급 가능)\n\n' +
+        'API 키를 입력해주세요:'
+      );
+      if (key && key.trim()) {
+        key = key.trim();
+        try { localStorage.setItem('rescene_yt_api_key', key); } catch (e) {}
+        return key;
+      }
+      return '';
+    }
+
+    // videoIds에 대한 조회수를 가져온다. 캐시(6시간 이내)가 있으면 그대로 쓰고,
+    // 없거나 오래된 것만 실제로 API를 호출한다(할당량 절약).
+    async function fetchViewCounts(videoIds, apiKey) {
+      const now = Date.now();
+      videoIds.forEach(id => {
+        const cached = viewCountsCache[id];
+        if (cached) viewCountsData[id] = cached.count;
+      });
+      const idsToFetch = videoIds.filter(id => {
+        const cached = viewCountsCache[id];
+        return !cached || (now - cached.ts) > VIEW_COUNT_CACHE_MS;
+      });
+      if (idsToFetch.length === 0) return { ok: true };
+
+      try {
+        for (let i = 0; i < idsToFetch.length; i += 50) {
+          const chunk = idsToFetch.slice(i, i + 50);
+          const url = `https://www.googleapis.com/youtube/v3/videos?part=statistics&id=${chunk.join(',')}&key=${encodeURIComponent(apiKey)}`;
+          const res = await fetch(url);
+          if (!res.ok) {
+            let msg = `HTTP ${res.status}`;
+            try {
+              const errBody = await res.json();
+              if (errBody && errBody.error && errBody.error.message) msg = errBody.error.message;
+            } catch (e) {}
+            return { ok: false, error: msg };
+          }
+          const data = await res.json();
+          (data.items || []).forEach(item => {
+            const count = parseInt((item.statistics && item.statistics.viewCount) || '0', 10);
+            viewCountsData[item.id] = count;
+            viewCountsCache[item.id] = { count, ts: now };
+          });
+        }
+        saveViewCountsCache();
+        return { ok: true };
+      } catch (e) {
+        return { ok: false, error: (e && e.message) || '네트워크 오류' };
+      }
+    }
+
+    function formatViewCount(n) {
+      if (n == null) return '';
+      return n.toLocaleString('ko-KR');
     }
 
     /* ----------------------------------
@@ -6960,7 +7053,7 @@
       const gridDiv = document.createElement('div');
       gridDiv.className = 'album-grid-container';
 
-      const targetAlbums = (type === 'all' || type === 'favorite') ? albums : albums.filter(a => a.type === type);
+      const targetAlbums = (type === 'all' || type === 'favorite' || type === 'views') ? albums : albums.filter(a => a.type === type);
 
       targetAlbums.forEach((album) => {
         const card = document.createElement('div');
@@ -7378,6 +7471,7 @@
       const tracklistTitle = document.getElementById('tracklist-title');
       if (!trackListUl) return;
       trackListUl.innerHTML = '';
+      viewsRenderRequestId++; // 목록을 새로 그릴 때마다 값을 올려서, 그 사이 끝나는 이전 조회수 로딩 결과는 무시한다.
 
       if (isShowingFavoritesOnly || activeCategory === 'favorite') {
         if (tracklistTitle) tracklistTitle.innerText = 'TRACKLIST - 좋아요 목록';
@@ -7404,6 +7498,11 @@
           createTrackListItem(trackListUl, item, idx, trackKey, true);
         });
         setTimeout(updateMarqueeEffect, 50);
+        return;
+      }
+
+      if (activeCategory === 'views' && !selectedAlbum) {
+        renderViewsTrackListUI(trackListUl, tracklistTitle);
         return;
       }
 
@@ -7467,7 +7566,80 @@
       setTimeout(updateMarqueeEffect, 50);
     }
 
-    function createTrackListItem(parentUl, item, idx, trackKey, isFavMode) {
+    // "조회수" 카테고리 전용: 전체 음원의 유튜브 조회수를 불러와 높은 순으로 정렬해서 보여준다.
+    async function renderViewsTrackListUI(trackListUl, tracklistTitle) {
+      const myRequestId = viewsRenderRequestId; // renderTrackListUIImpl에서 이미 ++된 현재 값을 그대로 기록
+      if (tracklistTitle) tracklistTitle.innerText = 'TRACKLIST - 조회수 높은 순';
+
+      const apiKey = getYoutubeApiKey();
+      if (!apiKey) {
+        trackListUl.innerHTML = '';
+        const li = document.createElement('li');
+        li.className = 'track-placeholder';
+        li.innerText = 'YouTube API 키가 없어 조회수를 불러올 수 없습니다.';
+        trackListUl.appendChild(li);
+        return;
+      }
+
+      let allTracks = getAllTracksByCategory('all');
+      if (searchQuery) {
+        allTracks = allTracks.filter(item => 
+          item.track.name.toLowerCase().includes(searchQuery) || 
+          item.album.title.toLowerCase().includes(searchQuery)
+        );
+      }
+
+      trackListUl.innerHTML = '';
+      const loadingLi = document.createElement('li');
+      loadingLi.className = 'track-placeholder';
+      loadingLi.innerText = '조회수를 불러오는 중...';
+      trackListUl.appendChild(loadingLi);
+
+      const videoIds = [...new Set(allTracks.map(item => item.track.src))];
+      const result = await fetchViewCounts(videoIds, apiKey);
+
+      // 로딩되는 동안 다른 카테고리/앨범으로 이동했으면 이 결과는 화면에 반영하지 않는다.
+      if (myRequestId !== viewsRenderRequestId) return;
+
+      trackListUl.innerHTML = '';
+
+      if (!result.ok) {
+        const li = document.createElement('li');
+        li.className = 'track-placeholder';
+        li.innerText = `조회수를 불러오지 못했습니다 (${result.error}).`;
+        trackListUl.appendChild(li);
+
+        const resetBtn = document.createElement('button');
+        resetBtn.className = 'track-action-btn';
+        resetBtn.style.cssText = 'display:block;margin:10px auto 0;padding:6px 14px;';
+        resetBtn.innerText = 'API 키 다시 입력하기';
+        resetBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          try { localStorage.removeItem('rescene_yt_api_key'); } catch (err) {}
+          renderTrackListUI();
+        });
+        trackListUl.appendChild(resetBtn);
+        return;
+      }
+
+      if (allTracks.length === 0) {
+        const li = document.createElement('li');
+        li.className = 'track-placeholder';
+        li.innerText = searchQuery ? '검색 결과가 없습니다.' : '음원이 없습니다.';
+        trackListUl.appendChild(li);
+        return;
+      }
+
+      allTracks.sort((a, b) => (viewCountsData[b.track.src] || 0) - (viewCountsData[a.track.src] || 0));
+
+      allTracks.forEach((item, idx) => {
+        const trackKey = getTrackKey(item.album.id, item.track.name);
+        createTrackListItem(trackListUl, item, idx, trackKey, false, viewCountsData[item.track.src]);
+      });
+      setTimeout(updateMarqueeEffect, 50);
+    }
+
+    function createTrackListItem(parentUl, item, idx, trackKey, isFavMode, viewCount) {
       const li = document.createElement('li');
       li.className = 'track-item';
 
@@ -7522,6 +7694,12 @@
       const rightGroup = document.createElement('div');
       rightGroup.className = 'track-right-group';
       rightGroup.appendChild(btnGroup);
+      if (viewCount != null) {
+        const viewSpan = document.createElement('span');
+        viewSpan.className = 'track-view-count-text';
+        viewSpan.innerText = `👁 ${formatViewCount(viewCount)}`;
+        rightGroup.appendChild(viewSpan);
+      }
       rightGroup.appendChild(durationSpan);
 
       if (ytIcon) li.appendChild(ytIcon);
