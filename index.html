@@ -3654,7 +3654,7 @@
         id: "loveattack-kcon-ver",
         type: "single",
         title: "[2026.08.17] LOVE ATTACK (KCON Ver.) - LIVE @ KCON LA 2026",
-        cover: fixPath("[2026.08.17] LOVE ATTACK (KCON Ver.).webp"),
+        cover: fixPath("[260817] LOVE ATTACK (KCON.Ver).webp"),
         tracks: [
           { name: "LOVE ATTACK (KCON Ver.)", src: "X148vFRUvZ4", duration: "3:00", trimStart: 5, trimEnd: 185 }
         ]
@@ -4591,7 +4591,7 @@
        단, KCON 무대 직캠처럼 처음부터 타 사이트 임베드가 막혀있는 것이
        확실한 영상은 재생 시도 자체를 생략하고 곧바로 "유튜브에서 보기"
        배지 + 새 탭 이동으로 고정한다. */
-    const FORCE_EXTERNAL_VIDEO_IDS = ['X148vFRUvZ4']; // LOVE ATTACK (KCON Ver.) - KCON LA 2026 무대 직캠
+    const FORCE_EXTERNAL_VIDEO_IDS = []; // (현재 강제 외부링크 처리 대상 없음 — 커버곡과 동일하게 내부 영상보기로 처리)
 
     function isTrackFailed(videoId) {
       return FORCE_EXTERNAL_VIDEO_IDS.includes(videoId) || failedVideoIds.includes(videoId);
@@ -8644,7 +8644,8 @@
       'op05giODUE0': { videoId: '7DZlkZ4bMpU', start: 31, label: '🎉 응원법' },     // Runaway
       'v6R4vvOkNH4': { videoId: 's1S-lnU-yMI', start: 23, label: '🎉 응원법' },     // UhUh
       'QC641OJe_Aw': { videoId: 'QCA8quPZHPc', start: 0, label: '🎉 응원법' },      // YoYo
-      '_tADnkWlvnA': { videoId: 'QCA8quPZHPc', start: 0, label: '🎉 응원법' }       // YoYo (Re;Scene)
+      '_tADnkWlvnA': { videoId: 'QCA8quPZHPc', start: 0, label: '🎉 응원법' },       // YoYo (Re;Scene)
+      'X148vFRUvZ4': { videoId: 'X148vFRUvZ4', start: 5, end: 185, label: '▶ 영상보기' }  // LOVE ATTACK (KCON Ver.)
     };
 
     // 커버곡/피처링곡(COVER, 피처링 카테고리) 앨범들은 트랙 자체가 이미 유튜브
@@ -8738,6 +8739,11 @@
       sharedActiveConfig = config;
       panel.style.display = '';
       cheerWantsPlay = true;
+      // 영상보기/응원법 박스를 열 때는 같은 음원이 두 곳에서 동시에 재생되어
+      // 소리가 겹치지 않도록 메인 뮤직 플레이어를 멈춘다.
+      if (audio && typeof audio.pause === 'function') {
+        audio.pause();
+      }
       if (!cheerYtPlayer) {
         if (window.YT && window.YT.Player) {
           ensureCheerPlayerCreated();
