@@ -4,6 +4,10 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>RESCENE 홀로카드 · PULL</title>
+<script>
+  // 카드 이미지 우클릭(다운로드/이미지 저장) 방지
+  document.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+</script>
 <style>
   @font-face{font-family:'PretendardV';src:local('Pretendard Variable');}
   :root{

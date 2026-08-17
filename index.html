@@ -738,6 +738,10 @@
       font-weight: 800;
     }
 
+    body.light-mode .tracklist-count {
+      color: #64748b;
+    }
+
     body.light-mode .cat-btn {
       background: rgba(255, 255, 255, 0.55);
       color: #0f172a;
@@ -880,6 +884,16 @@
       color: #c5cbd3;
       margin-top: -6px;
       margin-bottom: 6px;
+    }
+
+    .tracklist-count {
+      font-size: 11px;
+      font-weight: 600;
+      color: #8f97a3;
+      letter-spacing: 0.3px;
+      margin-top: -6px;
+      margin-bottom: 2px;
+      min-height: 13px;
     }
 
     .category-buttons {
@@ -2458,6 +2472,12 @@
       min-width: 34px;
       text-align: right;
     }
+    .track-duration-text.track-blocked-text {
+      color: #ff6b6b;
+      font-weight: 700;
+      font-size: 11px;
+      min-width: auto;
+    }
     .track-view-count-text {
       font-size: 12px;
       color: #FC6FCF;
@@ -3031,11 +3051,11 @@
   <img id="pokeball-toy" class="pokeball-toy" src="POKEMON/POKEBALL.png" alt="몬스터볼" ondragstart="return false;" style="display: none;">
 
   <!-- 포획된 포켓몬 버튼: 처음엔 숨겨져 있다가 하나라도 포획하면 나타난다. -->
-  <button id="captured-list-btn" class="pokeball-spawn-btn captured-list-btn" title="포획된 포켓몬" style="display:none;">📦</button>
+  <button id="captured-list-btn" class="pokeball-spawn-btn captured-list-btn" style="display:none;">📦</button>
   <div id="captured-list-panel" class="captured-list-panel" style="display:none;"></div>
 
   <!-- 홀로카드 뽑기 버튼 -->
-  <button id="photocard-gacha-btn" class="pokeball-spawn-btn photocard-gacha-btn" title="홀로카드 뽑기">🃏</button>
+  <button id="photocard-gacha-btn" class="pokeball-spawn-btn photocard-gacha-btn">🃏</button>
   <div id="photocard-gacha-modal-bg" class="photocard-gacha-modal-bg">
     <div class="photocard-gacha-modal-wrap">
       <button id="photocard-gacha-close-btn" class="photocard-gacha-close-btn" title="닫기">✕</button>
@@ -3058,6 +3078,19 @@
           loaded = true;
         }
         modalBg.classList.add('show');
+      });
+      // holo_photocard_gacha.html은 같은 폴더(같은 origin)에서 로드되므로,
+      // 그 문서 안에서 우클릭(contextmenu)이 뜨지 않도록 iframe이 로드될
+      // 때마다 여기서 직접 막아준다. (파일 자체를 수정할 필요 없음)
+      iframe.addEventListener('load', function(){
+        try {
+          var innerDoc = iframe.contentWindow && iframe.contentWindow.document;
+          if (innerDoc) {
+            innerDoc.addEventListener('contextmenu', function(e){ e.preventDefault(); });
+          }
+        } catch (e) {
+          // 혹시 다른 origin에서 로드되는 경우 접근이 막힐 수 있어 안전하게 무시한다.
+        }
       });
       closeBtn.addEventListener('click', function(){
         modalBg.classList.remove('show');
@@ -3140,6 +3173,7 @@
 
       <!-- 트랙리스트 카드 -->
       <div class="card-box draggable-panel" id="panel-tracklist">
+        <div class="tracklist-count" id="tracklist-count"></div>
         <div class="section-title panel-drag-handle panel-collapse-header" id="tracklist-title">TRACKLIST</div>
         <div class="tracklist-box">
           <ul id="track-list">
@@ -3177,6 +3211,7 @@
             <button class="charmander-act-btn" data-src="오이쉬 파이리.mp4">오이쉬</button>
             <button class="charmander-act-btn" data-src="MAY_ONEHAND_STAR.mkv">메이 개인기</button>
             <button class="charmander-act-btn compact" data-src="YOU_AND_ME.mkv">너도? 나도!</button>
+            <button class="charmander-act-btn" data-src="메리오.mp4">메리오</button>
           </div>
         </div>
 
@@ -3847,7 +3882,7 @@
         title: "[COVER] 혜성 - 원곡: 윤하",
         cover: "https://img.youtube.com/vi/K-beRJuRjQQ/hqdefault.jpg",
         tracks: [
-          { name: "혜성 (미나미)", src: "K-beRJuRjQQ", duration: "0:00" }
+          { name: "혜성 (미나미)", src: "K-beRJuRjQQ", duration: "2:33" }
         ]
       },
       {
@@ -3856,7 +3891,7 @@
         title: "[COVER] Dry Flower - 원곡: Yuuri",
         cover: "https://img.youtube.com/vi/i0UW8-8UCvc/hqdefault.jpg",
         tracks: [
-          { name: "Dry Flower (미나미)", src: "i0UW8-8UCvc", duration: "0:00" }
+          { name: "Dry Flower (미나미)", src: "i0UW8-8UCvc", duration: "3:24" }
         ]
       },
       {
@@ -3865,7 +3900,7 @@
         title: "[COVER] 꽃길 - 원곡: 김세정",
         cover: "https://img.youtube.com/vi/FzUeh7XBOmI/hqdefault.jpg",
         tracks: [
-          { name: "꽃길 (규빈 X 미나미)", src: "FzUeh7XBOmI", duration: "0:00" }
+          { name: "꽃길 (규빈 X 미나미)", src: "FzUeh7XBOmI", duration: "4:09" }
         ]
       },
       {
@@ -3874,7 +3909,7 @@
         title: "[COVER] HAPPY - 원곡: DAY6",
         cover: "https://img.youtube.com/vi/TucLh-PYwwE/hqdefault.jpg",
         tracks: [
-          { name: "HAPPY (규빈 X 미나미)", src: "TucLh-PYwwE", duration: "0:00" }
+          { name: "HAPPY (규빈 X 미나미)", src: "TucLh-PYwwE", duration: "3:09" }
         ]
       },
       {
@@ -3901,7 +3936,7 @@
         title: "[COVER] Life's Too Short - 원곡: aespa",
         cover: "https://img.youtube.com/vi/OybCC65kqEw/hqdefault.jpg",
         tracks: [
-          { name: "Life's Too Short (제나)", src: "OybCC65kqEw", duration: "0:00" }
+          { name: "Life's Too Short (제나)", src: "OybCC65kqEw", duration: "1:12" }
         ]
       },
       {
@@ -3910,7 +3945,7 @@
         title: "[COVER] 첫눈처럼 너에게 가겠다 - 원곡: 에일리",
         cover: "https://img.youtube.com/vi/M-qJ2Bf3FZg/hqdefault.jpg",
         tracks: [
-          { name: "첫눈처럼 너에게 가겠다 (폰꾸미기 쎄이 VS 가방꾸미기 미나미)", src: "M-qJ2Bf3FZg", duration: "0:00" }
+          { name: "첫눈처럼 너에게 가겠다 (폰꾸미기 쎄이 VS 가방꾸미기 미나미)", src: "M-qJ2Bf3FZg", duration: "3:08" }
         ]
       },
       {
@@ -3919,7 +3954,7 @@
         title: "[COVER] 비밀번호 486 - 원곡: 윤하",
         cover: "https://img.youtube.com/vi/jt5dpJ1iVoM/hqdefault.jpg",
         tracks: [
-          { name: "비밀번호 486 (가방 꾸미기 미나미)", src: "jt5dpJ1iVoM", duration: "0:00" }
+          { name: "비밀번호 486 (가방 꾸미기 미나미)", src: "jt5dpJ1iVoM", duration: "3:36" }
         ]
       },
       {
@@ -3946,7 +3981,7 @@
         title: "[COVER] Losing You - 원곡: FLO",
         cover: "https://img.youtube.com/vi/nBWg9eWMbfc/hqdefault.jpg",
         tracks: [
-          { name: "Losing You (MINAMI X JUSTICEBACTERIA)", src: "nBWg9eWMbfc", duration: "0:00" }
+          { name: "Losing You (미나미 X JUSTICEBACTERIA)", src: "nBWg9eWMbfc", duration: "2:43" }
         ]
       },
       {
@@ -3955,7 +3990,7 @@
         title: "[COVER] 내 남자친구에게 - 원곡: 핑클(Fin.K.L)",
         cover: "https://img.youtube.com/vi/O0BVlom5poY/hqdefault.jpg",
         tracks: [
-          { name: "내 남자친구에게 (리브)", src: "O0BVlom5poY", duration: "0:00" }
+          { name: "내 남자친구에게 (리브)", src: "O0BVlom5poY", duration: "2:43" }
         ]
       },
       {
@@ -4000,7 +4035,7 @@
         title: "[COVER] 그런 일은 - 원곡: 박화요비",
         cover: "https://img.youtube.com/vi/iLcyx5g3_j8/hqdefault.jpg",
         tracks: [
-          { name: "그런 일은 (리브,미나미,제나)", src: "iLcyx5g3_j8", duration: "0:00" }
+          { name: "그런 일은 (리브,미나미,제나)", src: "iLcyx5g3_j8", duration: "4:05" }
         ]
       },
       {
@@ -4009,7 +4044,7 @@
         title: "[COVER] 응급실 - 원곡: izi(이지)",
         cover: "https://img.youtube.com/vi/ivwkXESUkas/hqdefault.jpg",
         tracks: [
-          { name: "응급실 (리브,미나미,제나)", src: "ivwkXESUkas", duration: "0:00" }
+          { name: "응급실 (리브,미나미,제나)", src: "ivwkXESUkas", duration: "3:14" }
         ]
       },
       {
@@ -4081,7 +4116,7 @@
         title: "[COVER] Die with a Smile - 원곡: Lady Gaga & Bruno Mars",
         cover: "https://img.youtube.com/vi/J_YUy-C-7ds/hqdefault.jpg",
         tracks: [
-          { name: "Die with a Smile (리브,미나미,제나)", src: "J_YUy-C-7ds", duration: "0:00" }
+          { name: "Die with a Smile (리브,미나미,제나)", src: "J_YUy-C-7ds", duration: "3:54" }
         ]
       },
       {
@@ -4090,7 +4125,7 @@
         title: "[COVER] Sad Song - 원곡: ちゃんみな(챤미나)",
         cover: "https://img.youtube.com/vi/FUhkv2YZxnc/hqdefault.jpg",
         tracks: [
-          { name: "Sad Song (RESCENE)", src: "FUhkv2YZxnc", duration: "0:00" }
+          { name: "Sad Song (RESCENE)", src: "FUhkv2YZxnc", duration: "4:44" }
         ]
       },
       {
@@ -4593,8 +4628,17 @@
        배지 + 새 탭 이동으로 고정한다. */
     const FORCE_EXTERNAL_VIDEO_IDS = []; // (현재 강제 외부링크 처리 대상 없음 — 커버곡과 동일하게 내부 영상보기로 처리)
 
+    // 유튜브에서 임베드 자체가 차단되어 있어서(재생 시도해도 항상 에러) 아예
+    // 재생을 시도하지 않고 "차단된 영상"으로 안내만 하는 영상들.
+    // KCON 공식 채널에 재업로드/공개되어 정상 링크로 교체되면 여기서 제거하면 된다.
+    const BLOCKED_VIDEO_IDS = ['X148vFRUvZ4']; // LOVE ATTACK (KCON Ver.) - KCON LA 2026, 임베드 차단됨 (2026.08.17 기준)
+
+    function isBlockedVideo(videoId) {
+      return BLOCKED_VIDEO_IDS.includes(videoId);
+    }
+
     function isTrackFailed(videoId) {
-      return FORCE_EXTERNAL_VIDEO_IDS.includes(videoId) || failedVideoIds.includes(videoId);
+      return isBlockedVideo(videoId) || FORCE_EXTERNAL_VIDEO_IDS.includes(videoId) || failedVideoIds.includes(videoId);
     }
 
     function isAlwaysAllow(videoId) {
@@ -7711,25 +7755,22 @@
       if (fadeInterval) clearInterval(fadeInterval);
 
       const targetVolume = (volumeSlider ? parseInt(volumeSlider.value) : 50) / 100;
-      const step = targetVolume / (FADE_DURATION / 30);
 
-      fadeInterval = setInterval(() => {
-        if (audio.volume - step <= 0) {
-          audio.volume = 0;
-          audio.pause();
-          clearInterval(fadeInterval);
-          fadeInterval = null;
-          audio.volume = targetVolume;
+      // (반응 속도 개선) 예전에는 볼륨이 서서히 0까지 다 내려간 뒤에야
+      // 실제로 audio.pause()를 호출해서, 스페이스바를 짧은 간격(0.1초 등)으로
+      // 빠르게 연타하면 그 페이드 시간(약 150ms)만큼 실제 재생/정지가 계속
+      // 밀리며 반응이 느리게 느껴지는 문제가 있었다.
+      // 이제는 실제 정지(pause)를 먼저 즉시 실행해서 스페이스바를 아무리
+      // 빠르게 눌러도 그 즉시 멈추고, 그 다음 바로 이어서 눌러도 곧바로
+      // 다시 재생되도록 한다.
+      audio.pause();
+      audio.volume = targetVolume;
 
-          if (playIcon) playIcon.innerHTML = playSvg;
-          if (lpRecord) lpRecord.classList.remove('spinning');
-          if (statusDot) statusDot.classList.remove('playing');
+      if (playIcon) playIcon.innerHTML = playSvg;
+      if (lpRecord) lpRecord.classList.remove('spinning');
+      if (statusDot) statusDot.classList.remove('playing');
 
-          if (callback) callback();
-        } else {
-          audio.volume -= step;
-        }
-      }, 30);
+      if (callback) callback();
     }
 
     function togglePlay() {
@@ -8196,6 +8237,7 @@
     function renderTrackListUIImpl() {
       const trackListUl = document.getElementById('track-list');
       const tracklistTitle = document.getElementById('tracklist-title');
+      const tracklistCount = document.getElementById('tracklist-count');
       if (!trackListUl) return;
       trackListUl.innerHTML = '';
       viewsRenderRequestId++; // 목록을 새로 그릴 때마다 값을 올려서, 그 사이 끝나는 이전 조회수 로딩 결과는 무시한다.
@@ -8211,6 +8253,8 @@
             item.album.title.toLowerCase().includes(searchQuery)
           );
         }
+
+        if (tracklistCount) tracklistCount.textContent = `총 ${favList.length}곡`;
 
         if (favList.length === 0) {
           const li = document.createElement('li');
@@ -8229,7 +8273,7 @@
       }
 
       if (activeCategory === 'views' && !selectedAlbum) {
-        renderViewsTrackListUI(trackListUl, tracklistTitle);
+        renderViewsTrackListUI(trackListUl, tracklistTitle, tracklistCount);
         return;
       }
 
@@ -8245,6 +8289,8 @@
             item.album.title.toLowerCase().includes(searchQuery)
           );
         }
+
+        if (tracklistCount) tracklistCount.textContent = `총 ${allCatTracks.length}곡`;
 
         if (allCatTracks.length === 0) {
           const li = document.createElement('li');
@@ -8278,6 +8324,8 @@
         );
       }
 
+      if (tracklistCount) tracklistCount.textContent = `총 ${albumTracks.length}곡`;
+
       if (albumTracks.length === 0) {
         const li = document.createElement('li');
         li.className = 'track-placeholder';
@@ -8294,9 +8342,10 @@
     }
 
     // "조회수" 카테고리 전용: 전체 음원의 유튜브 조회수를 불러와 높은 순으로 정렬해서 보여준다.
-    async function renderViewsTrackListUI(trackListUl, tracklistTitle) {
+    async function renderViewsTrackListUI(trackListUl, tracklistTitle, tracklistCount) {
       const myRequestId = viewsRenderRequestId; // renderTrackListUIImpl에서 이미 ++된 현재 값을 그대로 기록
       if (tracklistTitle) tracklistTitle.innerText = 'TRACKLIST - 조회수 높은 순';
+      if (tracklistCount) tracklistCount.textContent = '';
 
       const apiKey = getYoutubeApiKey();
       if (!apiKey) {
@@ -8315,6 +8364,8 @@
           item.album.title.toLowerCase().includes(searchQuery)
         );
       }
+
+      if (tracklistCount) tracklistCount.textContent = `총 ${allTracks.length}곡`;
 
       trackListUl.innerHTML = '';
       const loadingLi = document.createElement('li');
@@ -8405,7 +8456,14 @@
 
       const durationSpan = document.createElement('span');
       durationSpan.className = 'track-duration-text';
-      durationSpan.innerText = item.track.duration || '0:00';
+      const isBlocked = isBlockedVideo(item.track.src);
+      if (isBlocked) {
+        durationSpan.classList.add('track-blocked-text');
+        durationSpan.innerText = '🚫 차단됨';
+        durationSpan.title = '유튜브 임베드가 차단된 영상입니다. KCON 공식 채널에 업로드되면 링크를 교체할 예정입니다.';
+      } else {
+        durationSpan.innerText = item.track.duration || '0:00';
+      }
 
       const rightGroup = document.createElement('div');
       rightGroup.className = 'track-right-group';
@@ -8424,6 +8482,10 @@
 
       li.addEventListener('click', (e) => {
         e.stopPropagation();
+        if (isBlockedVideo(item.track.src)) {
+          alert('이 영상은 현재 유튜브에서 임베드(재생)가 차단되어 있어요.\nKCON 공식 채널에 영상이 올라오면 정상 링크로 교체될 예정입니다.');
+          return;
+        }
         if (isAlwaysAllow(item.track.src)) {
           openYoutubeNewTab(item.track.src);
           return;
@@ -8644,26 +8706,35 @@
       'op05giODUE0': { videoId: '7DZlkZ4bMpU', start: 31, label: '🎉 응원법' },     // Runaway
       'v6R4vvOkNH4': { videoId: 's1S-lnU-yMI', start: 23, label: '🎉 응원법' },     // UhUh
       'QC641OJe_Aw': { videoId: 'QCA8quPZHPc', start: 0, label: '🎉 응원법' },      // YoYo
-      '_tADnkWlvnA': { videoId: 'QCA8quPZHPc', start: 0, label: '🎉 응원법' },       // YoYo (Re;Scene)
-      'X148vFRUvZ4': { videoId: 'X148vFRUvZ4', start: 5, end: 185, label: '▶ 영상보기' }  // LOVE ATTACK (KCON Ver.)
+      '_tADnkWlvnA': { videoId: 'QCA8quPZHPc', start: 0, label: '🎉 응원법' }       // YoYo (Re;Scene)
     };
 
     // 커버곡/피처링곡(COVER, 피처링 카테고리) 앨범들은 트랙 자체가 이미 유튜브
     // 영상을 그대로 재생하는 트랙이라, 응원법 버튼과 똑같은 방식으로 "영상보기"
-    // 버튼을 눌러 같은 유튜브 영상 박스를 띄울 수 있게 자동으로 등록해준다.
-    (function registerCoverAndFeaturingCheerButtons() {
-      albums.forEach((album) => {
-        if (album.type !== 'cover' && album.type !== 'featuring') return;
-        album.tracks.forEach((track) => {
-          if (CHEER_CONFIG[track.src]) return; // 이미 응원법으로 등록된 곡은 건드리지 않는다.
-          CHEER_CONFIG[track.src] = {
-            videoId: track.src,
-            start: track.trimStart || 0,
-            label: '▶ 영상보기'
-          };
-        });
-      });
-    })();
+    // 버튼을 눌러 같은 유튜브 영상 박스를 띄울 수 있게 해준다.
+    //
+    // 주의: 같은 무대 영상(src) 안에서 곡 구간만 다르게 잘라 쓰는 트랙들이
+    // 있다 (예: "Runaway"와 "예뻤어"가 같은 무대 영상의 서로 다른 구간).
+    // 예전에는 videoId 하나당 CHEER_CONFIG를 한 번만 채워 넣는 방식이라,
+    // 같은 영상을 공유하는 두 번째 곡을 누르면 첫 번째 곡의 시작 시간으로
+    // 잘못 열리는 버그가 있었다. 이제는 CHEER_CONFIG에 없는 커버/피처링
+    // 트랙은 매번 "현재 클릭된 그 트랙" 자신의 trimStart/trimEnd로
+    // 동적으로 계산해서, 같은 영상을 공유해도 항상 올바른 구간에서 열린다.
+    function getCheerConfigForTrack(track) {
+      if (!track) return null;
+      if (isBlockedVideo(track.src)) return null; // 차단된 영상은 영상보기 버튼도 띄우지 않는다.
+      if (CHEER_CONFIG[track.src]) return CHEER_CONFIG[track.src];
+      const isCoverOrFeaturing = albums.some((album) =>
+        (album.type === 'cover' || album.type === 'featuring') && album.tracks.includes(track)
+      );
+      if (!isCoverOrFeaturing) return null;
+      return {
+        videoId: track.src,
+        start: track.trimStart || 0,
+        end: (track.trimEnd != null) ? track.trimEnd : null,
+        label: '▶ 영상보기'
+      };
+    }
 
     let cheerYtPlayer = null;
     let cheerYtReady = false;
@@ -8744,6 +8815,17 @@
       if (audio && typeof audio.pause === 'function') {
         audio.pause();
       }
+      // (버그 수정) 박스를 display:none → '' 로 막 전환한 직후에는 브라우저가
+      // 아직 레이아웃을 확정하기 전이라 getBoundingClientRect() 폭이 부정확할
+      // 때가 있어서, 처음 열 때만 높이가 잘못 계산되어 하단이 잘려 보이는
+      // 문제가 있었다(크기 조절 핸들을 만지면 그때 재계산되어 정상으로
+      // 돌아왔음). 레이아웃이 완전히 반영된 뒤(rAF 두 번) 다시 한 번
+      // 높이를 맞춰서 처음 열 때부터 정상 크기로 보이게 한다.
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          syncCheerBoxHeightToWidth();
+        });
+      });
       if (!cheerYtPlayer) {
         if (window.YT && window.YT.Player) {
           ensureCheerPlayerCreated();
@@ -8789,10 +8871,11 @@
     function updateCheerButtonVisibility(track) {
       const btn = document.getElementById('cheer-btn');
       if (!btn) return;
-      const config = track ? CHEER_CONFIG[track.src] : null;
+      const config = getCheerConfigForTrack(track);
       const panel = document.getElementById('panel-cheer');
       const wasOpen = panel && panel.style.display !== 'none';
-      const trackChangedCheerVideo = config && cheerCurrentConfig && config.videoId !== cheerCurrentConfig.videoId;
+      const trackChangedCheerVideo = config && cheerCurrentConfig &&
+        (config.videoId !== cheerCurrentConfig.videoId || config.start !== cheerCurrentConfig.start);
       cheerCurrentConfig = config || null;
       btn.textContent = (config && config.label) || '🎉 응원법';
       btn.classList.toggle('visible', !!config);
@@ -11166,7 +11249,7 @@
         const SPEED_MIN = baseSpeed * 0.8;
         const SPEED_MAX = baseSpeed * 1.8;
         let x = opts.startX != null ? opts.startX : Math.random() * Math.max(0, innerWidth - SPRITE_WIDTH);
-        let y = opts.startY != null ? opts.startY : Math.random() * Math.max(0, innerHeight * 0.7);
+        let y = opts.startY != null ? opts.startY : Math.random() * Math.max(0, innerHeight - SPRITE_HEIGHT);
         let vx = 0, vy = 0;
         let lastTime = null;
         let stopped = false;
@@ -11175,7 +11258,11 @@
         const minX = 0;
         const maxX = Math.max(0, innerWidth - SPRITE_WIDTH);
         const minY = 0;
-        const maxY = Math.max(0, innerHeight * 0.7);
+        // (버그 수정) 예전에는 innerHeight * 0.7로 제한해서 화면 아래쪽 30%까지는
+        // 절대 못 내려가고, 드래그로 맨 아래에 갖다놔도 다음 애니메이션 프레임에서
+        // 다시 70% 지점까지 튕겨 올라와버리는 문제가 있었다. 드래그 가능 범위와
+        // 동일하게 화면 맨 아래(innerHeight - SPRITE_HEIGHT)까지 자유롭게 움직이도록 수정.
+        const maxY = Math.max(0, innerHeight - SPRITE_HEIGHT);
         const state = { x, y, w: SPRITE_WIDTH, h: SPRITE_HEIGHT };
 
         function pickDirection() {
