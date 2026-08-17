@@ -4586,14 +4586,19 @@
        실제 재생을 시도하지도 않고 무조건 배지/새 탭 이동 처리를 했었다.
        하지만 실제로는 정상 재생되는 영상들이었음이 확인되어 제거함.
        이제는 실제 재생을 시도했다가 에러가 났을 때만(failedVideoIds)
-       배지가 표시되고 모달이 뜬다. */
+       배지가 표시되고 모달이 뜬다.
+
+       단, KCON 무대 직캠처럼 처음부터 타 사이트 임베드가 막혀있는 것이
+       확실한 영상은 재생 시도 자체를 생략하고 곧바로 "유튜브에서 보기"
+       배지 + 새 탭 이동으로 고정한다. */
+    const FORCE_EXTERNAL_VIDEO_IDS = ['X148vFRUvZ4']; // LOVE ATTACK (KCON Ver.) - KCON LA 2026 무대 직캠
 
     function isTrackFailed(videoId) {
-      return failedVideoIds.includes(videoId);
+      return FORCE_EXTERNAL_VIDEO_IDS.includes(videoId) || failedVideoIds.includes(videoId);
     }
 
     function isAlwaysAllow(videoId) {
-      return alwaysAllowVideoIds.includes(videoId);
+      return FORCE_EXTERNAL_VIDEO_IDS.includes(videoId) || alwaysAllowVideoIds.includes(videoId);
     }
 
     function markTrackFailed(videoId) {
