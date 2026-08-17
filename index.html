@@ -1348,6 +1348,136 @@
       user-select: none;
     }
 
+    /* ----------------------------------
+       패널 상단(헤더)을 클릭하면 접고 펼치기
+       - CATEGORY / ALBUM / TRACKLIST / 파이리 영상 / 응원법 영상 박스에서 사용.
+       - 헤더(.panel-collapse-header)만 남기고 나머지 자식 요소는 전부 숨긴다.
+    ---------------------------------- */
+    .panel-collapse-header {
+      cursor: pointer;
+    }
+
+    .draggable-panel.panel-collapsed {
+      height: auto !important;
+    }
+
+    .draggable-panel.panel-collapsed > *:not(.panel-collapse-header) {
+      display: none !important;
+    }
+
+    .section-title.panel-collapse-header {
+      position: relative;
+      padding-right: 18px;
+    }
+
+    .section-title.panel-collapse-header::after {
+      content: "\25BE";
+      position: absolute;
+      right: 2px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 11px;
+      opacity: 0.6;
+    }
+
+    .draggable-panel.panel-collapsed .section-title.panel-collapse-header::after {
+      content: "\25B8";
+    }
+
+    /* 응원법(치어리딩 영상) 버튼: Deja Vu 재생 중에만 보인다. */
+    .cheer-btn {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      margin: 6px auto 0;
+      padding: 7px 22px;
+      border-radius: 999px;
+      border: none;
+      background: linear-gradient(135deg, #FC6FCF 0%, #01ACCE 100%);
+      color: #ffffff;
+      font-weight: 800;
+      font-size: 15px;
+      cursor: pointer;
+      box-shadow: 0 4px 14px rgba(252, 111, 207, 0.4);
+      transition: transform 0.15s ease, box-shadow 0.15s ease, opacity 0.15s ease;
+    }
+
+    .cheer-btn.visible {
+      display: inline-flex;
+    }
+
+    .cheer-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(1, 172, 206, 0.45);
+    }
+
+    .cheer-btn.active {
+      background: linear-gradient(135deg, #01ACCE 0%, #FC6FCF 100%);
+    }
+
+    /* 응원법 유튜브 영상 박스: 여백이 넉넉한 배경 위에 영상이 뜨도록 카드 안쪽에
+       패딩을 넉넉히 두고, 화면 위에 자유롭게 띄워두는 플로팅 박스로 만든다. */
+    .cheer-video-box {
+      position: fixed;
+      left: 50%;
+      top: 8%;
+      transform: translateX(-50%);
+      width: 480px;
+      max-width: 92vw;
+      z-index: 60;
+      padding: 0;
+      border-radius: 20px;
+    }
+
+    .cheer-video-inner {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 26px;
+    }
+
+    .cheer-video-frame-wrap {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .cheer-video-frame-wrap iframe,
+    .cheer-video-frame-wrap #cheer-yt-player {
+      width: 100%;
+      height: 100%;
+      display: block;
+      border: 0;
+    }
+
+    .cheer-close-btn {
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: none;
+      background: rgba(0, 0, 0, 0.45);
+      color: #ffffff;
+      font-size: 12px;
+      line-height: 22px;
+      text-align: center;
+      cursor: pointer;
+      z-index: 6;
+      padding: 0;
+    }
+
+    /* 가사창이 패널 드래그/복귀로 인한 순간적인 레이아웃 변화 때문에 아래로
+       스르륵 밀렸다가 돌아오는 것처럼 보이는 문제를 막기 위해, 패널을 드래그로
+       옮기거나 제자리로 되돌리는 짧은 순간에는 부드러운 스크롤 애니메이션을
+       잠깐 꺼둔다(즉시 이동으로 대체). */
+    .lyrics-box.lyrics-scroll-instant {
+      scroll-behavior: auto !important;
+    }
+
     .charmander-control-bar {
       /* (변경) 일반 동영상 플레이어처럼, 평소에는 숨겨져 있다가 동영상에
          마우스를 올리거나(hover) 슬라이더를 조작 중일 때만(focus-within)
@@ -1936,7 +2066,8 @@
     .time-stamps {
       display: flex;
       justify-content: space-between;
-      font-size: 13px;
+      font-size: 15px;
+      font-weight: 600;
       color: #c5cbd3;
       margin-bottom: 6px;
     }
@@ -2943,7 +3074,7 @@
     <div class="left-panel">
       <!-- 카테고리 선택 카드 -->
       <div class="card-box draggable-panel" id="panel-category">
-        <div class="section-title panel-drag-handle">CATEGORY</div>
+        <div class="section-title panel-drag-handle panel-collapse-header">CATEGORY</div>
         <div class="category-buttons">
           <button class="cat-btn active" data-type="all">ALL</button>
           <button class="cat-btn" data-type="single">SINGLE</button>
@@ -2961,13 +3092,13 @@
 
       <!-- 앨범 선택 카드 -->
       <div class="card-box draggable-panel" id="panel-album">
-        <div class="section-title panel-drag-handle">ALBUM</div>
+        <div class="section-title panel-drag-handle panel-collapse-header">ALBUM</div>
         <div class="album-select-box" id="album-select-container"></div>
       </div>
 
       <!-- 트랙리스트 카드 -->
       <div class="card-box draggable-panel" id="panel-tracklist">
-        <div class="section-title panel-drag-handle" id="tracklist-title">TRACKLIST</div>
+        <div class="section-title panel-drag-handle panel-collapse-header" id="tracklist-title">TRACKLIST</div>
         <div class="tracklist-box">
           <ul id="track-list">
             <li class="track-placeholder">상단 ALBUM SELECT에서 앨범을 선택해주세요.</li>
@@ -2977,7 +3108,7 @@
 
       <!-- 파이리 비디오 및 오디오 제어 컨테이너 -->
       <div class="card-box charmander-box draggable-panel" id="panel-video">
-        <div class="panel-drag-handle-bar" title="드래그해서 이동"></div>
+        <div class="panel-drag-handle-bar panel-collapse-header" title="드래그해서 이동 / 클릭해서 접기"></div>
         <div class="charmander-container">
           <div class="charmander-video-wrap">
             <video id="charmander-video" class="charmander-video" autoplay loop playsinline muted>
@@ -3013,6 +3144,23 @@
         <div class="charmander-resize-handle bl" data-corner="bl" title="드래그해서 크기 조절"></div>
         <div class="charmander-resize-handle br" data-corner="br" title="드래그해서 크기 조절"></div>
       </div>
+    </div>
+
+    <!-- 응원법 유튜브 영상 박스: Deja Vu 재생 중 "응원법" 버튼을 누르면 나타난다.
+         상단 바를 누르면 접고 펼칠 수 있고, 네 모서리를 끌어 크기 조절이 가능하며,
+         59.5초~4분11.5초 구간만 반복 재생되도록 JS에서 제어한다. -->
+    <div class="card-box charmander-box cheer-video-box draggable-panel" id="panel-cheer" style="display:none;">
+      <div class="panel-drag-handle-bar panel-collapse-header" title="드래그해서 이동 / 클릭해서 접기"></div>
+      <button class="cheer-close-btn" id="cheer-close-btn" title="응원법 영상 닫기" type="button">✕</button>
+      <div class="cheer-video-inner">
+        <div class="cheer-video-frame-wrap">
+          <div id="cheer-yt-player"></div>
+        </div>
+      </div>
+      <div class="charmander-resize-handle tl" data-corner="tl" title="드래그해서 크기 조절"></div>
+      <div class="charmander-resize-handle tr" data-corner="tr" title="드래그해서 크기 조절"></div>
+      <div class="charmander-resize-handle bl" data-corner="bl" title="드래그해서 크기 조절"></div>
+      <div class="charmander-resize-handle br" data-corner="br" title="드래그해서 크기 조절"></div>
     </div>
 
     <!-- 오른쪽 패널: 메인 플레이어 및 재생목록 -->
@@ -3083,6 +3231,7 @@
               <h2 id="song-title">곡을 선택하세요</h2>
             </div>
           </div>
+          <button id="cheer-btn" class="cheer-btn" type="button">🎉 응원법</button>
         </div>
 
         <div class="progress-section">
@@ -7363,35 +7512,58 @@
     // width:100%이므로 카드 크기에 맞춰 자동으로 커지고, aspect-ratio가
     // 걸려있어 비율도 유지된다.
     (function setupCharmanderResize() {
-      const box = document.getElementById('panel-video');
-      if (!box) return;
-      const handles = box.querySelectorAll('.charmander-resize-handle');
+      // (일반화) 예전에는 #panel-video 하나만 대상으로 삼았는데, 응원법 영상
+      // 박스(#panel-cheer)도 같은 .charmander-resize-handle 마크업을 그대로
+      // 재사용하므로, 문서 전체의 핸들을 대상으로 삼고 각 핸들을 잡는 순간
+      // 그 핸들이 속한 박스(.charmander-box)를 찾아서 그 박스만 조절한다.
+      const handles = document.querySelectorAll('.charmander-resize-handle');
       if (!handles.length) return;
 
       const MIN_WIDTH = 220;
       const MAX_WIDTH = 900;
+      const CHEER_MAX_WIDTH = 1400; // 응원법 영상 박스는 더 크게 키울 수 있게 별도 상한
       let resizing = false;
+      let box = null;
       let corner = 'br';
       let startX = 0;
       let startWidth = 0;
 
       function onMove(e) {
-        if (!resizing) return;
+        if (!resizing || !box) return;
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
         const delta = clientX - startX;
         // 왼쪽 모서리(tl/bl)를 끌 때는 마우스가 왼쪽으로 갈수록 커져야 하므로
         // 부호를 뒤집는다. 오른쪽 모서리(tr/br)는 마우스가 오른쪽으로 갈수록 커진다.
         const sign = (corner === 'tl' || corner === 'bl') ? -1 : 1;
         let newWidth = startWidth + delta * sign;
-        newWidth = Math.max(MIN_WIDTH, Math.min(MAX_WIDTH, newWidth));
+        const maxW = (box.id === 'panel-cheer') ? CHEER_MAX_WIDTH : MAX_WIDTH;
+        newWidth = Math.max(MIN_WIDTH, Math.min(maxW, newWidth));
         box.style.width = `${newWidth}px`;
         box.style.maxWidth = 'none';
+
+        // (버그 수정) 응원법 영상 박스는 유튜브 iframe이 자체 비율(16:9)로 커지는
+        // 동안 카드 테두리(.card-box)의 높이는 자동으로 따라 늘어나지 않아서,
+        // 영상 아래쪽이 카드 바깥으로 삐져나오거나 overflow:hidden에 잘려 보였다.
+        // 너비가 바뀔 때마다 안쪽 패딩/헤더 바 높이까지 고려해서 카드 전체 높이도
+        // 같이 계산해 지정해주고, 유튜브 플레이어의 실제 픽셀 크기도 setSize로
+        // 함께 맞춰서 CSS 비율(aspect-ratio) 계산에만 기대지 않게 한다.
+        if (box.id === 'panel-cheer') {
+          const innerPadding = 26; // .cheer-video-inner 좌우/상하 패딩
+          const headerBarHeight = 18; // .panel-drag-handle-bar 높이 + 여백
+          const videoW = Math.max(0, newWidth - innerPadding * 2);
+          const videoH = videoW * 9 / 16;
+          box.style.height = `${videoH + innerPadding * 2 + headerBarHeight}px`;
+          if (typeof cheerYtPlayer !== 'undefined' && cheerYtPlayer && cheerYtPlayer.setSize) {
+            cheerYtPlayer.setSize(Math.round(videoW), Math.round(videoH));
+          }
+        }
       }
 
       function onUp() {
         if (!resizing) return;
         resizing = false;
-        box.classList.remove('resizing');
+        if (box) box.classList.remove('resizing');
+        box = null;
         document.removeEventListener('mousemove', onMove);
         document.removeEventListener('mouseup', onUp);
         document.removeEventListener('touchmove', onMove);
@@ -7399,9 +7571,12 @@
       }
 
       function onDown(e) {
+        const targetBox = e.currentTarget.closest('.charmander-box');
+        if (!targetBox) return;
         e.preventDefault();
         e.stopPropagation();
         resizing = true;
+        box = targetBox;
         corner = e.currentTarget.dataset.corner || 'br';
         box.classList.add('resizing');
         startX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -8106,6 +8281,160 @@
       setTimeout(updateMarqueeEffect, 50);
     }
 
+    /* ----------------------------------
+       응원법(치어리딩) 유튜브 영상 박스
+       - 트랙별로 응원법 영상이 정해져 있으면 곡 재생 중 "응원법" 버튼이 나타난다.
+       - 버튼을 누르면 유튜브 플레이어 기본 UI(화질 선택 포함)가 그대로 보이는
+         영상 박스가 뜨고, 지정된 시작 지점부터 자동 재생된다. 재생 구간을
+         강제로 가두지는 않으므로, 원하면 자유롭게 다른 구간으로 이동해서 볼 수 있다.
+    ---------------------------------- */
+    const CHEER_CONFIG = {
+      '_1juftZumOQ': { videoId: '9FlQOv6-Mjc', start: 59.5 },   // Deja Vu
+      'k7D4i1ILCCk': { videoId: '-55bUrG1qjg', start: 29.1 },   // Glow Up
+      'c70TkZH7fr0': { videoId: 'hc1HS71j6oY', start: 0 }       // Busy Boy
+    };
+
+    let cheerYtPlayer = null;
+    let cheerYtReady = false;
+    let cheerWantsPlay = false;
+    let cheerCurrentConfig = null;   // 지금 곡에 연결된 응원법 영상 설정
+    let cheerLoadedVideoId = null;   // 플레이어에 지금 로드되어 있는 영상 id
+
+    function syncCheerBoxHeightToWidth() {
+      const box = document.getElementById('panel-cheer');
+      if (!box) return;
+      const innerPadding = 26;
+      const headerBarHeight = 18;
+      const boxWidth = box.getBoundingClientRect().width || 480;
+      const videoW = Math.max(0, boxWidth - innerPadding * 2);
+      const videoH = videoW * 9 / 16;
+      box.style.height = `${videoH + innerPadding * 2 + headerBarHeight}px`;
+      if (cheerYtPlayer && cheerYtPlayer.setSize) {
+        cheerYtPlayer.setSize(Math.round(videoW), Math.round(videoH));
+      }
+    }
+
+    function ensureCheerPlayerCreated() {
+      if (cheerYtPlayer || !window.YT || !window.YT.Player || !cheerCurrentConfig) return;
+      cheerLoadedVideoId = cheerCurrentConfig.videoId;
+      cheerYtPlayer = new YT.Player('cheer-yt-player', {
+        height: '270',
+        width: '480',
+        videoId: cheerCurrentConfig.videoId,
+        playerVars: {
+          autoplay: 1,
+          controls: 1,
+          rel: 0,
+          playsinline: 1,
+          start: Math.floor(cheerCurrentConfig.start)
+        },
+        events: {
+          onReady: () => {
+            cheerYtReady = true;
+            if (cheerYtPlayer.seekTo) cheerYtPlayer.seekTo(cheerCurrentConfig.start, true);
+            if (cheerWantsPlay && cheerYtPlayer.playVideo) cheerYtPlayer.playVideo();
+            syncCheerBoxHeightToWidth();
+          }
+        }
+      });
+    }
+
+    function openCheerVideoBox() {
+      const panel = document.getElementById('panel-cheer');
+      if (!panel || !cheerCurrentConfig) return;
+      panel.style.display = '';
+      cheerWantsPlay = true;
+      if (!cheerYtPlayer) {
+        if (window.YT && window.YT.Player) {
+          ensureCheerPlayerCreated();
+        } else {
+          const waitTimer = setInterval(() => {
+            if (window.YT && window.YT.Player) {
+              clearInterval(waitTimer);
+              ensureCheerPlayerCreated();
+            }
+          }, 200);
+        }
+      } else if (cheerYtReady) {
+        // 다른 곡의 응원법 영상으로 바뀐 경우, 같은 플레이어에 새 영상을 불러온다.
+        if (cheerLoadedVideoId !== cheerCurrentConfig.videoId) {
+          cheerLoadedVideoId = cheerCurrentConfig.videoId;
+          cheerYtPlayer.loadVideoById({ videoId: cheerCurrentConfig.videoId, startSeconds: cheerCurrentConfig.start });
+        } else {
+          cheerYtPlayer.seekTo(cheerCurrentConfig.start, true);
+          if (cheerYtPlayer.playVideo) cheerYtPlayer.playVideo();
+        }
+        syncCheerBoxHeightToWidth();
+      }
+      const btn = document.getElementById('cheer-btn');
+      if (btn) btn.classList.add('active');
+    }
+
+    function closeCheerVideoBox() {
+      const panel = document.getElementById('panel-cheer');
+      if (panel) panel.style.display = 'none';
+      cheerWantsPlay = false;
+      if (cheerYtPlayer && cheerYtReady && cheerYtPlayer.pauseVideo) cheerYtPlayer.pauseVideo();
+      const btn = document.getElementById('cheer-btn');
+      if (btn) btn.classList.remove('active');
+    }
+
+    function updateCheerButtonVisibility(track) {
+      const btn = document.getElementById('cheer-btn');
+      if (!btn) return;
+      const config = track ? CHEER_CONFIG[track.src] : null;
+      const wasOpen = document.getElementById('panel-cheer') &&
+        document.getElementById('panel-cheer').style.display !== 'none';
+      const trackChangedCheerVideo = config && cheerCurrentConfig && config.videoId !== cheerCurrentConfig.videoId;
+      cheerCurrentConfig = config || null;
+      btn.classList.toggle('visible', !!config);
+      if (!config) {
+        closeCheerVideoBox();
+      } else if (wasOpen && trackChangedCheerVideo) {
+        // 응원법 박스가 열려있는 상태에서 다른 응원법 곡으로 넘어가면 영상도 같이 바꿔준다.
+        openCheerVideoBox();
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const cheerBtn = document.getElementById('cheer-btn');
+      const cheerCloseBtn = document.getElementById('cheer-close-btn');
+      if (cheerBtn) {
+        cheerBtn.addEventListener('click', () => {
+          const panel = document.getElementById('panel-cheer');
+          const isOpen = panel && panel.style.display !== 'none';
+          if (isOpen) closeCheerVideoBox(); else openCheerVideoBox();
+        });
+      }
+      if (cheerCloseBtn) {
+        cheerCloseBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          closeCheerVideoBox();
+        });
+      }
+    });
+    if (document.readyState !== 'loading') {
+      // (이 스크립트 블록 자체가 body 하단에서 실행되므로 대부분 이미 DOMContentLoaded
+      // 이후겠지만, 혹시 몰라 안전하게 즉시도 한 번 시도한다.)
+      const cheerBtnNow = document.getElementById('cheer-btn');
+      const cheerCloseBtnNow = document.getElementById('cheer-close-btn');
+      if (cheerBtnNow && !cheerBtnNow.__cheerBound) {
+        cheerBtnNow.__cheerBound = true;
+        cheerBtnNow.addEventListener('click', () => {
+          const panel = document.getElementById('panel-cheer');
+          const isOpen = panel && panel.style.display !== 'none';
+          if (isOpen) closeCheerVideoBox(); else openCheerVideoBox();
+        });
+      }
+      if (cheerCloseBtnNow && !cheerCloseBtnNow.__cheerBound) {
+        cheerCloseBtnNow.__cheerBound = true;
+        cheerCloseBtnNow.addEventListener('click', (e) => {
+          e.stopPropagation();
+          closeCheerVideoBox();
+        });
+      }
+    }
+
     function playTrackByListIndex(playIdx, autoPlay = true) {
       if (!currentPlaylist || currentPlaylist.length === 0) return;
       if (playIdx < 0) playIdx = 0;
@@ -8117,6 +8446,7 @@
       if (albumCover) albumCover.src = item.album.cover;
       if (albumName) albumName.innerText = item.album.title;
       if (songTitle) songTitle.innerText = item.track.name;
+      updateCheerButtonVisibility(item.track);
       currentLyricsIdx = -1;
       lyricsLineEls.forEach(el => el.classList.remove('active'));
       // 지금 재생하는 트랙의 영상 ID에 해당하는 가사가 있으면 그걸 보여준다.
@@ -8881,8 +9211,30 @@
     // 나머지 패널들이 위로 당겨지지 않게 한다. 이렇게 하면 실제로 옮기지
     // 않은 패널들은 계속 원래 반응형 흐름 안에 남아서 창 크기에 맞춰
     // 정상적으로 축소/복원된다.
+    // 가사창(#lyrics-box)이 패널을 옮기거나(freeze) 제자리로 되돌릴 때 생기는
+    // 순간적인 레이아웃 변화 때문에 부드러운 스크롤 애니메이션을 타고 아래로
+    // 살짝 밀렸다가 돌아오는 것처럼 보이는 문제를 막기 위한 헬퍼. 짧은 시간
+    // 동안 scroll-behavior를 auto(즉시 이동)로 바꿔두고, 그 시간이 지나면
+    // 현재 재생 중인 줄 기준으로 정확한 위치에 다시 한 번 맞춰준다.
+    function suppressLyricsSmoothScrollBriefly() {
+      const box = document.getElementById('lyrics-box');
+      if (!box) return;
+      box.classList.add('lyrics-scroll-instant');
+      clearTimeout(box.__lyricsInstantTimer);
+      box.__lyricsInstantTimer = setTimeout(() => {
+        box.classList.remove('lyrics-scroll-instant');
+        try {
+          if (typeof currentLyricsIdx !== 'undefined' && currentLyricsIdx >= 0 &&
+              typeof recenterLyricsToActive === 'function') {
+            recenterLyricsToActive();
+          }
+        } catch (e) {}
+      }, 400);
+    }
+
     function freezeSinglePanel(panelEl) {
       if (panelEl.dataset.panelFixed === '1') return;
+      suppressLyricsSmoothScrollBriefly();
 
       const playerWrapperEl2 = document.querySelector('.player-wrapper');
 
@@ -9054,6 +9406,10 @@
       const DRAG_THRESHOLD = 4; // 이만큼은 움직여야 "드래그"로 인정 (그 전까진 원래 클릭 동작 유지)
       let pointerDown = false;
       let dragging = false;
+      // 실제로 드래그가 일어난 직후에 발생하는 click 이벤트(헤더를 잡고 옮긴 뒤
+      // 마우스를 놓으면 브라우저가 자동으로 click도 같이 발생시킨다)까지 접기/펼치기
+      // 토글로 오인하지 않도록 구분하는 플래그.
+      let justDragged = false;
       let startX = 0, startY = 0, startLeft = 0, startTop = 0;
 
       // 드래그하는 동안에는 다른(안 움직이는) 패널들의 위치/크기를 미리 한 번만
@@ -9215,6 +9571,7 @@
           return;
         }
         dragging = false;
+        justDragged = true;
         // 마지막으로 예약된 위치 반영이 아직 안 됐다면(rAF 대기 중), 여기서
         // 즉시 한 번 더 확실히 반영해서 마우스를 놓은 좌표와 최종 위치가
         // 어긋나지 않게 한다.
@@ -9248,6 +9605,7 @@
             Math.abs(curTop - ph.top) <= RETURN_TO_ORIGIN_THRESHOLD;
 
           if (closeEnough) {
+            suppressLyricsSmoothScrollBriefly();
             placeholder.parentNode.insertBefore(panelEl, placeholder);
             placeholder.remove();
             panelEl.__reseneOriginPlaceholder = null;
@@ -9302,6 +9660,29 @@
       // 번갈아 그려지면서 화면이 지진 난 것처럼 떨려 보이는 원인이 됐다.
       // 지금은 scheduleFitPlayerWrapper 한 곳에서만 모든 fixed 패널을 함께,
       // 항상 같은 프레임에 일관되게 재배치하도록 정리했다.
+
+      // ---- 박스 상단(헤더)을 클릭하면 접고 펼치기 ----
+      // (CATEGORY/ALBUM/TRACKLIST/파이리 영상/응원법 영상 박스에 .panel-collapse-header가 있음)
+      const collapseHeader = panelEl.querySelector('.panel-collapse-header');
+      if (collapseHeader) {
+        try {
+          if (localStorage.getItem('rescene_panel_collapsed_' + panelEl.id) === '1') {
+            panelEl.classList.add('panel-collapsed');
+          }
+        } catch (e) {}
+        collapseHeader.addEventListener('click', () => {
+          // 방금 실제로 드래그해서 옮긴 직후에 뒤따라오는 click은 접기/펼치기로
+          // 처리하지 않는다(그렇지 않으면 옮길 때마다 매번 접혀버린다).
+          if (justDragged) { justDragged = false; return; }
+          panelEl.classList.toggle('panel-collapsed');
+          try {
+            localStorage.setItem(
+              'rescene_panel_collapsed_' + panelEl.id,
+              panelEl.classList.contains('panel-collapsed') ? '1' : '0'
+            );
+          } catch (e) {}
+        });
+      }
     }
 
     document.querySelectorAll('.draggable-panel').forEach(setupDraggablePanel);
