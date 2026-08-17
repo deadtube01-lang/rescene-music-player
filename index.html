@@ -3096,6 +3096,7 @@
           <button class="cat-btn" data-type="ep">EP</button>
           <button class="cat-btn" data-type="ost">OST</button>
           <button class="cat-btn" data-type="cover">COVER</button>
+          <button class="cat-btn" data-type="featuring">FEATURING</button>
           <button class="cat-btn" data-type="views">👁️ 조회수</button>
           <button class="cat-btn" data-type="favorite">좋아요❤️</button>
         </div>
@@ -3376,6 +3377,7 @@
         this._pollTimer = null;
         this._metaDispatched = false;
         this._trimEnd = null; // 이 시간(초)에 도달하면 실제 영상 길이와 무관하게 곡이 끝난 것으로 처리
+        this._trimStart = null; // 곡을 불러올 때 이 시간(초)부터 바로 재생 시작
       }
 
       _createPlayer() {
@@ -3415,7 +3417,7 @@
         this._duration = 0;
         this._activeVideoId = this._videoId;
         this._wantsPlay = false;
-        this._player.loadVideoById(this._videoId);
+        this._player.loadVideoById(this._trimStart != null ? { videoId: this._videoId, startSeconds: this._trimStart } : this._videoId);
       }
 
       _handleStateChange(e) {
@@ -3533,6 +3535,14 @@
 
       get trimEnd() {
         return this._trimEnd;
+      }
+
+      set trimStart(sec) {
+        this._trimStart = (typeof sec === 'number' && sec > 0) ? sec : null;
+      }
+
+      get trimStart() {
+        return this._trimStart;
       }
 
       get currentTime() {
@@ -3794,6 +3804,285 @@
         cover: "https://img.youtube.com/vi/HVsMGlboV_s/hqdefault.jpg",
         tracks: [
           { name: "중독 (Overdose)", src: "HVsMGlboV_s", duration: "3:27", trimEnd: 207 }
+        ]
+      },
+      {
+        id: "cover-hyeseong",
+        type: "cover",
+        title: "[COVER] 혜성 - 원곡: 윤하",
+        cover: "https://img.youtube.com/vi/K-beRJuRjQQ/hqdefault.jpg",
+        tracks: [
+          { name: "혜성 (미나미)", src: "K-beRJuRjQQ", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-dryflower",
+        type: "cover",
+        title: "[COVER] Dry Flower - 원곡: Yuuri",
+        cover: "https://img.youtube.com/vi/i0UW8-8UCvc/hqdefault.jpg",
+        tracks: [
+          { name: "Dry Flower (미나미)", src: "i0UW8-8UCvc", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-kkotgil",
+        type: "cover",
+        title: "[COVER] 꽃길 - 원곡: 김세정",
+        cover: "https://img.youtube.com/vi/FzUeh7XBOmI/hqdefault.jpg",
+        tracks: [
+          { name: "꽃길 (규빈 X 미나미)", src: "FzUeh7XBOmI", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-happy",
+        type: "cover",
+        title: "[COVER] HAPPY - 원곡: DAY6",
+        cover: "https://img.youtube.com/vi/TucLh-PYwwE/hqdefault.jpg",
+        tracks: [
+          { name: "HAPPY (규빈 X 미나미)", src: "TucLh-PYwwE", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-runaway-live",
+        type: "cover",
+        title: "[COVER] Runaway - 리브,미나미,제나",
+        cover: "https://img.youtube.com/vi/npwNcBPw7rg/hqdefault.jpg",
+        tracks: [
+          { name: "Runaway (리브,미나미,제나)", src: "npwNcBPw7rg", duration: "3:01", trimStart: 106.10, trimEnd: 288.00 }
+        ]
+      },
+      {
+        id: "cover-yeppeosseo",
+        type: "cover",
+        title: "[COVER] 예뻤어 - 원곡: DAY6",
+        cover: "https://img.youtube.com/vi/npwNcBPw7rg/hqdefault.jpg",
+        tracks: [
+          { name: "예뻤어 (리브,미나미,제나)", src: "npwNcBPw7rg", duration: "4:34", trimStart: 363, trimEnd: 637 }
+        ]
+      },
+      {
+        id: "cover-lifestooshort",
+        type: "cover",
+        title: "[COVER] Life's Too Short - 원곡: aespa",
+        cover: "https://img.youtube.com/vi/OybCC65kqEw/hqdefault.jpg",
+        tracks: [
+          { name: "Life's Too Short (제나)", src: "OybCC65kqEw", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-cheotnun",
+        type: "cover",
+        title: "[COVER] 첫눈처럼 너에게 가겠다 - 원곡: 에일리",
+        cover: "https://img.youtube.com/vi/M-qJ2Bf3FZg/hqdefault.jpg",
+        tracks: [
+          { name: "첫눈처럼 너에게 가겠다 (폰꾸미기 쎄이 VS 가방꾸미기 미나미)", src: "M-qJ2Bf3FZg", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-bimilbeonho",
+        type: "cover",
+        title: "[COVER] 비밀번호 486 - 원곡: 윤하",
+        cover: "https://img.youtube.com/vi/jt5dpJ1iVoM/hqdefault.jpg",
+        tracks: [
+          { name: "비밀번호 486 (가방 꾸미기 미나미)", src: "jt5dpJ1iVoM", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-underneath",
+        type: "cover",
+        title: "[COVER] Underneath the Tree Special Live - 원곡: Kelly Clarkson",
+        cover: "https://img.youtube.com/vi/Ocby704Ou-E/hqdefault.jpg",
+        tracks: [
+          { name: "Underneath the Tree Special Live (RESCENE)", src: "Ocby704Ou-E", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-titanium",
+        type: "cover",
+        title: "[COVER] TITANIUM - 원곡: David Guetta",
+        cover: "https://img.youtube.com/vi/AhJb7wPiOjQ/hqdefault.jpg",
+        tracks: [
+          { name: "TITANIUM (미나미)", src: "AhJb7wPiOjQ", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-losingyou",
+        type: "cover",
+        title: "[COVER] Losing You - 원곡: FLO",
+        cover: "https://img.youtube.com/vi/nBWg9eWMbfc/hqdefault.jpg",
+        tracks: [
+          { name: "Losing You (MINAMI X JUSTICEBACTERIA)", src: "nBWg9eWMbfc", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-namjachingu",
+        type: "cover",
+        title: "[COVER] 내 남자친구에게 - 원곡: 핑클(Fin.K.L)",
+        cover: "https://img.youtube.com/vi/O0BVlom5poY/hqdefault.jpg",
+        tracks: [
+          { name: "내 남자친구에게 (리브)", src: "O0BVlom5poY", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-nawasseumyeon",
+        type: "cover",
+        title: "[COVER] 나였으면 - 원곡: 나윤권",
+        cover: "https://img.youtube.com/vi/SW7M6MdlrlU/hqdefault.jpg",
+        tracks: [
+          { name: "나였으면 (미나미)", src: "SW7M6MdlrlU", duration: "4:22", trimStart: 368, trimEnd: 630 }
+        ]
+      },
+      {
+        id: "cover-bambi",
+        type: "cover",
+        title: "[COVER] Bambi (르세라핌 채원 ver) - 원곡: 백현",
+        cover: "https://img.youtube.com/vi/SW7M6MdlrlU/hqdefault.jpg",
+        tracks: [
+          { name: "Bambi (미나미)", src: "SW7M6MdlrlU", duration: "1:20", trimStart: 991, trimEnd: 1071 }
+        ]
+      },
+      {
+        id: "cover-mygospel",
+        type: "cover",
+        title: "[COVER] My Gospel - 원곡: 찰리 푸스",
+        cover: "https://img.youtube.com/vi/SW7M6MdlrlU/hqdefault.jpg",
+        tracks: [
+          { name: "My Gospel (미나미)", src: "SW7M6MdlrlU", duration: "3:02", trimStart: 1198, trimEnd: 1380 }
+        ]
+      },
+      {
+        id: "cover-timeless",
+        type: "cover",
+        title: "[COVER] Timeless - 원곡: 장리인 (Feat. 시아준수)",
+        cover: "https://img.youtube.com/vi/SW7M6MdlrlU/hqdefault.jpg",
+        tracks: [
+          { name: "Timeless (미나미 X 이무진)", src: "SW7M6MdlrlU", duration: "3:38", trimStart: 1840, trimEnd: 2058 }
+        ]
+      },
+      {
+        id: "cover-geureonirun",
+        type: "cover",
+        title: "[COVER] 그런 일은 - 원곡: 박화요비",
+        cover: "https://img.youtube.com/vi/iLcyx5g3_j8/hqdefault.jpg",
+        tracks: [
+          { name: "그런 일은 (리브,미나미,제나)", src: "iLcyx5g3_j8", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-eunggeupsil",
+        type: "cover",
+        title: "[COVER] 응급실 - 원곡: izi(이지)",
+        cover: "https://img.youtube.com/vi/ivwkXESUkas/hqdefault.jpg",
+        tracks: [
+          { name: "응급실 (리브,미나미,제나)", src: "ivwkXESUkas", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-bomnal",
+        type: "cover",
+        title: "[COVER] 봄날 - 원곡: BTS",
+        cover: "https://img.youtube.com/vi/waTiGXeIRJE/hqdefault.jpg",
+        tracks: [
+          { name: "봄날 (리브,미나미,제나)", src: "waTiGXeIRJE", duration: "3:11", trimStart: 219, trimEnd: 410 }
+        ]
+      },
+      {
+        id: "cover-dalligi",
+        type: "cover",
+        title: "[COVER] 달리기 - 원곡: 옥상달빛",
+        cover: "https://img.youtube.com/vi/waTiGXeIRJE/hqdefault.jpg",
+        tracks: [
+          { name: "달리기 (리브,제나)", src: "waTiGXeIRJE", duration: "2:15", trimStart: 565, trimEnd: 700 }
+        ]
+      },
+      {
+        id: "cover-stuckwithu",
+        type: "cover",
+        title: "[COVER] Stuck With U - 원곡: Ariana Grande, Justin Bieber",
+        cover: "https://img.youtube.com/vi/waTiGXeIRJE/hqdefault.jpg",
+        tracks: [
+          { name: "Stuck With U (리브,미나미)", src: "waTiGXeIRJE", duration: "2:00", trimStart: 750, trimEnd: 870 }
+        ]
+      },
+      {
+        id: "cover-numberonegirl",
+        type: "cover",
+        title: "[COVER] number one girl - 원곡: 로제(ROSÉ)",
+        cover: "https://img.youtube.com/vi/waTiGXeIRJE/hqdefault.jpg",
+        tracks: [
+          { name: "number one girl (미나미)", src: "waTiGXeIRJE", duration: "2:24", trimStart: 941, trimEnd: 1085 }
+        ]
+      },
+      {
+        id: "cover-sum",
+        type: "cover",
+        title: "[COVER] 숨 - 원곡: 민니(MINNIE)",
+        cover: "https://img.youtube.com/vi/waTiGXeIRJE/hqdefault.jpg",
+        tracks: [
+          { name: "숨 (제나)", src: "waTiGXeIRJE", duration: "2:32", trimStart: 1112, trimEnd: 1264 }
+        ]
+      },
+      {
+        id: "cover-ijeobeorijima",
+        type: "cover",
+        title: "[COVER] 잊어버리지마 - 원곡: Crush (feat. 태연)",
+        cover: "https://img.youtube.com/vi/waTiGXeIRJE/hqdefault.jpg",
+        tracks: [
+          { name: "잊어버리지마 (미나미,제나)", src: "waTiGXeIRJE", duration: "2:10", trimStart: 1295, trimEnd: 1425 }
+        ]
+      },
+      {
+        id: "cover-jajangga",
+        type: "cover",
+        title: "[COVER] 자장가 - 원곡: 아이유(IU)",
+        cover: "https://img.youtube.com/vi/waTiGXeIRJE/hqdefault.jpg",
+        tracks: [
+          { name: "자장가 (리브)", src: "waTiGXeIRJE", duration: "2:31", trimStart: 1447, trimEnd: 1598 }
+        ]
+      },
+      {
+        id: "cover-diewithasmile",
+        type: "cover",
+        title: "[COVER] Die with a Smile - 원곡: Lady Gaga & Bruno Mars",
+        cover: "https://img.youtube.com/vi/J_YUy-C-7ds/hqdefault.jpg",
+        tracks: [
+          { name: "Die with a Smile (리브,미나미,제나)", src: "J_YUy-C-7ds", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-sadsong",
+        type: "cover",
+        title: "[COVER] Sad Song - 원곡: ちゃんみな(챤미나)",
+        cover: "https://img.youtube.com/vi/FUhkv2YZxnc/hqdefault.jpg",
+        tracks: [
+          { name: "Sad Song (RESCENE)", src: "FUhkv2YZxnc", duration: "0:00" }
+        ]
+      },
+      {
+        id: "cover-neujeunhuhoe",
+        type: "cover",
+        title: "[COVER] 늦은 후회 - 원곡: 보보",
+        cover: "https://img.youtube.com/vi/oaPTaoYn_nQ/hqdefault.jpg",
+        tracks: [
+          { name: "늦은 후회 (원이)", src: "oaPTaoYn_nQ", duration: "2:36", trimStart: 5017, trimEnd: 5173 }
+        ]
+      },
+      {
+        id: "cover-neoegedahgireul",
+        type: "cover",
+        title: "[COVER] 너에게 닿기를 - 원곡: 10cm",
+        cover: "https://img.youtube.com/vi/Wu9cKzV0ERQ/hqdefault.jpg",
+        tracks: [
+          { name: "너에게 닿기를 (리센느)", src: "Wu9cKzV0ERQ", duration: "2:34", trimStart: 643, trimEnd: 797 }
+        ]
+      },
+      {
+        id: "featuring-teachmehowtoloveyou",
+        type: "featuring",
+        title: "[FEATURING] teachmehowtoloveyou - PATEKO, SHIRT (feat. MINAMI)",
+        cover: "https://img.youtube.com/vi/4PH3FgPboW4/hqdefault.jpg",
+        tracks: [
+          { name: "teachmehowtoloveyou (feat. MINAMI of RESCENE)", src: "4PH3FgPboW4", duration: "0:00" }
         ]
       }
     ];
@@ -8297,11 +8586,11 @@
     }
 
     /* ----------------------------------
-       응원법(치어리딩) 유튜브 영상 박스
-       - 트랙별로 응원법 영상이 정해져 있으면 곡 재생 중 "응원법" 버튼이 나타난다.
-       - 버튼을 누르면 유튜브 플레이어 기본 UI(화질 선택 포함)가 그대로 보이는
-         영상 박스가 뜨고, 지정된 시작 지점부터 자동 재생된다. 재생 구간을
-         강제로 가두지는 않으므로, 원하면 자유롭게 다른 구간으로 이동해서 볼 수 있다.
+       유튜브 영상 박스 (응원법 + 커버곡 목록 공용)
+       - 트랙별 응원법: 곡 재생 중이면 "응원법" 버튼이 나타난다.
+       - 커버곡 목록(COVER 패널): 목록에서 곡을 누르면 같은 영상 박스가 뜬다.
+       - 시작 시간만 있으면 그 지점부터 자유롭게 재생/탐색할 수 있고,
+         끝 시간까지 지정된 경우에는 그 구간을 벗어나면 다시 시작 지점으로 되돌아간다.
     ---------------------------------- */
     const CHEER_CONFIG = {
       '_1juftZumOQ': { videoId: '9FlQOv6-Mjc', start: 59.5 },   // Deja Vu
@@ -8321,8 +8610,29 @@
     let cheerYtPlayer = null;
     let cheerYtReady = false;
     let cheerWantsPlay = false;
-    let cheerCurrentConfig = null;   // 지금 곡에 연결된 응원법 영상 설정
+    let cheerCurrentConfig = null;   // 지금 곡에 연결된 응원법 영상 설정 (트랙 자동 노출용)
+    let sharedActiveConfig = null;   // 실제로 지금 박스에서 재생 중인 설정(응원법이든 커버곡이든)
     let cheerLoadedVideoId = null;   // 플레이어에 지금 로드되어 있는 영상 id
+    let sharedRangeTimer = null;
+
+    function startSharedRangeWatch(config) {
+      stopSharedRangeWatch();
+      if (!config || config.end == null) return;
+      sharedRangeTimer = setInterval(() => {
+        if (!cheerYtPlayer || !cheerYtPlayer.getCurrentTime) return;
+        const t = cheerYtPlayer.getCurrentTime();
+        if (t >= config.end || t < config.start - 1) {
+          cheerYtPlayer.seekTo(config.start, true);
+        }
+      }, 300);
+    }
+
+    function stopSharedRangeWatch() {
+      if (sharedRangeTimer) {
+        clearInterval(sharedRangeTimer);
+        sharedRangeTimer = null;
+      }
+    }
 
     function syncCheerBoxHeightToWidth() {
       const box = document.getElementById('panel-cheer');
@@ -8339,33 +8649,36 @@
     }
 
     function ensureCheerPlayerCreated() {
-      if (cheerYtPlayer || !window.YT || !window.YT.Player || !cheerCurrentConfig) return;
-      cheerLoadedVideoId = cheerCurrentConfig.videoId;
+      if (cheerYtPlayer || !window.YT || !window.YT.Player || !sharedActiveConfig) return;
+      cheerLoadedVideoId = sharedActiveConfig.videoId;
       cheerYtPlayer = new YT.Player('cheer-yt-player', {
         height: '270',
         width: '480',
-        videoId: cheerCurrentConfig.videoId,
+        videoId: sharedActiveConfig.videoId,
         playerVars: {
           autoplay: 1,
           controls: 1,
           rel: 0,
           playsinline: 1,
-          start: Math.floor(cheerCurrentConfig.start)
+          start: Math.floor(sharedActiveConfig.start)
         },
         events: {
           onReady: () => {
             cheerYtReady = true;
-            if (cheerYtPlayer.seekTo) cheerYtPlayer.seekTo(cheerCurrentConfig.start, true);
+            if (cheerYtPlayer.seekTo) cheerYtPlayer.seekTo(sharedActiveConfig.start, true);
             if (cheerWantsPlay && cheerYtPlayer.playVideo) cheerYtPlayer.playVideo();
             syncCheerBoxHeightToWidth();
+            startSharedRangeWatch(sharedActiveConfig);
           }
         }
       });
     }
 
-    function openCheerVideoBox() {
+    // 응원법 버튼이든 커버곡 목록이든, 공통으로 이 함수 하나로 영상 박스를 연다.
+    function openSharedVideoBox(config) {
       const panel = document.getElementById('panel-cheer');
-      if (!panel || !cheerCurrentConfig) return;
+      if (!panel || !config) return;
+      sharedActiveConfig = config;
       panel.style.display = '';
       cheerWantsPlay = true;
       if (!cheerYtPlayer) {
@@ -8380,16 +8693,21 @@
           }, 200);
         }
       } else if (cheerYtReady) {
-        // 다른 곡의 응원법 영상으로 바뀐 경우, 같은 플레이어에 새 영상을 불러온다.
-        if (cheerLoadedVideoId !== cheerCurrentConfig.videoId) {
-          cheerLoadedVideoId = cheerCurrentConfig.videoId;
-          cheerYtPlayer.loadVideoById({ videoId: cheerCurrentConfig.videoId, startSeconds: cheerCurrentConfig.start });
+        if (cheerLoadedVideoId !== config.videoId) {
+          cheerLoadedVideoId = config.videoId;
+          cheerYtPlayer.loadVideoById({ videoId: config.videoId, startSeconds: config.start });
         } else {
-          cheerYtPlayer.seekTo(cheerCurrentConfig.start, true);
+          cheerYtPlayer.seekTo(config.start, true);
           if (cheerYtPlayer.playVideo) cheerYtPlayer.playVideo();
         }
         syncCheerBoxHeightToWidth();
+        startSharedRangeWatch(config);
       }
+    }
+
+    function openCheerVideoBox() {
+      if (!cheerCurrentConfig) return;
+      openSharedVideoBox(cheerCurrentConfig);
       const btn = document.getElementById('cheer-btn');
       if (btn) btn.classList.add('active');
     }
@@ -8398,17 +8716,19 @@
       const panel = document.getElementById('panel-cheer');
       if (panel) panel.style.display = 'none';
       cheerWantsPlay = false;
+      stopSharedRangeWatch();
       if (cheerYtPlayer && cheerYtReady && cheerYtPlayer.pauseVideo) cheerYtPlayer.pauseVideo();
       const btn = document.getElementById('cheer-btn');
       if (btn) btn.classList.remove('active');
+      document.querySelectorAll('.cover-song-btn.active').forEach((el) => el.classList.remove('active'));
     }
 
     function updateCheerButtonVisibility(track) {
       const btn = document.getElementById('cheer-btn');
       if (!btn) return;
       const config = track ? CHEER_CONFIG[track.src] : null;
-      const wasOpen = document.getElementById('panel-cheer') &&
-        document.getElementById('panel-cheer').style.display !== 'none';
+      const panel = document.getElementById('panel-cheer');
+      const wasOpen = panel && panel.style.display !== 'none';
       const trackChangedCheerVideo = config && cheerCurrentConfig && config.videoId !== cheerCurrentConfig.videoId;
       cheerCurrentConfig = config || null;
       btn.classList.toggle('visible', !!config);
@@ -8420,43 +8740,32 @@
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
+    // ---- 응원법 버튼/닫기 버튼 바인딩 ----
+    function bindCheerAndCoverButtons() {
       const cheerBtn = document.getElementById('cheer-btn');
       const cheerCloseBtn = document.getElementById('cheer-close-btn');
-      if (cheerBtn) {
+      if (cheerBtn && !cheerBtn.__cheerBound) {
+        cheerBtn.__cheerBound = true;
         cheerBtn.addEventListener('click', () => {
           const panel = document.getElementById('panel-cheer');
-          const isOpen = panel && panel.style.display !== 'none';
+          const isOpen = panel && panel.style.display !== 'none' && sharedActiveConfig === cheerCurrentConfig;
           if (isOpen) closeCheerVideoBox(); else openCheerVideoBox();
         });
       }
-      if (cheerCloseBtn) {
+      if (cheerCloseBtn && !cheerCloseBtn.__cheerBound) {
+        cheerCloseBtn.__cheerBound = true;
         cheerCloseBtn.addEventListener('click', (e) => {
           e.stopPropagation();
           closeCheerVideoBox();
         });
       }
-    });
+    }
+
+    document.addEventListener('DOMContentLoaded', bindCheerAndCoverButtons);
     if (document.readyState !== 'loading') {
       // (이 스크립트 블록 자체가 body 하단에서 실행되므로 대부분 이미 DOMContentLoaded
       // 이후겠지만, 혹시 몰라 안전하게 즉시도 한 번 시도한다.)
-      const cheerBtnNow = document.getElementById('cheer-btn');
-      const cheerCloseBtnNow = document.getElementById('cheer-close-btn');
-      if (cheerBtnNow && !cheerBtnNow.__cheerBound) {
-        cheerBtnNow.__cheerBound = true;
-        cheerBtnNow.addEventListener('click', () => {
-          const panel = document.getElementById('panel-cheer');
-          const isOpen = panel && panel.style.display !== 'none';
-          if (isOpen) closeCheerVideoBox(); else openCheerVideoBox();
-        });
-      }
-      if (cheerCloseBtnNow && !cheerCloseBtnNow.__cheerBound) {
-        cheerCloseBtnNow.__cheerBound = true;
-        cheerCloseBtnNow.addEventListener('click', (e) => {
-          e.stopPropagation();
-          closeCheerVideoBox();
-        });
-      }
+      bindCheerAndCoverButtons();
     }
 
     function playTrackByListIndex(playIdx, autoPlay = true) {
@@ -8485,6 +8794,7 @@
       if (audio) {
         audio.src = item.track.src;
         audio.trimEnd = item.track.trimEnd || null;
+        audio.trimStart = item.track.trimStart || null;
         audio.load();
       }
 
