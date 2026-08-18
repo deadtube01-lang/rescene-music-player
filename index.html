@@ -3034,6 +3034,68 @@
         padding: 14px !important;
       }
     }
+
+    /* ===================================================================
+       모바일 뮤직앱 UI (1단계: 골격)
+       - 아래 규칙들은 max-width:768px 에서만 적용되므로 PC 화면(768px 초과)에는
+         전혀 영향을 주지 않는다.
+       - 하단 탭바(홈/검색/더보기) + 기존 파이리/가방/포토카드 버튼 숨김만 우선 적용.
+    =================================================================== */
+    #mobile-bottom-nav { display: none; }
+
+    @media (max-width: 768px) {
+      /* 파이리 소환 버튼(몬스터볼), 가방(포획 목록) 버튼, 포토카드 뽑기 버튼은
+         모바일 홈 화면에서는 숨긴다. (더보기 탭에서 다시 노출될 예정: 2단계 이후) */
+      #pokeball-spawn-btn,
+      #captured-list-btn,
+      #photocard-gacha-btn,
+      #wild-toggle-btn {
+        display: none !important;
+      }
+
+      /* 하단 탭바를 위한 여백 확보 */
+      body {
+        padding-bottom: 64px !important;
+      }
+
+      #mobile-bottom-nav {
+        display: flex;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 60px;
+        z-index: 9999;
+        background: var(--bg-secondary, #14121f);
+        border-top: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 -2px 12px rgba(0,0,0,0.25);
+      }
+      body.light-mode #mobile-bottom-nav {
+        background: #ffffff;
+        border-top: 1px solid rgba(0,0,0,0.08);
+      }
+      .mnav-btn {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2px;
+        background: none;
+        border: none;
+        font-size: 10px;
+        color: var(--text-secondary, #9a94b3);
+        cursor: pointer;
+        -webkit-tap-highlight-color: transparent;
+      }
+      .mnav-btn .mnav-icon {
+        font-size: 20px;
+        line-height: 1;
+      }
+      .mnav-btn.active {
+        color: var(--accent-color, #7c5cff);
+      }
+    }
   </style>
 </head>
 <body class="light-mode" oncontextmenu="return false;">
@@ -3102,9 +3164,74 @@
   </script>
 
   <!-- 야생 파이리 이스터에그 on/off 토글 버튼 -->
-  <button id="wild-toggle-btn" class="pokeball-spawn-btn wild-toggle-btn active" title="야생 파이리 이스터에그 켜기/끄기">
+  <button id="wild-toggle-btn" class="pokeball-spawn-btn wild-toggle-btn" title="야생 파이리 이스터에그 켜기/끄기">
     <img src="POKEMON/포획된파이리.png" alt="야생 파이리" class="pokeball-spawn-btn-icon">
   </button>
+
+  <!-- ===================================================================
+       모바일 전용 하단 탭바 (홈 / 검색 / 더보기) — 1단계 골격.
+       CSS에서 max-width:768px 에서만 display:flex 로 보이도록 처리했으므로
+       PC 화면에는 나타나지 않는다. 아직은 탭 전환 시 화면 내용까지 바꾸지는
+       않고, 눌린 탭 표시(active)만 동작한다. (홈 화면 캐러셀/검색/더보기
+       화면 구현은 다음 단계에서 이어서 진행)
+  =================================================================== */
+  <nav id="mobile-bottom-nav">
+    <button class="mnav-btn active" data-mnav="home" type="button">
+      <span class="mnav-icon">🏠</span><span>홈</span>
+    </button>
+    <button class="mnav-btn" data-mnav="search" type="button">
+      <span class="mnav-icon">🔍</span><span>검색</span>
+    </button>
+    <button class="mnav-btn" data-mnav="more" type="button">
+      <span class="mnav-icon">☰</span><span>더보기</span>
+    </button>
+  </nav>
+
+  <script>
+    (function () {
+      var btns = document.querySelectorAll('.mnav-btn');
+      btns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          btns.forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          // TODO(다음 단계): data-mnav 값(home/search/more)에 따라
+          // 실제 화면(캐러셀 홈 / 카테고리 검색 / 영상·포토카드·파이리 토글)을 전환.
+        });
+      });
+    })();
+
+    /* -------------------------------------------------------------
+       "자주 들은 곡" 트래킹: 한 곡이 처음부터 끝까지 재생 완료되었을 때만
+       카운트한다. 재생 중이던 트랙의 ended 이벤트(자연 종료 또는
+       trimEnd 도달로 인한 종료 모두 포함)가 발생하는 시점 = "끝까지 재생됨"
+       이므로 이 시점에만 카운트를 올린다. localStorage에 영구 저장.
+       (다음 단계에서 홈 화면 "자주 들은 곡" 캐러셀이 이 데이터를 사용)
+    ------------------------------------------------------------- */
+    (function () {
+      var STORAGE_KEY = 'playCompletionCounts';
+      function loadCounts() {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+        } catch (e) {
+          return {};
+        }
+      }
+      function saveCounts(counts) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(counts));
+        } catch (e) { /* 무시 */ }
+      }
+      window.__recordTrackCompleted = function (videoId) {
+        if (!videoId) return;
+        var counts = loadCounts();
+        counts[videoId] = (counts[videoId] || 0) + 1;
+        saveCounts(counts);
+      };
+      window.__getPlayCompletionCounts = function () {
+        return loadCounts();
+      };
+    })();
+  </script>
 
   <!-- 최상단 왼쪽 테마 토글 버튼 (기본 상태 라이트 모드) -->
   <div class="theme-toggle-row">
@@ -9698,6 +9825,10 @@
       });
 
       audio.addEventListener('ended', () => {
+        // 끝까지 재생 완료된 시점(자연 종료 / trimEnd 도달 모두 포함) = "자주 들은 곡" 집계 대상.
+        if (window.__recordTrackCompleted && currentPlaylist && currentPlaylist[currentPlayIndex]) {
+          window.__recordTrackCompleted(currentPlaylist[currentPlayIndex].track.src);
+        }
         handleNextTrack();
       });
     }
@@ -11685,7 +11816,9 @@
       let lastWildPos = null; // 야생 파이리가 마지막으로 있던 좌표 (재등장 시 이어서 시작)
 
       // 야생 파이리 이스터에그 on/off 토글. localStorage에 저장해서 새로고침해도 유지된다.
-      let wildEncounterEnabled = (localStorage.getItem('wildEncounterEnabled') !== 'off');
+      // 기본값은 항상 꺼짐(비활성화). 사용자가 더보기 화면 등에서 명시적으로 켠 적이
+      // 있을 때만( localStorage에 'on'으로 저장돼 있을 때만) 켜진 상태로 시작한다.
+      let wildEncounterEnabled = (localStorage.getItem('wildEncounterEnabled') === 'on');
       const wildToggleBtn = document.getElementById('wild-toggle-btn');
       function renderWildToggleBtnUI() {
         if (!wildToggleBtn) return;
