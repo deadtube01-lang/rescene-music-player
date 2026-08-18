@@ -6990,6 +6990,7 @@
       '_tADnkWlvnA': YOYO_LYRICS,                  // YoYo ([2024.03.26] Re ; Scene)
       'YVjcmz9sBIs': PRETTY_GIRL_LYRICS,           // Pretty Girl ([2026.07.08] Pretty Girl)
       '_1juftZumOQ': DEJA_VU_LYRICS,                // Deja Vu
+      'Rrt8F_72ztE': DEJA_VU_LYRICS,                 // Deja Vu (Acoustic Live Mix ver.) [COVER]
       '5rFDUT1DoBM': MOOD_LYRICS,                   // Mood
       'PJqWbyNPcqw': DEJA_VU_SPEDUP_LYRICS,          // Deja Vu (Sped Up Ver)
       'VtRqBzYte2g': MOOD_SPEDUP_LYRICS,             // Mood (Sped Up Ver)
@@ -8827,16 +8828,16 @@
     let cheerLoadedVideoId = null;   // 플레이어에 지금 로드되어 있는 영상 id
     let sharedRangeTimer = null;
 
+    // (수정) 예전에는 여기서 300ms마다 현재 재생 위치를 감시하다가 클립
+    // 구간(start~end) 밖으로 나가면 강제로 start 위치로 되돌렸다. 그런데
+    // 이 반복적인 seekTo() 호출이 유튜브 플레이어를 계속 재버퍼링시켜서,
+    // 사용자가 원하는 다른 위치로 직접 이동(스크러빙)해도 곧 원래 구간으로
+    // 되돌아가 버리고, 진행바에 회색 버퍼링 표시가 계속 깜빡이는 부작용도
+    // 있었다. 이제는 처음 영상을 열 때 한 번만 시작 위치로 이동시키고,
+    // 그 이후에는 사용자가 어디로든 자유롭게 재생 위치를 옮길 수 있도록
+    // 더 이상 강제로 되돌리지 않는다.
     function startSharedRangeWatch(config) {
       stopSharedRangeWatch();
-      if (!config || config.end == null) return;
-      sharedRangeTimer = setInterval(() => {
-        if (!cheerYtPlayer || !cheerYtPlayer.getCurrentTime) return;
-        const t = cheerYtPlayer.getCurrentTime();
-        if (t >= config.end || t < config.start - 1) {
-          cheerYtPlayer.seekTo(config.start, true);
-        }
-      }, 300);
     }
 
     function stopSharedRangeWatch() {
@@ -8844,6 +8845,33 @@
         clearInterval(sharedRangeTimer);
         sharedRangeTimer = null;
       }
+    }
+
+    // (버그 수정) rAF 두 번 + setTimeout 150ms로 초기 크기를 맞추던 기존
+    // 방식은 브라우저/기기에 따라 레이아웃이 그보다 더 늦게 확정되는 경우
+    // (폰트 로딩, 화면 회전 등)에는 여전히 첫 프레임에 잘못된 폭을 읽어
+    // 영상 아래쪽이 카드 밖으로 넘치거나 잘려 보이는 문제가 있었다.
+    // ResizeObserver로 박스 자체의 실제 렌더 크기 변화를 직접 감시해서,
+    // 폭이 바뀌는 시점마다(원인이 무엇이든) 항상 높이/플레이어 크기를
+    // 다시 맞춰주면 이 문제를 근본적으로 없앨 수 있다.
+    let cheerBoxResizeObserver = null;
+    function ensureCheerBoxResizeObserver() {
+      if (cheerBoxResizeObserver || typeof ResizeObserver === 'undefined') return;
+      const box = document.getElementById('panel-cheer');
+      if (!box) return;
+      let lastWidth = 0;
+      cheerBoxResizeObserver = new ResizeObserver((entries) => {
+        for (const entry of entries) {
+          const w = entry.contentRect.width;
+          // 우리 스스로 setSize/height를 바꾸는 과정에서도 ResizeObserver가
+          // 다시 발동해 무한 루프가 되지 않도록, 폭이 실제로 바뀐 경우만 처리.
+          if (Math.abs(w - lastWidth) > 0.5) {
+            lastWidth = w;
+            syncCheerBoxHeightToWidth();
+          }
+        }
+      });
+      cheerBoxResizeObserver.observe(box);
     }
 
     function syncCheerBoxHeightToWidth() {
@@ -8908,6 +8936,7 @@
       sharedActiveConfig = config;
       panel.style.display = '';
       cheerWantsPlay = true;
+      ensureCheerBoxResizeObserver();
       // 영상보기/응원법 박스를 열 때는 같은 음원이 두 곳에서 동시에 재생되어
       // 소리가 겹치지 않도록 메인 뮤직 플레이어를 멈춘다.
       if (audio && typeof audio.pause === 'function') {
