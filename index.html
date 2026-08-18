@@ -3266,21 +3266,14 @@ body .player-wrapper,body .theme-toggle-row,body .wallpaper-controls,body #pokeb
 .rm-lp-record{width:min(78vw,330px);height:min(78vw,330px);aspect-ratio:auto;flex:0 0 auto;border-radius:50%;background:#111;position:relative;margin:34px auto 25px;box-shadow:0 12px 45px rgba(0,0,0,.42),inset 0 0 14px rgba(255,255,255,.08);overflow:hidden;display:grid;place-items:center;animation:rmLpSpin 3s linear infinite;animation-play-state:paused}
 .rm-lp-record.playing{animation-play-state:running}.rm-lp-grooves{position:absolute;inset:0;border-radius:50%;background:repeating-radial-gradient(circle at center,transparent,transparent 4px,rgba(255,255,255,.05) 5px,transparent 6px);z-index:2}.rm-lp-cover{width:80%;height:80%;object-fit:cover;border-radius:50%;z-index:1;box-shadow:0 0 5px rgba(0,0,0,.8);display:block;background:transparent}.rm-lp-hole{position:absolute;width:7px;height:7px;border-radius:50%;background:#0d1117;border:2px solid #333;z-index:3}
 @keyframes rmLpSpin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
-.rm-player-actions{display:flex;align-items:center;justify-content:space-between;margin-top:16px}.rm-lp-speed{display:flex;align-items:center;gap:9px;margin:10px 0 0;color:var(--rm-sub);font-size:10px}.rm-lp-speed input{flex:1;height:6px;accent-color:var(--rm-accent);cursor:pointer}.rm-lp-speed-value{min-width:30px;text-align:right;color:var(--rm-text);font-weight:700}.rm-player-option{border:0;background:transparent;color:var(--rm-sub);font-size:22px;width:44px;height:44px}.rm-player-option.active{color:var(--rm-accent)}
-.rm-current-playlist{margin-top:28px;border-top:1px solid var(--rm-line);padding-top:20px}.rm-current-playlist-title{font-size:16px;font-weight:800;margin-bottom:10px}.rm-current-list{display:grid;gap:7px}.rm-current-item{display:flex;align-items:center;gap:10px;padding:9px;border:0;border-radius:9px;background:var(--rm-surface);color:var(--rm-text);text-align:left}.rm-current-item.active{background:linear-gradient(120deg,rgba(252,111,207,.22),rgba(139,124,255,.18));box-shadow:inset 0 0 0 1px rgba(252,111,207,.35)}.rm-current-num{width:20px;text-align:center;color:var(--rm-sub);font-size:11px}.rm-current-copy{min-width:0;flex:1}.rm-current-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-current-album{margin-top:2px;color:var(--rm-sub);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-current-state{font-size:10px;color:var(--rm-accent);font-weight:800}.rm-lyrics{margin-top:18px;height:220px;max-height:30vh;min-height:160px;overflow-y:auto;overflow-x:hidden;padding:0 10px;text-align:center;scrollbar-width:none;scroll-behavior:auto;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--rm-line);-webkit-overflow-scrolling:touch}
-.rm-lyrics::-webkit-scrollbar{display:none}
-.rm-lyric-spacer{height:90px;flex-shrink:0;pointer-events:none}
-.rm-lyric-line{color:var(--rm-sub);font-size:14px;line-height:1.55;padding:6px 8px;transition:color .2s,font-size .2s,opacity .2s;white-space:pre-line;word-break:keep-all;opacity:.55}
-.rm-lyric-line.active{color:var(--rm-text);font-size:16px;font-weight:800;opacity:1}
-.rm-lyrics-empty{color:var(--rm-sub);font-size:13px;padding:18px 0}
-
-#rm-player-sheet{position:fixed;inset:0;z-index:10050;display:none;flex-direction:column;background:radial-gradient(circle at 50% 8%,rgba(252,111,207,.24),transparent 34%),var(--rm-bg);padding:16px 22px calc(24px + env(safe-area-inset-bottom));overflow-y:auto}#rm-player-sheet.open{display:flex}.rm-sheet-top{display:flex;align-items:center;justify-content:space-between;height:44px}.rm-sheet-label{font-size:10px;letter-spacing:1.8px;font-weight:800;color:var(--rm-sub)}.rm-sheet-cover{width:min(78vw,330px);aspect-ratio:1;object-fit:cover;border-radius:13px;margin:34px auto 25px;box-shadow:0 24px 60px rgba(0,0,0,.38)}.rm-sheet-title{font-size:24px;font-weight:850;letter-spacing:-.7px;line-height:1.15}.rm-sheet-album{color:var(--rm-sub);font-size:13px;margin-top:7px}.rm-sheet-progress{margin:10px 40px 0;max-width:calc(100% - 80px)}
+.rm-player-actions{display:flex;align-items:center;justify-content:space-between;margin-top:16px}.rm-lp-speed{display:flex;align-items:center;gap:8px;margin:14px 48px 0;max-width:calc(100% - 96px);color:var(--rm-sub);font-size:9px;letter-spacing:.3px}.rm-lp-speed input{flex:1;min-width:0;height:3px;-webkit-appearance:none;appearance:none;border-radius:2px;background:rgba(0,0,0,.12);outline:none;cursor:pointer;accent-color:var(--rm-accent)}.rm-lp-speed input::-webkit-slider-runnable-track{height:3px;border-radius:2px;background:rgba(0,0,0,.12)}.rm-lp-speed input::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;margin-top:-4.5px;border-radius:50%;background:#FC6FCF;border:0;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer}.rm-lp-speed input::-moz-range-track{height:3px;border-radius:2px;background:rgba(0,0,0,.12)}.rm-lp-speed input::-moz-range-thumb{width:12px;height:12px;border-radius:50%;background:#FC6FCF;border:0;cursor:pointer}.rm-lp-speed-value{min-width:28px;text-align:right;color:var(--rm-text);font-weight:700;font-size:10px}.rm-player-option{border:0;background:transparent;color:var(--rm-sub);font-size:22px;width:44px;height:44px}.rm-player-option.active{color:var(--rm-accent)}
+.rm-current-playlist{margin-top:28px;border-top:1px solid var(--rm-line);padding-top:20px}.rm-current-playlist-title{font-size:16px;font-weight:800;margin-bottom:10px}.rm-current-list{display:grid;gap:7px}.rm-current-item{display:flex;align-items:center;gap:10px;padding:9px;border:0;border-radius:9px;background:var(--rm-surface);color:var(--rm-text);text-align:left}.rm-current-item.active{background:linear-gradient(120deg,rgba(252,111,207,.22),rgba(139,124,255,.18));box-shadow:inset 0 0 0 1px rgba(252,111,207,.35)}.rm-current-num{width:20px;text-align:center;color:var(--rm-sub);font-size:11px}.rm-current-copy{min-width:0;flex:1}.rm-current-name{font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-current-album{margin-top:2px;color:var(--rm-sub);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-current-state{font-size:10px;color:var(--rm-accent);font-weight:800}.rm-lyrics{margin-top:26px;height:240px;max-height:32vh;min-height:180px;overflow-y:auto;padding:12px 6px;text-align:center;scrollbar-width:thin;scroll-behavior:smooth;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid var(--rm-line)}.rm-lyrics::-webkit-scrollbar{display:none}.rm-lyric-line{color:var(--rm-sub);font-size:13px;line-height:1.4;padding:3px 6px;transition:.2s}.rm-lyric-line.active{color:var(--rm-text);font-size:15px;font-weight:800}.rm-lyrics-empty{color:var(--rm-sub);font-size:13px;padding:18px 0}
+#rm-player-sheet{position:fixed;inset:0;z-index:10050;display:none;flex-direction:column;background:radial-gradient(circle at 50% 8%,rgba(252,111,207,.24),transparent 34%),var(--rm-bg);padding:16px 22px calc(24px + env(safe-area-inset-bottom));overflow-y:auto}#rm-player-sheet.open{display:flex}.rm-sheet-top{display:flex;align-items:center;justify-content:space-between;height:44px}.rm-sheet-label{font-size:10px;letter-spacing:1.8px;font-weight:800;color:var(--rm-sub)}.rm-sheet-cover{width:min(78vw,330px);aspect-ratio:1;object-fit:cover;border-radius:13px;margin:34px auto 25px;box-shadow:0 24px 60px rgba(0,0,0,.38)}.rm-sheet-title{font-size:24px;font-weight:850;letter-spacing:-.7px;line-height:1.15}.rm-sheet-album{color:var(--rm-sub);font-size:13px;margin-top:7px}.rm-sheet-progress{margin:8px 0 0}
 .rm-range{
   width:100%;
   -webkit-appearance:none!important;
   appearance:none!important;
   height:28px;
-  border-radius:0;
   background:transparent;
   outline:none;
   cursor:pointer;
@@ -3289,44 +3282,25 @@ body .player-wrapper,body .theme-toggle-row,body .wallpaper-controls,body #pokeb
   margin:0;
 }
 .rm-range::-webkit-slider-runnable-track{
-  height:3px!important;
-  border-radius:2px;
+  height:6px!important;
+  border-radius:3px;
   background:linear-gradient(to right,#38d8f6 0%,#38d8f6 calc(var(--value,0)*100%),rgba(0,0,0,.12) calc(var(--value,0)*100%),rgba(0,0,0,.12) 100%);
 }
 .rm-range::-webkit-slider-thumb{
   -webkit-appearance:none!important;
-  appearance:none!important;
   width:14px!important;
   height:14px!important;
-  margin-top:-5.5px!important;
+  margin-top:-4px!important;
   border-radius:50%!important;
   background:#ffffff!important;
   border:2px solid #38d8f6!important;
   box-shadow:0 1px 4px rgba(0,0,0,.35)!important;
   cursor:grab;
 }
-.rm-range::-moz-range-track{
-  height:3px;
-  border-radius:2px;
-  background:rgba(0,0,0,.12);
-}
-.rm-range::-moz-range-progress{
-  height:3px;
-  border-radius:2px;
-  background:#38d8f6;
-}
-.rm-range::-moz-range-thumb{
-  width:14px;
-  height:14px;
-  border-radius:50%;
-  background:#ffffff;
-  border:2px solid #38d8f6;
-  box-shadow:0 1px 4px rgba(0,0,0,.35);
-  cursor:grab;
-}
-body.light-mode .rm-range::-webkit-slider-runnable-track{
-  background:linear-gradient(to right,#38d8f6 0%,#38d8f6 calc(var(--value,0)*100%),rgba(15,23,42,.12) calc(var(--value,0)*100%),rgba(15,23,42,.12) 100%);
-}.rm-player-small svg,.rm-player-option svg{width:24px;height:24px;display:block}.rm-player-main svg{width:25px;height:25px;display:block}.rm-times{display:flex;justify-content:space-between;color:var(--rm-sub);font-size:10px;margin-top:7px}.rm-player-controls{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:24px;padding:0 18px}.rm-player-small{width:42px;height:42px;border:0;background:transparent;color:var(--rm-text);display:grid;place-items:center;padding:3px}.rm-player-main{width:62px;height:62px;border:0;border-radius:50%;background:var(--rm-text);color:var(--rm-bg);font-size:22px;display:grid;place-items:center}.rm-player-small svg,.rm-player-option svg{width:28px;height:28px}.rm-player-main svg{width:25px;height:25px}.rm-player-fav{border:0;background:transparent;color:var(--rm-text);font-size:22px}.rm-player-volume{display:flex;align-items:center;gap:10px;margin-top:28px;color:var(--rm-sub)}.rm-player-volume input{flex:1;accent-color:var(--rm-text)}
+.rm-range::-moz-range-track{height:6px;border-radius:3px;background:rgba(0,0,0,.12)}
+.rm-range::-moz-range-progress{height:6px;border-radius:3px;background:#38d8f6}
+.rm-range::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#ffffff;border:2px solid #38d8f6;box-shadow:0 1px 4px rgba(0,0,0,.35);cursor:grab}
+.rm-player-small svg,.rm-player-option svg{width:24px;height:24px;display:block}.rm-player-main svg{width:25px;height:25px;display:block}.rm-times{display:flex;justify-content:space-between;color:var(--rm-sub);font-size:10px;margin-top:7px}.rm-player-controls{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:24px;padding:0 18px}.rm-player-small{width:42px;height:42px;border:0;background:transparent;color:var(--rm-text);display:grid;place-items:center;padding:3px}.rm-player-main{width:62px;height:62px;border:0;border-radius:50%;background:var(--rm-text);color:var(--rm-bg);font-size:22px;display:grid;place-items:center}.rm-player-small svg,.rm-player-option svg{width:28px;height:28px}.rm-player-main svg{width:25px;height:25px}.rm-player-fav{border:0;background:transparent;color:var(--rm-text);font-size:22px}.rm-player-volume{display:flex;align-items:center;gap:10px;margin-top:28px;color:var(--rm-sub)}.rm-player-volume input{flex:1;accent-color:var(--rm-text)}
 #rm-video-sheet{position:fixed;inset:0;z-index:10060;display:none;align-items:flex-end;background:rgba(0,0,0,.72)}#rm-video-sheet.open{display:flex}.rm-video-sheet-inner{width:100%;max-height:82dvh;overflow:auto;background:var(--rm-bg);border-radius:20px 20px 0 0;padding:14px 16px calc(22px + env(safe-area-inset-bottom))}.rm-video-sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.rm-video-close{border:0;background:transparent;color:var(--rm-text);font-size:22px}#rm-mobile-video{width:100%;max-height:58dvh;object-fit:contain;background:#000;border-radius:12px}
 .rm-toast{position:fixed;left:50%;bottom:calc(145px + env(safe-area-inset-bottom));transform:translate(-50%,12px);opacity:0;pointer-events:none;z-index:10100;padding:9px 13px;border-radius:999px;background:rgba(25,25,31,.94);color:#fff;font-size:11px;transition:.2s}.rm-toast.show{opacity:1;transform:translate(-50%,0)}
 }
@@ -3362,8 +3336,8 @@ body.light-mode .rm-range::-webkit-slider-runnable-track{
 <div id="rm-player-sheet">
 <div class="rm-sheet-top"><button class="rm-icon-btn" id="rm-sheet-close">⌄</button><span class="rm-sheet-label">NOW PLAYING</span><button class="rm-icon-btn" id="rm-sheet-fav">♡</button></div>
 <div class="rm-lp-record" id="rm-lp-record"><div class="rm-lp-grooves"></div><img class="rm-lp-cover" id="rm-sheet-cover" src="리센느1.webp" alt=""><div class="rm-lp-hole"></div></div><div class="rm-sheet-title" id="rm-sheet-title">재생 중인 곡 없음</div><div class="rm-sheet-album" id="rm-sheet-album">RESCENE</div>
-<div class="rm-sheet-progress"><input class="rm-range" id="rm-progress" type="range" min="0" max="1000" value="0"><div class="rm-times"><span id="rm-time-current">0:00</span><span id="rm-time-duration">0:00</span></div></div>
 <div class="rm-lp-speed"><span>LP SPEED</span><input id="rm-lp-speed" type="range" min="0.1" max="20" step="0.1" value="1.8"><span class="rm-lp-speed-value" id="rm-lp-speed-value">1.8s</span></div>
+<div class="rm-sheet-progress"><input class="rm-range" id="rm-progress" type="range" min="0" max="1000" value="0"><div class="rm-times"><span id="rm-time-current">0:00</span><span id="rm-time-duration">0:00</span></div></div>
 <div class="rm-player-actions"><button class="rm-player-option" id="rm-shuffle" aria-label="셔플"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.45 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg></button><button class="rm-player-option" id="rm-repeat" aria-label="반복"><svg id="rm-repeat-icon" viewBox="0 0 24 24"><path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v3h12v-6h-2v4z"/></svg></button></div>
 <div class="rm-player-controls"><button class="rm-player-small" id="rm-prev" aria-label="이전곡"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg></button><button class="rm-player-main" id="rm-play" aria-label="재생/일시정지"><span id="rm-play-icon"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg></span></button><button class="rm-player-small" id="rm-next" aria-label="다음곡"><svg viewBox="0 0 24 24"><path fill="currentColor" d="M16 18h2V6h-2zM6 18l8.5-6L6 18z"/></svg></button></div>
 <div class="rm-lyrics" id="rm-lyrics"><div class="rm-lyrics-empty">가사가 없습니다.</div></div>
@@ -4925,6 +4899,19 @@ body.light-mode .rm-range::-webkit-slider-runnable-track{
       localStorage.setItem('rescene_playlist', JSON.stringify(currentPlaylist));
     } catch (e) {}
 
+    // 새로고침 후에도 재생 중이던 곡 위치(네비게이션 UI) 유지
+    try {
+      const savedIdx = parseInt(localStorage.getItem('rescene_play_index'), 10);
+      if (Number.isFinite(savedIdx) && savedIdx >= 0 && savedIdx < currentPlaylist.length) {
+        currentPlayIndex = savedIdx;
+      } else if (currentPlaylist.length > 0) {
+        currentPlayIndex = Math.min(Math.max(0, currentPlayIndex), currentPlaylist.length - 1);
+      } else {
+        currentPlayIndex = 0;
+      }
+    } catch (e) {
+      currentPlayIndex = 0;
+    }
 
     let favoriteTracks = [];
     try {
@@ -5171,6 +5158,7 @@ body.light-mode .rm-range::-webkit-slider-runnable-track{
     function savePlaylistToStorage() {
       try {
         localStorage.setItem('rescene_playlist', JSON.stringify(currentPlaylist));
+        localStorage.setItem('rescene_play_index', String(currentPlayIndex));
       } catch (e) {}
     }
 
@@ -9559,6 +9547,7 @@ body.light-mode .rm-range::-webkit-slider-runnable-track{
       if (playIdx >= currentPlaylist.length) playIdx = currentPlaylist.length - 1;
 
       currentPlayIndex = playIdx;
+      try { savePlaylistToStorage(); } catch (e) {}
       const item = currentPlaylist[currentPlayIndex];
 
       if (albumCover) albumCover.src = item.album.cover;
@@ -12448,12 +12437,10 @@ body.light-mode .rm-range::-webkit-slider-runnable-track{
 function initRM(){
  if(window.innerWidth>768||!document.getElementById('rm-mobile-app')) return;
  document.body.classList.add('rm-mobile-mode');
- let rmSeeking=false;
- function setRmProgressVisual(val){const rp=document.getElementById('rm-progress');if(!rp)return;const v=Math.max(0,Math.min(1000,Number(val)||0));rp.value=String(v);rp.style.setProperty('--value',(v/1000).toFixed(4));}
  const pages={home:document.getElementById('rm-home-page'),search:document.getElementById('rm-search-page'),more:document.getElementById('rm-more-page')};
  const navs=[...document.querySelectorAll('.rm-nav-btn')],freq=document.getElementById('rm-frequent-list'),rec=document.getElementById('rm-recommend-list'),input=document.getElementById('rm-search-input'),results=document.getElementById('rm-search-results'),chips=document.getElementById('rm-category-chips'),mini=document.getElementById('rm-mini-player'),sheet=document.getElementById('rm-player-sheet'),toast=document.getElementById('rm-toast');
  const rmLyrics=document.getElementById('rm-lyrics');
- let cat='all',lastLyricIndex=-2;if(rmLyrics){let __lyT=null;rmLyrics.addEventListener('scroll',()=>{rmLyrics._userScrolling=true;clearTimeout(__lyT);__lyT=setTimeout(()=>{rmLyrics._userScrolling=false},1800);},{passive:true});}
+ let cat='all',lastLyricIndex=-2;
  const fmt=s=>{s=Number(s);if(!isFinite(s)||s<0)return'0:00';return Math.floor(s/60)+':'+String(Math.floor(s%60)).padStart(2,'0')};
  const tracks=()=>typeof getAllTracksByCategory==='function'?getAllTracksByCategory('all')||[]:[];
  const dur=x=>{const t=x.track||{};if(typeof t.trimStart==='number'&&typeof t.trimEnd==='number')return Math.max(0,t.trimEnd-t.trimStart);if(typeof t.duration==='number')return t.duration;if(typeof t.duration==='string'){let a=t.duration.split(':').map(Number);if(a.length===2&&a.every(Number.isFinite))return a[0]*60+a[1];if(a.length===3&&a.every(Number.isFinite))return a[0]*3600+a[1]*60+a[2]}return 0};
@@ -12491,10 +12478,10 @@ function initRM(){
  function item(){return typeof currentPlaylist!=='undefined'&&currentPlaylist&&currentPlaylist[currentPlayIndex]?currentPlaylist[currentPlayIndex]:null}
  function favState(){const x=item();if(!x)return false;return favoriteTracks.includes(getTrackKey(x.album.id,x.track.name))}
  function syncFav(){const on=favState();document.getElementById('rm-sheet-fav').textContent=on?'♥':'♡';document.getElementById('rm-sheet-fav').classList.toggle('active',on)}
- function renderLyrics(){lastLyricIndex=-2;const x=item();rmLyrics.innerHTML='';if(!x){rmLyrics.innerHTML='<div class="rm-lyrics-empty">가사가 없습니다.</div>';return}const data=typeof LYRICS_BY_TRACK!=='undefined'?LYRICS_BY_TRACK[x.track.src]:null;if(!data||!data.length){rmLyrics.innerHTML='<div class="rm-lyrics-empty">가사가 없습니다.</div>';return}const topSp=document.createElement('div');topSp.className='rm-lyric-spacer';rmLyrics.appendChild(topSp);const arr=[...data].sort((a,b)=>a.time-b.time);arr.forEach((line,i)=>{const el=document.createElement('div');el.className='rm-lyric-line';el.dataset.time=line.time;el.textContent=String(line.text||'').replace(/\\n/g,'\n');el.onclick=()=>{if(audio)audio.currentTime=(audio.trimStart||0)+Number(line.time||0)};rmLyrics.appendChild(el)});const botSp=document.createElement('div');botSp.className='rm-lyric-spacer';rmLyrics.appendChild(botSp);updateLyricsActive()}
- function updateLyricsActive(){if(!rmLyrics)return;const x=item();if(!x)return;const st=audio?.trimStart||0;const t=Math.max(0,(audio?.currentTime||0)-st);const els=[...rmLyrics.querySelectorAll('.rm-lyric-line')];let idx=-1;els.forEach((el,i)=>{if(Number(el.dataset.time)<=t)idx=i});els.forEach((el,i)=>el.classList.toggle('active',i===idx));if(idx!==lastLyricIndex&&idx>=0&&els[idx]){lastLyricIndex=idx;if(!document.hidden&&!rmLyrics._userScrolling){const el=els[idx];const box=rmLyrics;const target=el.offsetTop-(box.clientHeight/2)+(el.offsetHeight/2);box.scrollTop=Math.max(0,Math.min(target,box.scrollHeight-box.clientHeight));}}}
+ function renderLyrics(){lastLyricIndex=-2;const x=item();rmLyrics.innerHTML='';if(!x){rmLyrics.innerHTML='<div class="rm-lyrics-empty">가사가 없습니다.</div>';return}const data=typeof LYRICS_BY_TRACK!=='undefined'?LYRICS_BY_TRACK[x.track.src]:null;if(!data||!data.length){rmLyrics.innerHTML='<div class="rm-lyrics-empty">가사가 없습니다.</div>';return}const arr=[...data].sort((a,b)=>a.time-b.time);arr.forEach((line,i)=>{const el=document.createElement('div');el.className='rm-lyric-line';el.dataset.time=line.time;el.textContent=line.text||'';el.onclick=()=>{if(audio)audio.currentTime=(audio.trimStart||0)+Number(line.time||0)};rmLyrics.appendChild(el)});updateLyricsActive()}
+ function updateLyricsActive(){if(!rmLyrics)return;const x=item();if(!x)return;const st=audio?.trimStart||0;const t=Math.max(0,(audio?.currentTime||0)-st);const els=[...rmLyrics.querySelectorAll('.rm-lyric-line')];let idx=-1;els.forEach((el,i)=>{if(Number(el.dataset.time)<=t)idx=i});els.forEach((el,i)=>el.classList.toggle('active',i===idx));if(idx!==lastLyricIndex&&idx>=0&&els[idx]){lastLyricIndex=idx;if(!document.hidden&&window.innerWidth>768){els[idx].scrollIntoView({block:'center',behavior:'smooth'})}}}
  function renderCurrentPlaylist(){const box=document.getElementById('rm-current-list');if(!box)return;box.innerHTML='';const list=typeof currentPlaylist!=='undefined'?currentPlaylist||[]:[];if(!list.length){box.innerHTML='<div class="rm-empty">재생목록이 비어 있어요.</div>';return}list.forEach((it,i)=>{const d=document.createElement('button');d.className='rm-current-item'+(i===currentPlayIndex?' active':'');d.innerHTML='<span class="rm-current-num">'+(i+1)+'</span><span class="rm-current-copy"><span class="rm-current-name"></span><span class="rm-current-album"></span></span>'+(i===currentPlayIndex?'<span class="rm-current-state">재생 중</span>':'');d.querySelector('.rm-current-name').textContent=it.track.name;d.querySelector('.rm-current-album').textContent=it.album.title;d.onclick=()=>{currentPlayIndex=i;playTrackByListIndex(i,true);sync();renderLyrics();renderCurrentPlaylist()};box.appendChild(d)})}
- function sync(){let x=item();if(!x){mini.classList.remove('has-track');renderCurrentPlaylist();return}mini.classList.add('has-track');let cover=x.album.cover||'리센느1.webp';document.getElementById('rm-mini-cover').src=cover;document.getElementById('rm-mini-title').textContent=x.track.name;document.getElementById('rm-mini-sub').textContent=x.album.title;document.getElementById('rm-sheet-cover').src=cover;document.getElementById('rm-sheet-title').textContent=x.track.name;document.getElementById('rm-sheet-album').textContent=x.album.title;let playing=audio&&!audio.paused&&!audio.ended;document.getElementById('rm-mini-play').innerHTML=playing?'Ⅱ':'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';document.getElementById('rm-play').innerHTML=playing?'Ⅱ':'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';document.getElementById('rm-lp-record').classList.toggle('playing',playing);syncFav();let sh=document.getElementById('rm-shuffle'),rp=document.getElementById('rm-repeat');sh.classList.toggle('active',!!isShuffle);rp.classList.toggle('active',repeatMode!=='none');const ri=document.getElementById('rm-repeat-icon');if(ri)ri.innerHTML=repeatMode==='one'?'<path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v3h12v-6h-2v4z"/><text x="12" y="14.5" font-size="8.5" font-weight="bold" text-anchor="middle" fill="currentColor">1</text>':'<path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v3h12v-6h-2v4z"/>';if(audio){let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st,rel=Math.max(0,(audio.currentTime||0)-st);if(d>0){if(!rmSeeking)setRmProgressVisual(Math.round(rel/d*1000));const tc=document.getElementById('rm-time-current');const td=document.getElementById('rm-time-duration');if(tc)tc.textContent=fmt(rel);if(td)td.textContent=fmt(d)}}const speed=document.getElementById('rm-lp-speed');if(speed){const val=Number(speed.value)||1.8;document.getElementById('rm-lp-speed-value').textContent=val.toFixed(1)+'s';document.getElementById('rm-lp-record').style.animationDuration=val+'s'}updateLyricsActive();renderCurrentPlaylist()}
+ function sync(){let x=item();if(!x){mini.classList.remove('has-track');renderCurrentPlaylist();return}mini.classList.add('has-track');let cover=x.album.cover||'리센느1.webp';document.getElementById('rm-mini-cover').src=cover;document.getElementById('rm-mini-title').textContent=x.track.name;document.getElementById('rm-mini-sub').textContent=x.album.title;document.getElementById('rm-sheet-cover').src=cover;document.getElementById('rm-sheet-title').textContent=x.track.name;document.getElementById('rm-sheet-album').textContent=x.album.title;let playing=audio&&!audio.paused&&!audio.ended;document.getElementById('rm-mini-play').innerHTML=playing?'Ⅱ':'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';document.getElementById('rm-play').innerHTML=playing?'Ⅱ':'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';document.getElementById('rm-lp-record').classList.toggle('playing',playing);syncFav();let sh=document.getElementById('rm-shuffle'),rp=document.getElementById('rm-repeat');sh.classList.toggle('active',!!isShuffle);rp.classList.toggle('active',repeatMode!=='none');const ri=document.getElementById('rm-repeat-icon');if(ri)ri.innerHTML=repeatMode==='one'?'<path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v3h12v-6h-2v4z"/><text x="12" y="14.5" font-size="8.5" font-weight="bold" text-anchor="middle" fill="currentColor">1</text>':'<path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v3h12v-6h-2v4z"/>';if(audio){let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st,rel=Math.max(0,(audio.currentTime||0)-st);if(d>0){const rp=document.getElementById('rm-progress');if(rp){rp.value=Math.round(rel/d*1000);rp.style.setProperty('--value',(Number(rp.value)/1000).toFixed(4));}document.getElementById('rm-time-current').textContent=fmt(rel);document.getElementById('rm-time-duration').textContent=fmt(d)}}const speed=document.getElementById('rm-lp-speed');if(speed){const val=Number(speed.value)||1.8;document.getElementById('rm-lp-speed-value').textContent=val.toFixed(1)+'s';document.getElementById('rm-lp-record').style.animationDuration=val+'s'}updateLyricsActive();renderCurrentPlaylist()}
  function toastMsg(s){toast.textContent=s;toast.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toast.classList.remove('show'),1400)}
  navs.forEach(b=>b.onclick=()=>tab(b.dataset.rmNav));input.oninput=search;mini.onclick=()=>{sheet.classList.add('open');sync();renderLyrics()};document.getElementById('rm-mini-play').onclick=e=>{e.stopPropagation();togglePlay();setTimeout(sync,80)};
  document.getElementById('rm-sheet-close').onclick=()=>sheet.classList.remove('open');document.getElementById('rm-play').onclick=()=>{togglePlay();setTimeout(sync,80)};
@@ -12502,29 +12489,18 @@ function initRM(){
  document.getElementById('rm-shuffle').onclick=()=>{if(shuffleBtn)shuffleBtn.click();sync()};document.getElementById('rm-repeat').onclick=()=>{if(repeatBtn)repeatBtn.click();sync()};
  document.getElementById('rm-sheet-fav').onclick=()=>{if(lpFavBtn)lpFavBtn.click();sync();search()};
  document.getElementById('rm-lp-speed').oninput=e=>{const v=Number(e.target.value)||1.8;document.getElementById('rm-lp-speed-value').textContent=v.toFixed(1)+'s';document.getElementById('rm-lp-record').style.animationDuration=v+'s'};
- function seekFromRmProgress(){const rp=document.getElementById('rm-progress');if(!rp||!audio)return;let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st;if(!(d>0))return;const rel=(Number(rp.value)/1000)*d;try{audio.currentTime=st+rel}catch(_){}const tc=document.getElementById('rm-time-current');if(tc)tc.textContent=fmt(rel);setRmProgressVisual(rp.value);}
+ document.getElementById('rm-progress').oninput=e=>{if(!audio)return;let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st;if(d>0)audio.currentTime=st+e.target.value/1000*d;sync()};
+ // 모바일 플레이어 아이콘은 PC 플레이어의 실제 SVG를 그대로 복제해 항상 동일하게 유지
  function syncDesktopPlayerIcons(){ const map=[['rm-shuffle','shuffle-btn'],['rm-prev','prev-btn'],['rm-play','play-btn'],['rm-next','next-btn'],['rm-repeat','repeat-btn']]; map.forEach(([m,d])=>{const a=document.getElementById(m),b=document.getElementById(d); if(a&&b){ const src=b.querySelector('svg,span'); if(src){ const holder=a.querySelector('svg,span'); if(holder) holder.outerHTML=src.outerHTML; else a.innerHTML=src.outerHTML; } } }); }
  syncDesktopPlayerIcons();
- const rp=document.getElementById('rm-progress');
- if(rp){
-  const startSeek=e=>{rmSeeking=true;try{rp.setPointerCapture?.(e.pointerId)}catch(_){}};
-  const moveSeek=()=>{setRmProgressVisual(rp.value);if(!audio)return;let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st;if(!(d>0))return;const rel=(Number(rp.value)/1000)*d;const tc=document.getElementById('rm-time-current');if(tc)tc.textContent=fmt(rel);};
-  const endSeek=()=>{if(!rmSeeking)return;seekFromRmProgress();rmSeeking=false;};
-  rp.addEventListener('pointerdown',startSeek);
-  rp.addEventListener('touchstart',startSeek,{passive:true});
-  rp.addEventListener('pointerup',endSeek);
-  rp.addEventListener('pointercancel',endSeek);
-  rp.addEventListener('touchend',endSeek);
-  rp.addEventListener('change',()=>{seekFromRmProgress();rmSeeking=false;});
-  rp.addEventListener('input',moveSeek);
- }
+ const rp=document.getElementById('rm-progress'); if(rp){ rp.addEventListener('pointerdown',e=>{try{rp.setPointerCapture?.(e.pointerId)}catch(_){}}); rp.addEventListener('input',()=>{ if(audio){ let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st; if(d>0){ audio.currentTime=st+(Number(rp.value)/1000)*d; sync(); } } }); }
  document.getElementById('rm-theme-btn').onclick=()=>{if(typeof themeToggleBtn!=='undefined'&&themeToggleBtn)themeToggleBtn.click();else document.body.classList.toggle('light-mode')};
  document.getElementById('rm-gacha-btn').onclick=()=>document.getElementById('photocard-gacha-btn')?.click();
  const wt=document.getElementById('rm-wild-toggle'),wi=document.getElementById('rm-wild-item');function wildUI(){wt.classList.toggle('on',localStorage.getItem('wildEncounterEnabled')==='on')}wi.onclick=()=>{document.getElementById('wild-toggle-btn')?.click();wildUI();toastMsg(localStorage.getItem('wildEncounterEnabled')==='on'?'야생 원이 파이리를 켰어요':'야생 원이 파이리를 껐어요')};wildUI();
  document.querySelectorAll('.rm-video-btn').forEach(b=>b.onclick=()=>{let wanted=b.dataset.videoAction,orig=[...document.querySelectorAll('.charmander-act-btn')].find(x=>(x.textContent||'').trim()===wanted);if(orig){orig.click();let v=document.getElementById('charmander-video'),mv=document.getElementById('rm-mobile-video');if(v&&v.src){mv.src=v.currentSrc||v.src;document.getElementById('rm-video-title').textContent=wanted;videoSheet.classList.add('open');mv.play().catch(()=>{})}}else toastMsg('동영상을 찾을 수 없어요')});
  document.getElementById('rm-video-close').onclick=()=>{let v=document.getElementById('rm-mobile-video');v.pause();v.removeAttribute('src');videoSheet.classList.remove('open')};
  if(audio)['play','playing','pause','ended','timeupdate','loadedmetadata','durationchange'].forEach(ev=>audio.addEventListener(ev,()=>{if(ev==='ended')home();if(ev==='play'||ev==='loadedmetadata')renderLyrics();sync()}));
- window.addEventListener('rescene-play-history-updated',home);window.addEventListener('storage',e=>{if(e.key==='rescene_favorites'||e.key==='playCompletionCounts')home()});setInterval(sync,300);home();renderChips();search();
+ window.addEventListener('rescene-play-history-updated',home);window.addEventListener('storage',e=>{if(e.key==='rescene_favorites'||e.key==='playCompletionCounts')home()});setInterval(sync,300);home();renderChips();search();sync();renderCurrentPlaylist();if(typeof currentPlaylist!=='undefined'&&currentPlaylist&&currentPlaylist.length){renderLyrics();}
 }
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initRM,{once:true});else initRM();
 })();
