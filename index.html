@@ -3095,6 +3095,152 @@
       .mnav-btn.active {
         color: var(--accent-color, #7c5cff);
       }
+
+      /* -----------------------------------------------------------
+         2단계: 홈 / 검색 / 더보기 화면 전환 (Spotify 스타일 모바일 UI)
+         body에 mobile-tab-home / mobile-tab-search / mobile-tab-more
+         클래스를 붙여서 화면을 전환한다.
+      ----------------------------------------------------------- */
+      body { padding-bottom: 122px !important; } /* 미니플레이어(60px) + 탭바(60px) */
+
+      .mobile-view { display: none; }
+
+      /* 홈 탭: 새 홈 화면만 보이고, 기존 카테고리/앨범/트랙리스트/파이리/오른쪽 플레이어는 숨김 */
+      body.mobile-tab-home #mobile-home-view { display: block; }
+      body.mobile-tab-home #panel-category,
+      body.mobile-tab-home #panel-album,
+      body.mobile-tab-home #panel-tracklist,
+      body.mobile-tab-home #panel-video,
+      body.mobile-tab-home #panel-cheer,
+      body.mobile-tab-home .right-panel {
+        display: none !important;
+      }
+
+      /* 검색 탭: 기존 카테고리/검색창 + 앨범 + 트랙리스트만 풀스크린으로 노출 */
+      body.mobile-tab-search #panel-video,
+      body.mobile-tab-search #panel-cheer,
+      body.mobile-tab-search .right-panel,
+      body.mobile-tab-search #mobile-home-view {
+        display: none !important;
+      }
+      body.mobile-tab-search #panel-category,
+      body.mobile-tab-search #panel-album,
+      body.mobile-tab-search #panel-tracklist {
+        display: flex !important;
+      }
+
+      /* 더보기 탭: (3단계에서 동영상/포토카드/파이리 토글로 교체 예정)
+         지금은 기존 플레이어+재생목록을 그대로 보여준다. */
+      body.mobile-tab-more #mobile-home-view,
+      body.mobile-tab-more #panel-category,
+      body.mobile-tab-more #panel-album,
+      body.mobile-tab-more #panel-tracklist,
+      body.mobile-tab-more #panel-video {
+        display: none !important;
+      }
+
+      /* 미니 플레이어: 더보기 탭(이미 풀 플레이어가 보임)에서는 숨김 */
+      body.mobile-tab-more #mobile-mini-player { display: none !important; }
+
+      #mobile-mini-player {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        position: fixed;
+        left: 0;
+        right: 0;
+        bottom: 60px;
+        height: 60px;
+        padding: 0 12px;
+        z-index: 9998;
+        background: var(--bg-secondary, #1c1930);
+        border-top: 1px solid rgba(255,255,255,0.08);
+        cursor: pointer;
+      }
+      body.light-mode #mobile-mini-player {
+        background: #f3f1fa;
+        border-top: 1px solid rgba(0,0,0,0.08);
+      }
+      #mobile-mini-player img {
+        width: 40px;
+        height: 40px;
+        border-radius: 6px;
+        object-fit: cover;
+        flex: none;
+      }
+      #mobile-mini-player .mobile-mini-title {
+        flex: 1;
+        min-width: 0;
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary, #fff);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      body.light-mode #mobile-mini-player .mobile-mini-title { color: #1a1730; }
+      #mobile-mini-player .mobile-mini-btn {
+        flex: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        border: none;
+        background: var(--accent-color, #7c5cff);
+        color: #fff;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+      }
+
+      #mobile-home-view {
+        padding: 16px 14px 8px;
+      }
+      .mobile-home-section { margin-bottom: 22px; }
+      .mobile-home-section-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: var(--text-primary, #fff);
+        margin-bottom: 10px;
+      }
+      body.light-mode .mobile-home-section-title { color: #1a1730; }
+      .mobile-carousel-row {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        scroll-snap-type: x proximity;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+      }
+      .mobile-carousel-card {
+        flex: none;
+        width: 118px;
+        scroll-snap-align: start;
+        cursor: pointer;
+      }
+      .mobile-carousel-card img {
+        width: 118px;
+        height: 118px;
+        border-radius: 10px;
+        object-fit: cover;
+        display: block;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+      }
+      .mobile-carousel-card-title {
+        margin-top: 6px;
+        font-size: 12px;
+        color: var(--text-primary, #fff);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      body.light-mode .mobile-carousel-card-title { color: #1a1730; }
+      .mobile-carousel-empty {
+        font-size: 13px;
+        color: var(--text-secondary, #9a94b3);
+        padding: 8px 0;
+      }
     }
   </style>
 </head>
@@ -7179,37 +7325,37 @@
 ];
 
     const DRY_FLOWER_LYRICS = [
-      { time: 14.72, text: '多分 私じゃなくていいね\n타분 와타시쟈 나쿠테 이이네\n아마 내가 아니어도 될 거야' },
-      { time: 18.17, text: '余裕のない二人だったし\n요유-노 나이 후타리 닷타시\n우리 둘 사이에 여유라는 건 없었고' },
-      { time: 21.26, text: '気付けば喧嘩ばっかりしてさ\n키즈케바 켄카밧카리 시테사\n생각해 보면 싸우기만 했었지' },
-      { time: 24.34, text: 'ごめんね\n고멘네\n미안해' },
-      { time: 26.76, text: 'ずっと話そうと思ってた\n즛토 하나소-토 오못테타\n계속 이야기하려고했는데' },
-      { time: 30.01, text: 'きっと私たち合わないね\n킷토 와타시타치 아와나이네\n우린 진짜 안 맞는 것 같아' },
-      { time: 33.16, text: '二人きりしかいない部屋でさ\n후타리키리 시카 이나이 헤야데사\n방 안에 우리 둘밖에 없는데도' },
-      { time: 36.59, text: '貴方ばかり話していたよね\n아나타 바카리 하나시테이타요네\n너 하고 싶은 말만 했었잖아' },
-      { time: 39.86, text: 'もしいつか何処かで会えたら\n모시 이츠카 도코카데 아에타라\n혹시 언젠가 어디서 또 만나게 된다면' },
-      { time: 45.75, text: '今日の事を笑ってくれるかな\n쿄-노 코토오 와랏테 쿠레루카나\n오늘 있던 일에 웃어줄까' },
-      { time: 52.23, text: '理由もちゃんと話せないけれど\n리유-모 챤토 하나세나이케레도\n왜 그런지 제대로 설명 못하지만' },
-      { time: 58.64, text: '貴方が眠った後に泣くのは嫌\n아나타가 네뭇타 아토니 나쿠노와 이야\n내가 잠든 뒤에 울고 싶진 않아' },
-      { time: 65.10, text: '声も顔も不器用なとこも\n코에모 카오모 부키요-나 토코모\n너의 목소리도 얼굴도 서툰 그 모습까지' },
-      { time: 71.88, text: '全部全部 嫌いじゃないの\n젠부 젠부 키라이쟈나이노\n딱히 지금도 싫은 건 아니야' },
-      { time: 78.45, text: 'ドライフラワーみたい\n도라이후라와- 미타이\n드라이플라워처럼' },
-      { time: 82.29, text: '時間が経てばもきっときっときっときっと\n키미토노 히비모 킷토 킷토 킷토 킷토\n시간이 흐르면 언젠가 분명' },
-      { time: 89.73, text: '色褪せる\n이로아세루\n바래겠지' },
-      { time: 98.88, text: '' },
-      { time: 103.88, text: '月灯りに魔物が揺れる\n츠키아카리니 마모노가 유레루\n달빛에 미련이 흔들려' },
-      { time: 107.01, text: 'きっと私もどうかしてる\n킷토 와타시모 도-카 시테루\n나도 정신이 어떻게 돼버린 것 같아' },
-      { time: 109.96, text: '暗闇に色彩が浮かぶ\n쿠라야미니 시키사이가 우카부\n어둠 속에서 색들이 떠올라' },
-      { time: 113.35, text: '赤黄藍色が胸の奥\n아카 키 아이이로가 무네노 오쿠\n빨강 노랑 파란색이 가슴속 깊이' },
-      { time: 115.96, text: 'ずっと貴方の名前を呼ぶ\n즛토 아나타노 나마에오 요부\n계속해서 네 이름을 불러' },
-      { time: 119.12, text: '好きという気持ちまた香る\n스키토 이우 키모치 마타 카오루\n좋아한다는 감정의 향기가 또다시 들려와' },
-      { time: 122.25, text: '声も顔も不器用なとこも\n코에모 카오모 부키요-나 토코모\n목소리도 얼굴도 서툰 그 모습도' },
-      { time: 125.43, text: '全部全部 大嫌いだよ\n젠부 젠부 다이키라이다요\n전부 전부 다 진짜 싫다고' },
-      { time: 128.82, text: 'まだ枯れない花を\n마다 카레나이 하나오\n아직 시들지 않은 꽃을' },
-      { time: 134.84, text: '君に添えてさ\n키미니 소에테사\n네게 곁들여줄테니까' },
-      { time: 141.10, text: 'ずっとずっとずっとずっと\n즛토 즛토 즛토 즛토\n계속 계속 영원히' },
-      { time: 154.20, text: '抱えてよ\n카카에테요\n안아줘' },
-      { time: 165.00, text: '' }
+      { time: 18.72, text: '多分 私じゃなくていいね\n타분 와타시쟈 나쿠테 이이네\n아마 내가 아니어도 될 거야' },
+      { time: 22.17, text: '余裕のない二人だったし\n요유-노 나이 후타리 닷타시\n우리 둘 사이에 여유라는 건 없었고' },
+      { time: 25.26, text: '気付けば喧嘩ばっかりしてさ\n키즈케바 켄카밧카리 시테사\n생각해 보면 싸우기만 했었지' },
+      { time: 28.34, text: 'ごめんね\n고멘네\n미안해' },
+      { time: 30.76, text: 'ずっと話そうと思ってた\n즛토 하나소-토 오못테타\n계속 이야기하려고했는데' },
+      { time: 34.01, text: 'きっと私たち合わないね\n킷토 와타시타치 아와나이네\n우린 진짜 안 맞는 것 같아' },
+      { time: 37.16, text: '二人きりしかいない部屋でさ\n후타리키리 시카 이나이 헤야데사\n방 안에 우리 둘밖에 없는데도' },
+      { time: 40.59, text: '貴方ばかり話していたよね\n아나타 바카리 하나시테이타요네\n너 하고 싶은 말만 했었잖아' },
+      { time: 43.86, text: 'もしいつか何処かで会えたら\n모시 이츠카 도코카데 아에타라\n혹시 언젠가 어디서 또 만나게 된다면' },
+      { time: 49.75, text: '今日の事を笑ってくれるかな\n쿄-노 코토오 와랏테 쿠레루카나\n오늘 있던 일에 웃어줄까' },
+      { time: 56.23, text: '理由もちゃんと話せないけれど\n리유-모 챤토 하나세나이케레도\n왜 그런지 제대로 설명 못하지만' },
+      { time: 62.64, text: '貴方が眠った後に泣くのは嫌\n아나타가 네뭇타 아토니 나쿠노와 이야\n내가 잠든 뒤에 울고 싶진 않아' },
+      { time: 69.10, text: '声も顔も不器用なとこも\n코에모 카오모 부키요-나 토코모\n너의 목소리도 얼굴도 서툰 그 모습까지' },
+      { time: 75.88, text: '全部全部 嫌いじゃないの\n젠부 젠부 키라이쟈나이노\n딱히 지금도 싫은 건 아니야' },
+      { time: 82.45, text: 'ドライフラワーみたい\n도라이후라와- 미타이\n드라이플라워처럼' },
+      { time: 86.29, text: '時間が経てばもきっときっときっときっと\n키미토노 히비모 킷토 킷토 킷토 킷토\n시간이 흐르면 언젠가 분명' },
+      { time: 93.73, text: '色褪せる\n이로아세루\n바래겠지' },
+      { time: 102.88, text: '' },
+      { time: 107.88, text: '月灯りに魔物が揺れる\n츠키아카리니 마모노가 유레루\n달빛에 미련이 흔들려' },
+      { time: 111.01, text: 'きっと私もどうかしてる\n킷토 와타시모 도-카 시테루\n나도 정신이 어떻게 돼버린 것 같아' },
+      { time: 113.96, text: '暗闇に色彩が浮かぶ\n쿠라야미니 시키사이가 우카부\n어둠 속에서 색들이 떠올라' },
+      { time: 117.35, text: '赤黄藍色が胸の奥\n아카 키 아이이로가 무네노 오쿠\n빨강 노랑 파란색이 가슴속 깊이' },
+      { time: 119.96, text: 'ずっと貴方の名前を呼ぶ\n즛토 아나타노 나마에오 요부\n계속해서 네 이름을 불러' },
+      { time: 123.12, text: '好きという気持ちまた香る\n스키토 이우 키모치 마타 카오루\n좋아한다는 감정의 향기가 또다시 들려와' },
+      { time: 126.25, text: '声も顔も不器用なとこも\n코에모 카오모 부키요-나 토코모\n목소리도 얼굴도 서툰 그 모습도' },
+      { time: 129.43, text: '全部全部 大嫌いだよ\n젠부 젠부 다이키라이다요\n전부 전부 다 진짜 싫다고' },
+      { time: 132.82, text: 'まだ枯れない花を\n마다 카레나이 하나오\n아직 시들지 않은 꽃을' },
+      { time: 138.84, text: '君に添えてさ\n키미니 소에테사\n네게 곁들여줄테니까' },
+      { time: 145.10, text: 'ずっとずっとずっとずっと\n즛토 즛토 즛토 즛토\n계속 계속 영원히' },
+      { time: 158.20, text: '抱えてよ\n카카에테요\n안아줘' },
+      { time: 169.00, text: '' }
     ];
 
     const LYRICS_BY_TRACK = {
