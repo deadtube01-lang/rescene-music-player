@@ -12495,7 +12495,6 @@ function initRM(){
  function renderLyrics(){
   lastLyricIndex=-2;
   rmLyricsManualScroll=false;
-  rmLyricsAutoScrolling=false;
   const x=item();
   rmLyrics.innerHTML='';
   if(!x){rmLyrics.innerHTML='<div class="rm-lyrics-empty">가사가 없습니다.</div>';return}
@@ -12511,7 +12510,7 @@ function initRM(){
     el.className='rm-lyric-line';
     el.dataset.time=line.time;
     // \n → <br> 줄바꿈 처리
-    el.innerHTML=(line.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\\n/g,'<br>');
+    el.innerHTML=(line.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\\n/g,'<br>').replace(/\n/g,'<br>');
     el.onclick=()=>{if(audio)audio.currentTime=(audio.trimStart||0)+Number(line.time||0)};
     rmLyrics.appendChild(el);
   });
@@ -12522,36 +12521,17 @@ function initRM(){
 
  // 사용자가 가사창을 직접 스크롤 중인지 추적
 
- // ── 모바일 가사창: PC와 동일한 방식으로 스크롤 ──────────────────────────
- // PC의 lyricsManualScroll / markLyricsAutoScroll 패턴 그대로 이식
+ // ── 모바일 가사창: 사용자가 직접 터치/휠로 스크롤할 때만 "수동 스크롤"로 ─────
+ // (버그 수정) 예전에는 'scroll' 이벤트가 발생한 시점에 "이게 우리가 프로그램적으로
+ // 스크롤시킨 것인지 아닌지"를 rAF로 안착 감지해서 추측했는데, smooth 스크롤 애니메이션
+ // 도중에 발생하는 중간 scroll 이벤트가 종종 "사용자가 직접 스크롤한 것"으로 잘못
+ // 판정되어 rmLyricsManualScroll이 true로 눌러앉는 경우가 있었다. 그러면 그 뒤로는
+ // updateLyricsActive()가 새 가사로 넘어가도 recenter를 계속 건너뛰게 되어, 현재 재생
+ // 중인 가사는 계속 위쪽에 머물고 가사창 중앙에는 훨씬 더 아래(미래) 가사가 있는 것처럼
+ // 보이는 오류가 발생했다. 지금은 실제 사용자 제스처(터치/휠/포인터)가 있을 때만 수동
+ // 스크롤로 간주하므로, 우리가 프로그램적으로 실행한 scrollTo와 절대 혼동되지 않는다.
  let rmLyricsManualScroll = false;
  let rmLyricsManualScrollTimer = null;
- let rmLyricsAutoScrolling = false;
- let rmLyricsAutoScrollTimer = null;
- let rmLyricsLastAutoTarget = null;
-
- function rmMarkAutoScroll(target, safetyMs) {
-   rmLyricsAutoScrolling = true;
-   rmLyricsLastAutoTarget = target;
-   clearTimeout(rmLyricsAutoScrollTimer);
-   rmLyricsAutoScrollTimer = setTimeout(()=>{ rmLyricsAutoScrolling=false; }, safetyMs||1500);
-   // rAF로 안착 감지해서 플래그 해제 (PC 방식 동일)
-   const startedAt = performance.now();
-   let settledFrames = 0;
-   const check = () => {
-     if(!rmLyricsAutoScrolling) return;
-     if(Math.abs(rmLyrics.scrollTop - target) <= 2) {
-       settledFrames++;
-       if(settledFrames>=2 && (performance.now()-startedAt)>=180) {
-         rmLyricsAutoScrolling=false;
-         clearTimeout(rmLyricsAutoScrollTimer);
-         return;
-       }
-     } else { settledFrames=0; }
-     requestAnimationFrame(check);
-   };
-   requestAnimationFrame(check);
- }
 
  function rmEnterManualScroll() {
    rmLyricsManualScroll = true;
@@ -12567,18 +12547,19 @@ function initRM(){
    const activeEl = els[lastLyricIndex];
    if(!activeEl) return;
    const target = activeEl.offsetTop - (rmLyrics.clientHeight/2) + (activeEl.clientHeight/2);
-   rmMarkAutoScroll(target);
    rmLyrics.scrollTo({top: target, behavior:'smooth'});
  }
 
- // 가사창 scroll 이벤트: 프로그램적 스크롤이 아닐 때만 manual 로 처리
+ // 실제 사용자 제스처가 시작될 때만 수동 스크롤로 간주 (scroll 이벤트로 추측하지 않음)
  function rmSetupLyricsEvents() {
    if(!rmLyrics || rmLyrics._rmEventsSet) return;
    rmLyrics._rmEventsSet = true;
-   rmLyrics.addEventListener('scroll', ()=>{
-     if(rmLyricsAutoScrolling) return; // 프로그램 스크롤 중 → 무시
-     rmEnterManualScroll();
-   }, {passive:true});
+   const onUserGesture = () => rmEnterManualScroll();
+   rmLyrics.addEventListener('touchstart', onUserGesture, {passive:true});
+   rmLyrics.addEventListener('wheel', onUserGesture, {passive:true});
+   rmLyrics.addEventListener('pointerdown', onUserGesture, {passive:true});
+   // 제스처 도중 계속 스크롤 중이면 수동 타이머를 계속 갱신
+   rmLyrics.addEventListener('touchmove', onUserGesture, {passive:true});
  }
 
  function updateLyricsActive(instant) {
@@ -12600,9 +12581,9 @@ function initRM(){
    // 사용자가 직접 스크롤 중이면 자동스크롤 건너뜀 (instant 강제 제외)
    if(rmLyricsManualScroll && !instant) return;
    const target = activeEl.offsetTop - (rmLyrics.clientHeight/2) + (activeEl.clientHeight/2);
-   rmMarkAutoScroll(target, instant ? 400 : 1200);
    rmLyrics.scrollTo({top: target, behavior: instant ? 'auto' : 'smooth'});
  }
+
  function renderCurrentPlaylist(){const box=document.getElementById('rm-current-list');if(!box)return;box.innerHTML='';const list=typeof currentPlaylist!=='undefined'?currentPlaylist||[]:[];if(!list.length){box.innerHTML='<div class="rm-empty">재생목록이 비어 있어요.</div>';return}list.forEach((it,i)=>{const d=document.createElement('button');d.className='rm-current-item'+(i===currentPlayIndex?' active':'');d.innerHTML='<span class="rm-current-num">'+(i+1)+'</span><span class="rm-current-copy"><span class="rm-current-name"></span><span class="rm-current-album"></span></span>'+(i===currentPlayIndex?'<span class="rm-current-state">재생 중</span>':'');d.querySelector('.rm-current-name').textContent=it.track.name;d.querySelector('.rm-current-album').textContent=it.album.title;d.onclick=()=>{currentPlayIndex=i;playTrackByListIndex(i,true);sync();renderLyrics();renderCurrentPlaylist()};box.appendChild(d)})}
  function sync(){let x=item();if(!x){mini.classList.remove('has-track');renderCurrentPlaylist();return}mini.classList.add('has-track');let cover=x.album.cover||'리센느1.webp';document.getElementById('rm-mini-cover').src=cover;document.getElementById('rm-mini-title').textContent=x.track.name;document.getElementById('rm-mini-sub').textContent=x.album.title;document.getElementById('rm-sheet-cover').src=cover;document.getElementById('rm-sheet-title').textContent=x.track.name;document.getElementById('rm-sheet-album').textContent=x.album.title;let playing=audio&&!audio.paused&&!audio.ended;document.getElementById('rm-mini-play').innerHTML=playing?'Ⅱ':'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';document.getElementById('rm-play').innerHTML=playing?'Ⅱ':'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';document.getElementById('rm-lp-record').classList.toggle('playing',playing);syncFav();let sh=document.getElementById('rm-shuffle'),rp=document.getElementById('rm-repeat');sh.classList.toggle('active',!!isShuffle);rp.classList.toggle('active',repeatMode!=='none');const ri=document.getElementById('rm-repeat-icon');if(ri)ri.innerHTML=repeatMode==='one'?'<path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v3h12v-6h-2v4z"/><text x="12" y="14.5" font-size="8.5" font-weight="bold" text-anchor="middle" fill="currentColor">1</text>':'<path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v3h12v-6h-2v4z"/>';if(audio){let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st,rel=Math.max(0,(audio.currentTime||0)-st);if(d>0){const rp=document.getElementById('rm-progress');if(rp){rp.value=Math.round(rel/d*1000);rp.style.setProperty('--value',(Number(rp.value)/1000).toFixed(4));}document.getElementById('rm-time-current').textContent=fmt(rel);document.getElementById('rm-time-duration').textContent=fmt(d)}}const speed=document.getElementById('rm-lp-speed');if(speed){const val=Number(speed.value)||1.8;document.getElementById('rm-lp-speed-value').textContent=val.toFixed(1)+'s';document.getElementById('rm-lp-record').style.animationDuration=val+'s'}updateLyricsActive();renderCurrentPlaylist()}
  function toastMsg(s){toast.textContent=s;toast.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toast.classList.remove('show'),1400)}
