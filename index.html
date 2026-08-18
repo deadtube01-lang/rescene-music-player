@@ -3895,6 +3895,15 @@
         ]
       },
       {
+        id: "dejavu-acoustic-live-mix-cover",
+        type: "cover",
+        title: "[COVER] Deja Vu (Acoustic Live Mix ver.)",
+        cover: "https://img.youtube.com/vi/Rrt8F_72ztE/hqdefault.jpg",
+        tracks: [
+          { name: "Deja Vu (Acoustic Live Mix ver.)", src: "Rrt8F_72ztE", duration: "3:04", trimStart: 0, trimEnd: 184 }
+        ]
+      },
+      {
         id: "cover-kkotgil",
         type: "cover",
         title: "[COVER] 꽃길 - 원곡: 김세정",
@@ -8775,14 +8784,26 @@
       if (cheerYtPlayer && cheerYtPlayer.setSize) {
         cheerYtPlayer.setSize(Math.round(videoW), Math.round(videoH));
       }
+      return { videoW: Math.round(videoW), videoH: Math.round(videoH) };
     }
 
     function ensureCheerPlayerCreated() {
       if (cheerYtPlayer || !window.YT || !window.YT.Player || !sharedActiveConfig) return;
       cheerLoadedVideoId = sharedActiveConfig.videoId;
+      // (버그 수정) 예전에는 여기서 항상 width:480/height:270 고정값으로 플레이어를
+      // 만들어놓고 onReady에서야 실제 박스 크기로 setSize를 다시 불렀는데,
+      // 그 시점에 박스 폭을 잘못 읽거나(레이아웃 미확정) setSize가 늦게 반영되면
+      // 유튜브 iframe이 계속 옛날(작은) 크기로 남아 하단이 overflow:hidden에
+      // 잘려 보이는 문제가 있었다. 처음부터 지금 박스의 실제 폭 기준으로
+      // 계산한 크기로 플레이어를 만들어서 이 불일치 자체를 없앤다.
+      const box = document.getElementById('panel-cheer');
+      const innerPadding = 26;
+      const boxWidth = (box && box.getBoundingClientRect().width) || 480;
+      const initW = Math.max(200, Math.round(boxWidth - innerPadding * 2));
+      const initH = Math.round(initW * 9 / 16);
       cheerYtPlayer = new YT.Player('cheer-yt-player', {
-        height: '270',
-        width: '480',
+        height: String(initH),
+        width: String(initW),
         videoId: sharedActiveConfig.videoId,
         playerVars: {
           autoplay: 1,
@@ -8798,6 +8819,9 @@
             if (cheerWantsPlay && cheerYtPlayer.playVideo) cheerYtPlayer.playVideo();
             syncCheerBoxHeightToWidth();
             startSharedRangeWatch(sharedActiveConfig);
+            // 안전장치: 폰트/레이아웃이 이 시점 이후에도 아주 살짝 더 바뀌는
+            // 경우를 대비해 한 번 더 뒤늦게 재보정한다.
+            setTimeout(syncCheerBoxHeightToWidth, 150);
           }
         }
       });
