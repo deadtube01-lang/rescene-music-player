@@ -2810,15 +2810,6 @@
        - 좌측 상단에 고정돼 있던 테마/배경화면 컨트롤을 상단 가로 바로 이동
        - 버튼/슬라이더 등 터치 조작 영역을 더 크게
     ---------------------------------- */
-    /* 모바일 미니 플레이어 바 / 하단 탭바 / 풀스크린 플레이어 전환용 버튼은
-       데스크탑에서는 항상 숨긴다. 실제 표시는 아래 max-width:768px 미디어
-       쿼리 안에서만 켠다. */
-    .mobile-mini-player,
-    .mobile-tab-bar,
-    .mobile-player-collapse-btn {
-      display: none;
-    }
-
     @media (max-width: 768px) {
       /* 좁은 화면에서는 좋아요/조회수/재생시간 사이 간격이 과하게
          넓어 보이므로 모바일에서만 간격을 줄인다 */
@@ -3031,207 +3022,86 @@
         max-height: 280px;
         overflow-y: auto;
       }
+    }
 
-      /* ============================================================
-         스포티파이 / 애플뮤직 / 멜론 앱처럼: 화면 아래에 미니 플레이어 +
-         홈/트랙/재생목록 탭바를 고정하고, 본문은 그 중 하나만 보여준다.
-         메인 플레이어 카드(#panel-player)는 평소엔 숨겨두고, 미니 플레이어를
-         탭하면 화면 전체를 덮는 "지금 재생 중" 화면으로 확대해서 그대로
-         사용한다(같은 요소를 그대로 키우는 방식이라 재생/볼륨/가사 등
-         기존 기능이 전부 그대로 동작한다). */
+      /* [모바일 앱 UI 1단계] 홈 화면에서는 파이리/가방/포토카드뽑기 버튼을 숨긴다.
+         (포토카드 뽑기는 이후 단계에서 '더보기' 탭 안으로 이동해 다시 노출됨) */
+      #pokeball-spawn-btn,
+      #pokeball-toy,
+      #captured-list-btn,
+      #wild-toggle-btn,
+      #photocard-gacha-btn {
+        display: none !important;
+      }
 
+      /* 하단 탭바 높이만큼 본문 아래 여백 확보 */
       body {
-        /* 하단 고정 미니 플레이어(56px) + 탭바(56px) + 아이폰 홈 인디케이터 여백만큼
-           본문 아래쪽에 여유 공간을 둬서 마지막 트랙/카드가 가려지지 않게 한다. */
-        padding-bottom: calc(112px + env(safe-area-inset-bottom, 0px)) !important;
+        padding-bottom: 78px !important;
       }
+    }
 
-      /* 홈 탭에서만 카테고리/앨범/파이리 영상이 보이고, 트랙리스트와 재생목록은 숨김 */
-      body.mobile-tab-home #panel-tracklist,
-      body.mobile-tab-home #panel-playlist {
-        display: none !important;
-      }
-
-      /* 트랙 탭에서는 트랙리스트만 보이고 나머지는 숨김 */
-      body.mobile-tab-track #panel-category,
-      body.mobile-tab-track #panel-album,
-      body.mobile-tab-track #panel-video,
-      body.mobile-tab-track #panel-playlist {
-        display: none !important;
-      }
-
-      /* 재생목록 탭에서는 재생목록만 보이고 나머지는 숨김 */
-      body.mobile-tab-playlist #panel-category,
-      body.mobile-tab-playlist #panel-album,
-      body.mobile-tab-playlist #panel-video,
-      body.mobile-tab-playlist #panel-tracklist {
-        display: none !important;
-      }
-
-      /* 트랙/재생목록 탭에서는 상단 테마·배경화면 버튼도 접어서 화면을 더 앱처럼 정리 */
-      body.mobile-tab-track .wallpaper-controls,
-      body.mobile-tab-playlist .wallpaper-controls {
-        display: none !important;
-      }
-
-      /* 메인 플레이어 카드는 모바일에서는 항상 숨기고, 대신 하단 미니 플레이어를 쓴다.
-         미니 플레이어를 탭했을 때만(body.mobile-player-expanded) 화면 전체를 덮는
-         "지금 재생 중" 화면으로 다시 보여준다. */
-      #panel-player {
-        display: none;
-      }
-
-      body.mobile-player-expanded #panel-player {
-        display: flex !important;
-        flex-direction: column;
-        position: fixed !important;
-        inset: 0 !important;
-        left: 0 !important;
-        top: 0 !important;
-        width: 100% !important;
-        max-width: 100% !important;
-        height: 100% !important;
-        max-height: 100% !important;
-        margin: 0 !important;
-        border-radius: 0 !important;
-        z-index: 500;
-        overflow-y: auto;
-        padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
-      }
-
-      body.mobile-player-expanded .mobile-mini-player,
-      body.mobile-player-expanded .mobile-tab-bar {
-        display: none !important;
-      }
-
-      /* 풀스크린으로 열렸을 때만 보이는 닫기(⌄) 버튼 */
-      body.mobile-player-expanded .mobile-player-collapse-btn {
-        display: flex !important;
-        align-items: center;
-        justify-content: center;
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        border: none;
-        background: rgba(255,255,255,0.15);
-        color: inherit;
-        font-size: 20px;
-        line-height: 1;
-        cursor: pointer;
-        margin-right: 8px;
-      }
-
-      /* ---- 하단 미니 플레이어 바 ---- */
-      .mobile-mini-player {
-        display: flex;
-        align-items: center;
-        gap: 10px;
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: calc(56px + env(safe-area-inset-bottom, 0px));
-        height: 56px;
-        padding: 0 12px;
-        background: rgba(30, 30, 40, 0.92);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        border-top: 1px solid rgba(255,255,255,0.08);
-        z-index: 400;
-        box-sizing: border-box;
-      }
-
-      body.light-mode .mobile-mini-player {
-        background: rgba(255, 255, 255, 0.92);
-        border-top: 1px solid rgba(15,23,42,0.08);
-      }
-
-      .mobile-mini-cover {
-        width: 38px;
-        height: 38px;
-        border-radius: 6px;
-        object-fit: cover;
-        flex-shrink: 0;
-      }
-
-      .mobile-mini-title-wrap {
-        flex: 1;
-        min-width: 0;
-        overflow: hidden;
-      }
-
-      .mobile-mini-title {
-        display: block;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        font-size: 13.5px;
-        font-weight: 600;
-        color: inherit;
-      }
-
-      .mobile-mini-btn {
-        flex-shrink: 0;
-        width: 36px;
-        height: 36px;
-        border: none;
-        background: transparent;
-        color: inherit;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        cursor: pointer;
-      }
-
-      #mobile-mini-play-icon svg {
-        width: 22px;
-        height: 22px;
-      }
-
-      /* ---- 하단 탭바 (홈 / 트랙 / 재생목록) ---- */
+    /* [모바일 앱 UI 1단계] 하단 탭바(홈/검색/더보기) 뼈대.
+       지금은 탭을 눌러 보여줄 화면(검색/더보기 내용)이 비어있는 뼈대 단계이고,
+       다음 단계에서 홈 캐러셀, 그 다음 단계에서 검색/더보기 내용을 채운다. */
+    .mobile-tab-bar {
+      display: none;
+    }
+    @media (max-width: 768px) {
       .mobile-tab-bar {
         display: flex;
         position: fixed;
         left: 0;
         right: 0;
         bottom: 0;
-        height: calc(56px + env(safe-area-inset-bottom, 0px));
-        padding-bottom: env(safe-area-inset-bottom, 0px);
-        background: rgba(20, 20, 28, 0.96);
+        z-index: 200;
+        height: 62px;
+        background: rgba(13, 17, 23, 0.92);
         backdrop-filter: blur(14px);
         -webkit-backdrop-filter: blur(14px);
         border-top: 1px solid rgba(255,255,255,0.08);
-        z-index: 400;
+        padding-bottom: env(safe-area-inset-bottom, 0);
       }
-
       body.light-mode .mobile-tab-bar {
-        background: rgba(255, 255, 255, 0.96);
-        border-top: 1px solid rgba(15,23,42,0.08);
+        background: rgba(255,255,255,0.92);
+        border-top: 1px solid rgba(0,0,0,0.08);
       }
-
       .mobile-tab-btn {
         flex: 1;
         display: flex;
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 2px;
+        gap: 3px;
+        background: none;
         border: none;
-        background: transparent;
-        color: inherit;
-        opacity: 0.55;
+        color: rgba(255,255,255,0.5);
         font-size: 10.5px;
+        font-family: inherit;
         cursor: pointer;
-        min-height: 0 !important;
       }
-
-      .mobile-tab-btn.active {
-        opacity: 1;
-        color: #a855f7;
+      body.light-mode .mobile-tab-btn {
+        color: rgba(0,0,0,0.45);
       }
-
-      .mobile-tab-icon {
-        font-size: 19px;
+      .mobile-tab-btn .mobile-tab-icon {
+        font-size: 20px;
         line-height: 1;
+      }
+      .mobile-tab-btn.active {
+        color: #6ea8fe;
+      }
+      body.light-mode .mobile-tab-btn.active {
+        color: #3b6fe0;
+      }
+
+      /* 홈이 아닌 탭이 활성화되면 기존(홈) 화면 콘텐츠는 숨김 */
+      body.mobile-tab-search .player-wrapper,
+      body.mobile-tab-more .player-wrapper {
+        display: none !important;
+      }
+      .mobile-view-panel { display: none; }
+      body.mobile-tab-search #mobile-search-view,
+      body.mobile-tab-more #mobile-more-view {
+        display: block;
       }
     }
 
@@ -3354,6 +3224,45 @@
     </defs>
   </svg>
 
+  <!-- [모바일 앱 UI 1단계] 검색 / 더보기 화면 뼈대 (다음 단계에서 내용 채움) -->
+  <div id="mobile-search-view" class="mobile-view-panel" style="padding:16px 4px 24px;">
+    <div style="font-size:20px;font-weight:700;margin-bottom:14px;">검색</div>
+    <div style="opacity:0.6;font-size:13px;">카테고리 검색 기능은 곧 추가돼요.</div>
+  </div>
+  <div id="mobile-more-view" class="mobile-view-panel" style="padding:16px 4px 24px;">
+    <div style="font-size:20px;font-weight:700;margin-bottom:14px;">더보기</div>
+    <div style="opacity:0.6;font-size:13px;">동영상 목록과 포토카드 뽑기는 곧 추가돼요.</div>
+  </div>
+
+  <!-- [모바일 앱 UI 1단계] 하단 탭바 -->
+  <nav class="mobile-tab-bar" id="mobile-tab-bar">
+    <button class="mobile-tab-btn active" data-mobile-tab="home">
+      <span class="mobile-tab-icon">🏠</span><span>홈</span>
+    </button>
+    <button class="mobile-tab-btn" data-mobile-tab="search">
+      <span class="mobile-tab-icon">🔍</span><span>검색</span>
+    </button>
+    <button class="mobile-tab-btn" data-mobile-tab="more">
+      <span class="mobile-tab-icon">⋯</span><span>더보기</span>
+    </button>
+  </nav>
+  <script>
+    (function () {
+      var bar = document.getElementById('mobile-tab-bar');
+      if (!bar) return;
+      var btns = bar.querySelectorAll('.mobile-tab-btn');
+      btns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var tab = btn.getAttribute('data-mobile-tab');
+          btns.forEach(function (b) { b.classList.toggle('active', b === btn); });
+          document.body.classList.remove('mobile-tab-home', 'mobile-tab-search', 'mobile-tab-more');
+          document.body.classList.add('mobile-tab-' + tab);
+          window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+        });
+      });
+    })();
+  </script>
+
   <div class="player-wrapper">
     <!-- 왼쪽 패널: 카테고리, 앨범, 트랙리스트, 파이리 영역 -->
     <div class="left-panel">
@@ -3457,7 +3366,6 @@
       <!-- 메인 플레이어 카드 -->
       <div class="card-box main-player-card draggable-panel" id="panel-player">
         <div class="card-header panel-drag-handle">
-          <button id="mobile-player-collapse-btn" class="mobile-player-collapse-btn" type="button" title="닫기">⌄</button>
           <span class="brand-title">RESCENE</span>
           <span class="status-dot" id="status-dot"></span>
         </div>
@@ -3588,38 +3496,7 @@
     </div>
   </div>
 
-  <!-- 모바일(≤768px) 전용: 스포티파이/애플뮤직/멜론 앱처럼 하단에 미니 플레이어 바 +
-       탭바(홈/트랙/재생목록)를 띄우는 UI. 데스크탑에서는 CSS로 완전히 숨겨진다.
-       미니 플레이어를 탭하면 실제 메인 플레이어 카드(#panel-player)가 화면 전체를
-       덮는 "지금 재생 중" 풀스크린으로 전환된다(별도 카드를 새로 만들지 않고
-       기존 플레이어 카드를 그대로 확대해서 보여주므로 모든 기능이 그대로 동작한다). -->
-  <div class="mobile-mini-player" id="mobile-mini-player">
-    <img id="mobile-mini-cover" class="mobile-mini-cover" src="리센느1.webp" alt="" ondragstart="return false;">
-    <div class="mobile-mini-title-wrap">
-      <span id="mobile-mini-title" class="mobile-mini-title">곡을 선택하세요</span>
-    </div>
-    <button id="mobile-mini-play-btn" class="mobile-mini-btn" type="button" title="재생/일시정지">
-      <span id="mobile-mini-play-icon"></span>
-    </button>
-    <button id="mobile-mini-next-btn" class="mobile-mini-btn" type="button" title="다음 곡">
-      <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M16 18h2V6h-2zM6 18l8.5-6L6 6z"/></svg>
-    </button>
-  </div>
-
-  <div class="mobile-tab-bar" id="mobile-tab-bar">
-    <button class="mobile-tab-btn active" data-mobile-tab="home" type="button">
-      <span class="mobile-tab-icon">🏠</span><span class="mobile-tab-label">홈</span>
-    </button>
-    <button class="mobile-tab-btn" data-mobile-tab="track" type="button">
-      <span class="mobile-tab-icon">🎵</span><span class="mobile-tab-label">트랙</span>
-    </button>
-    <button class="mobile-tab-btn" data-mobile-tab="playlist" type="button">
-      <span class="mobile-tab-icon">📃</span><span class="mobile-tab-label">재생목록</span>
-    </button>
-  </div>
-
   <div id="youtube-player-container" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;overflow:hidden;"></div>
-
 
   <!-- 재생 실패 안내 / 유튜브 이동 확인 모달 -->
   <div id="yt-error-modal" class="yt-modal-overlay">
@@ -7294,7 +7171,42 @@
   { time: 178.17, text: '' }
 ];
 
+    const DRY_FLOWER_LYRICS = [
+      { time: 18.72, text: '多分 私じゃなくていいね\n타분 와타시쟈 나쿠테 이이네\n아마 내가 아니어도 될 거야' },
+      { time: 22.17, text: '余裕のない二人だったし\n요유-노 나이 후타리 닷타시\n우리 둘 사이에 여유라는 건 없었고' },
+      { time: 25.26, text: '気付けば喧嘩ばっかりしてさ\n키즈케바 켄카밧카리 시테사\n생각해 보면 싸우기만 했었지' },
+      { time: 28.34, text: 'ごめんね\n고멘네\n미안해' },
+      { time: 30.76, text: 'ずっと話そうと思ってた\n즛토 하나소-토 오못테타\n계속 이야기하려고했는데' },
+      { time: 34.01, text: 'きっと私たち合わないね\n킷토 와타시타치 아와나이네\n우린 진짜 안 맞는 것 같아' },
+      { time: 37.16, text: '二人きりしかいない部屋でさ\n후타리키리 시카 이나이 헤야데사\n방 안에 우리 둘밖에 없는데도' },
+      { time: 40.59, text: '貴方ばかり話していたよね\n아나타 바카리 하나시테이타요네\n너 하고 싶은 말만 했었잖아' },
+      { time: 43.86, text: 'もしいつか何処かで会えたら\n모시 이츠카 도코카데 아에타라\n혹시 언젠가 어디서 또 만나게 된다면' },
+      { time: 49.75, text: '今日の事を笑ってくれるかな\n쿄-노 코토오 와랏테 쿠레루카나\n오늘 있던 일에 웃어줄까' },
+      { time: 56.23, text: '理由もちゃんと話せないけれど\n리유-모 챤토 하나세나이케레도\n왜 그런지 제대로 설명 못하지만' },
+      { time: 62.64, text: '貴方が眠った後に泣くのは嫌\n아나타가 네뭇타 아토니 나쿠노와 이야\n내가 잠든 뒤에 울고 싶진 않아' },
+      { time: 69.10, text: '声も顔も不器用なとこも\n코에모 카오모 부키요-나 토코모\n너의 목소리도 얼굴도 서툰 그 모습까지' },
+      { time: 75.88, text: '全部全部 嫌いじゃないの\n젠부 젠부 키라이쟈나이노\n딱히 지금도 싫은 건 아니야' },
+      { time: 82.45, text: 'ドライフラワーみたい\n도라이후라와- 미타이\n드라이플라워처럼' },
+      { time: 86.29, text: '時間が経てばもきっときっときっときっと\n키미토노 히비모 킷토 킷토 킷토 킷토\n시간이 흐르면 언젠가 분명' },
+      { time: 93.73, text: '色褪せる\n이로아세루\n바래겠지' },
+      { time: 102.88, text: '' },
+      { time: 107.88, text: '月灯りに魔物が揺れる\n츠키아카리니 마모노가 유레루\n달빛에 미련이 흔들려' },
+      { time: 111.01, text: 'きっと私もどうかしてる\n킷토 와타시모 도-카 시테루\n나도 정신이 어떻게 돼버린 것 같아' },
+      { time: 113.96, text: '暗闇に色彩が浮かぶ\n쿠라야미니 시키사이가 우카부\n어둠 속에서 색들이 떠올라' },
+      { time: 117.35, text: '赤黄藍色が胸の奥\n아카 키 아이이로가 무네노 오쿠\n빨강 노랑 파란색이 가슴속 깊이' },
+      { time: 119.96, text: 'ずっと貴方の名前を呼ぶ\n즛토 아나타노 나마에오 요부\n계속해서 네 이름을 불러' },
+      { time: 123.12, text: '好きという気持ちまた香る\n스키토 이우 키모치 마타 카오루\n좋아한다는 감정의 향기가 또다시 들려와' },
+      { time: 126.25, text: '声も顔も不器用なとこも\n코에모 카오모 부키요-나 토코모\n목소리도 얼굴도 서툰 그 모습도' },
+      { time: 129.43, text: '全部全部 大嫌いだよ\n젠부 젠부 다이키라이다요\n전부 전부 다 진짜 싫다고' },
+      { time: 132.82, text: 'まだ枯れない花を\n마다 카레나이 하나오\n아직 시들지 않은 꽃을' },
+      { time: 138.84, text: '君に添えてさ\n키미니 소에테사\n네게 곁들여줄테니까' },
+      { time: 145.10, text: 'ずっとずっとずっとずっと\n즛토 즛토 즛토 즛토\n계속 계속 영원히' },
+      { time: 158.20, text: '抱えてよ\n카카에테요\n안아줘' },
+      { time: 169.00, text: '' }
+    ];
+
     const LYRICS_BY_TRACK = {
+      'i0UW8-8UCvc': DRY_FLOWER_LYRICS,             // Dry Flower (미나미) [COVER]
       '1uDzUPzS2w8': LOVE_ATTACK_LYRICS,          // LOVE ATTACK (SCENEDROME)
       'QC641OJe_Aw': YOYO_LYRICS,                  // YoYo ([2024.02.29] YoYo)
       '_tADnkWlvnA': YOYO_LYRICS,                  // YoYo ([2024.03.26] Re ; Scene)
@@ -12237,111 +12149,6 @@
     })();
 
     console.log('[rescene] build fit-jitter-fix-2026-08-12b');
-
-    // ============================================================
-    // 모바일 앱 스타일 UI: 하단 미니 플레이어 + 홈/트랙/재생목록 탭바.
-    // 실제 컨트롤(재생/일시정지/다음곡)은 새로 만들지 않고 기존 데스크탑
-    // 버튼(#play-btn, #next-btn)을 그대로 클릭시켜서 재사용한다. 곡 제목/
-    // 앨범아트/재생아이콘은 MutationObserver로 원본 요소를 그대로 지켜보다가
-    // 바뀔 때마다 미니 플레이어에도 그대로 복사해준다.
-    (function initMobileAppUI() {
-      const miniBar = document.getElementById('mobile-mini-player');
-      const miniCover = document.getElementById('mobile-mini-cover');
-      const miniTitle = document.getElementById('mobile-mini-title');
-      const miniPlayBtn = document.getElementById('mobile-mini-play-btn');
-      const miniPlayIcon = document.getElementById('mobile-mini-play-icon');
-      const miniNextBtn = document.getElementById('mobile-mini-next-btn');
-      const tabBar = document.getElementById('mobile-tab-bar');
-      const collapseBtn = document.getElementById('mobile-player-collapse-btn');
-      const realSongTitle = document.getElementById('song-title');
-      const realAlbumCover = document.getElementById('album-cover');
-      const realPlayIcon = document.getElementById('play-icon');
-      const realPlayBtn = document.getElementById('play-btn');
-      const realNextBtn = document.getElementById('next-btn');
-      if (!miniBar || !tabBar || !realSongTitle || !realAlbumCover || !realPlayIcon) return;
-
-      function syncMiniTitle() {
-        miniTitle.textContent = realSongTitle.textContent || '곡을 선택하세요';
-      }
-      function syncMiniCover() {
-        if (realAlbumCover.src) miniCover.src = realAlbumCover.src;
-      }
-      function syncMiniPlayIcon() {
-        miniPlayIcon.innerHTML = realPlayIcon.innerHTML;
-      }
-
-      syncMiniTitle();
-      syncMiniCover();
-      syncMiniPlayIcon();
-
-      new MutationObserver(syncMiniTitle).observe(realSongTitle, { childList: true, characterData: true, subtree: true });
-      new MutationObserver(syncMiniCover).observe(realAlbumCover, { attributes: true, attributeFilter: ['src'] });
-      new MutationObserver(syncMiniPlayIcon).observe(realPlayIcon, { childList: true, subtree: true });
-
-      // 미니 플레이어의 재생/다음곡 버튼은 실제 데스크탑 버튼을 그대로 클릭시켜
-      // 재사용한다(로직 중복 없이 항상 동일하게 동작).
-      if (miniPlayBtn && realPlayBtn) {
-        miniPlayBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          realPlayBtn.click();
-        });
-      }
-      if (miniNextBtn && realNextBtn) {
-        miniNextBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          realNextBtn.click();
-        });
-      }
-
-      // 미니 플레이어의 아무 곳(버튼 제외)을 탭하면 메인 플레이어 카드를
-      // 화면 전체로 확대해서 "지금 재생 중" 화면처럼 보여준다.
-      miniBar.addEventListener('click', () => {
-        document.body.classList.add('mobile-player-expanded');
-      });
-      if (collapseBtn) {
-        collapseBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          document.body.classList.remove('mobile-player-expanded');
-        });
-      }
-
-      // 하단 탭바: 홈 / 트랙 / 재생목록 전환
-      const tabBtns = tabBar.querySelectorAll('.mobile-tab-btn');
-      function setMobileTab(tab) {
-        document.body.classList.remove('mobile-tab-home', 'mobile-tab-track', 'mobile-tab-playlist');
-        document.body.classList.add('mobile-tab-' + tab);
-        tabBtns.forEach(b => b.classList.toggle('active', b.dataset.mobileTab === tab));
-        try { localStorage.setItem('rescene_mobile_tab', tab); } catch (e) {}
-      }
-      tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-          document.body.classList.remove('mobile-player-expanded');
-          setMobileTab(btn.dataset.mobileTab);
-        });
-      });
-
-      let savedTab = 'home';
-      try {
-        const stored = localStorage.getItem('rescene_mobile_tab');
-        if (stored === 'home' || stored === 'track' || stored === 'playlist') savedTab = stored;
-      } catch (e) {}
-      setMobileTab(savedTab);
-
-      // 트랙리스트/재생목록에서 곡을 재생하면 자연스럽게 "지금 재생 중"
-      // 화면으로 넘어가도록, 재생목록/트랙리스트 li 클릭 시 미니플레이어를
-      // 확장한다. 데스크탑에서는 이 클래스가 CSS로 무시되므로 영향 없다.
-      const trackListEl = document.getElementById('track-list');
-      const playlistEl = document.getElementById('current-playlist');
-      [trackListEl, playlistEl].forEach(el => {
-        if (!el) return;
-        el.addEventListener('click', (e) => {
-          const li = e.target.closest('li');
-          if (li && !e.target.closest('button')) {
-            document.body.classList.add('mobile-player-expanded');
-          }
-        });
-      });
-    })();
   </script>
 </body>
 </html>
