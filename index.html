@@ -12511,7 +12511,7 @@ function initRM(){
     el.dataset.time=line.time;
     // \n → <br> 줄바꿈 처리
     el.innerHTML=(line.text||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\\n/g,'<br>').replace(/\n/g,'<br>');
-    el.onclick=()=>{if(audio)audio.currentTime=(audio.trimStart||0)+Number(line.time||0)};
+    el.onclick=()=>{if(audio)audio.currentTime=Number(line.time||0)};
     rmLyrics.appendChild(el);
   });
   rmLyrics.appendChild(mkSpacer());
@@ -12566,8 +12566,7 @@ function initRM(){
    if(!rmLyrics) return;
    rmSetupLyricsEvents();
    const x = item(); if(!x) return;
-   const st = audio?.trimStart||0;
-   const t = Math.max(0, (audio?.currentTime||0) - st);
+   const t = audio?.currentTime||0;
    const els = [...rmLyrics.querySelectorAll('.rm-lyric-line')];
    let idx = -1;
    els.forEach((el,i)=>{ if(Number(el.dataset.time)<=t) idx=i; });
