@@ -3024,87 +3024,6 @@
       }
     }
 
-      /* [모바일 앱 UI 1단계] 홈 화면에서는 파이리/가방/포토카드뽑기 버튼을 숨긴다.
-         (포토카드 뽑기는 이후 단계에서 '더보기' 탭 안으로 이동해 다시 노출됨) */
-      #pokeball-spawn-btn,
-      #pokeball-toy,
-      #captured-list-btn,
-      #wild-toggle-btn,
-      #photocard-gacha-btn {
-        display: none !important;
-      }
-
-      /* 하단 탭바 높이만큼 본문 아래 여백 확보 */
-      body {
-        padding-bottom: 78px !important;
-      }
-    }
-
-    /* [모바일 앱 UI 1단계] 하단 탭바(홈/검색/더보기) 뼈대.
-       지금은 탭을 눌러 보여줄 화면(검색/더보기 내용)이 비어있는 뼈대 단계이고,
-       다음 단계에서 홈 캐러셀, 그 다음 단계에서 검색/더보기 내용을 채운다. */
-    .mobile-tab-bar {
-      display: none;
-    }
-    @media (max-width: 768px) {
-      .mobile-tab-bar {
-        display: flex;
-        position: fixed;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 200;
-        height: 62px;
-        background: rgba(13, 17, 23, 0.92);
-        backdrop-filter: blur(14px);
-        -webkit-backdrop-filter: blur(14px);
-        border-top: 1px solid rgba(255,255,255,0.08);
-        padding-bottom: env(safe-area-inset-bottom, 0);
-      }
-      body.light-mode .mobile-tab-bar {
-        background: rgba(255,255,255,0.92);
-        border-top: 1px solid rgba(0,0,0,0.08);
-      }
-      .mobile-tab-btn {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        gap: 3px;
-        background: none;
-        border: none;
-        color: rgba(255,255,255,0.5);
-        font-size: 10.5px;
-        font-family: inherit;
-        cursor: pointer;
-      }
-      body.light-mode .mobile-tab-btn {
-        color: rgba(0,0,0,0.45);
-      }
-      .mobile-tab-btn .mobile-tab-icon {
-        font-size: 20px;
-        line-height: 1;
-      }
-      .mobile-tab-btn.active {
-        color: #6ea8fe;
-      }
-      body.light-mode .mobile-tab-btn.active {
-        color: #3b6fe0;
-      }
-
-      /* 홈이 아닌 탭이 활성화되면 기존(홈) 화면 콘텐츠는 숨김 */
-      body.mobile-tab-search .player-wrapper,
-      body.mobile-tab-more .player-wrapper {
-        display: none !important;
-      }
-      .mobile-view-panel { display: none; }
-      body.mobile-tab-search #mobile-search-view,
-      body.mobile-tab-more #mobile-more-view {
-        display: block;
-      }
-    }
-
     /* 아주 좁은 화면(작은 폰)에서는 앨범 카드 개수를 줄여 글자/이미지가 너무 작아지지 않게 */
     @media (max-width: 420px) {
       .album-grid-container {
@@ -3223,45 +3142,6 @@
       </filter>
     </defs>
   </svg>
-
-  <!-- [모바일 앱 UI 1단계] 검색 / 더보기 화면 뼈대 (다음 단계에서 내용 채움) -->
-  <div id="mobile-search-view" class="mobile-view-panel" style="padding:16px 4px 24px;">
-    <div style="font-size:20px;font-weight:700;margin-bottom:14px;">검색</div>
-    <div style="opacity:0.6;font-size:13px;">카테고리 검색 기능은 곧 추가돼요.</div>
-  </div>
-  <div id="mobile-more-view" class="mobile-view-panel" style="padding:16px 4px 24px;">
-    <div style="font-size:20px;font-weight:700;margin-bottom:14px;">더보기</div>
-    <div style="opacity:0.6;font-size:13px;">동영상 목록과 포토카드 뽑기는 곧 추가돼요.</div>
-  </div>
-
-  <!-- [모바일 앱 UI 1단계] 하단 탭바 -->
-  <nav class="mobile-tab-bar" id="mobile-tab-bar">
-    <button class="mobile-tab-btn active" data-mobile-tab="home">
-      <span class="mobile-tab-icon">🏠</span><span>홈</span>
-    </button>
-    <button class="mobile-tab-btn" data-mobile-tab="search">
-      <span class="mobile-tab-icon">🔍</span><span>검색</span>
-    </button>
-    <button class="mobile-tab-btn" data-mobile-tab="more">
-      <span class="mobile-tab-icon">⋯</span><span>더보기</span>
-    </button>
-  </nav>
-  <script>
-    (function () {
-      var bar = document.getElementById('mobile-tab-bar');
-      if (!bar) return;
-      var btns = bar.querySelectorAll('.mobile-tab-btn');
-      btns.forEach(function (btn) {
-        btn.addEventListener('click', function () {
-          var tab = btn.getAttribute('data-mobile-tab');
-          btns.forEach(function (b) { b.classList.toggle('active', b === btn); });
-          document.body.classList.remove('mobile-tab-home', 'mobile-tab-search', 'mobile-tab-more');
-          document.body.classList.add('mobile-tab-' + tab);
-          window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
-        });
-      });
-    })();
-  </script>
 
   <div class="player-wrapper">
     <!-- 왼쪽 패널: 카테고리, 앨범, 트랙리스트, 파이리 영역 -->
@@ -7171,42 +7051,7 @@
   { time: 178.17, text: '' }
 ];
 
-    const DRY_FLOWER_LYRICS = [
-      { time: 18.72, text: '多分 私じゃなくていいね\n타분 와타시쟈 나쿠테 이이네\n아마 내가 아니어도 될 거야' },
-      { time: 22.17, text: '余裕のない二人だったし\n요유-노 나이 후타리 닷타시\n우리 둘 사이에 여유라는 건 없었고' },
-      { time: 25.26, text: '気付けば喧嘩ばっかりしてさ\n키즈케바 켄카밧카리 시테사\n생각해 보면 싸우기만 했었지' },
-      { time: 28.34, text: 'ごめんね\n고멘네\n미안해' },
-      { time: 30.76, text: 'ずっと話そうと思ってた\n즛토 하나소-토 오못테타\n계속 이야기하려고했는데' },
-      { time: 34.01, text: 'きっと私たち合わないね\n킷토 와타시타치 아와나이네\n우린 진짜 안 맞는 것 같아' },
-      { time: 37.16, text: '二人きりしかいない部屋でさ\n후타리키리 시카 이나이 헤야데사\n방 안에 우리 둘밖에 없는데도' },
-      { time: 40.59, text: '貴方ばかり話していたよね\n아나타 바카리 하나시테이타요네\n너 하고 싶은 말만 했었잖아' },
-      { time: 43.86, text: 'もしいつか何処かで会えたら\n모시 이츠카 도코카데 아에타라\n혹시 언젠가 어디서 또 만나게 된다면' },
-      { time: 49.75, text: '今日の事を笑ってくれるかな\n쿄-노 코토오 와랏테 쿠레루카나\n오늘 있던 일에 웃어줄까' },
-      { time: 56.23, text: '理由もちゃんと話せないけれど\n리유-모 챤토 하나세나이케레도\n왜 그런지 제대로 설명 못하지만' },
-      { time: 62.64, text: '貴方が眠った後に泣くのは嫌\n아나타가 네뭇타 아토니 나쿠노와 이야\n내가 잠든 뒤에 울고 싶진 않아' },
-      { time: 69.10, text: '声も顔も不器用なとこも\n코에모 카오모 부키요-나 토코모\n너의 목소리도 얼굴도 서툰 그 모습까지' },
-      { time: 75.88, text: '全部全部 嫌いじゃないの\n젠부 젠부 키라이쟈나이노\n딱히 지금도 싫은 건 아니야' },
-      { time: 82.45, text: 'ドライフラワーみたい\n도라이후라와- 미타이\n드라이플라워처럼' },
-      { time: 86.29, text: '時間が経てばもきっときっときっときっと\n키미토노 히비모 킷토 킷토 킷토 킷토\n시간이 흐르면 언젠가 분명' },
-      { time: 93.73, text: '色褪せる\n이로아세루\n바래겠지' },
-      { time: 102.88, text: '' },
-      { time: 107.88, text: '月灯りに魔物が揺れる\n츠키아카리니 마모노가 유레루\n달빛에 미련이 흔들려' },
-      { time: 111.01, text: 'きっと私もどうかしてる\n킷토 와타시모 도-카 시테루\n나도 정신이 어떻게 돼버린 것 같아' },
-      { time: 113.96, text: '暗闇に色彩が浮かぶ\n쿠라야미니 시키사이가 우카부\n어둠 속에서 색들이 떠올라' },
-      { time: 117.35, text: '赤黄藍色が胸の奥\n아카 키 아이이로가 무네노 오쿠\n빨강 노랑 파란색이 가슴속 깊이' },
-      { time: 119.96, text: 'ずっと貴方の名前を呼ぶ\n즛토 아나타노 나마에오 요부\n계속해서 네 이름을 불러' },
-      { time: 123.12, text: '好きという気持ちまた香る\n스키토 이우 키모치 마타 카오루\n좋아한다는 감정의 향기가 또다시 들려와' },
-      { time: 126.25, text: '声も顔も不器用なとこも\n코에모 카오모 부키요-나 토코모\n목소리도 얼굴도 서툰 그 모습도' },
-      { time: 129.43, text: '全部全部 大嫌いだよ\n젠부 젠부 다이키라이다요\n전부 전부 다 진짜 싫다고' },
-      { time: 132.82, text: 'まだ枯れない花を\n마다 카레나이 하나오\n아직 시들지 않은 꽃을' },
-      { time: 138.84, text: '君に添えてさ\n키미니 소에테사\n네게 곁들여줄테니까' },
-      { time: 145.10, text: 'ずっとずっとずっとずっと\n즛토 즛토 즛토 즛토\n계속 계속 영원히' },
-      { time: 158.20, text: '抱えてよ\n카카에테요\n안아줘' },
-      { time: 169.00, text: '' }
-    ];
-
     const LYRICS_BY_TRACK = {
-      'i0UW8-8UCvc': DRY_FLOWER_LYRICS,             // Dry Flower (미나미) [COVER]
       '1uDzUPzS2w8': LOVE_ATTACK_LYRICS,          // LOVE ATTACK (SCENEDROME)
       'QC641OJe_Aw': YOYO_LYRICS,                  // YoYo ([2024.02.29] YoYo)
       '_tADnkWlvnA': YOYO_LYRICS,                  // YoYo ([2024.03.26] Re ; Scene)
