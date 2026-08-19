@@ -2634,10 +2634,13 @@
        문제 수정. 제목 줄 오른쪽에 X 버튼 자리만큼 여백을 둬서 초기화 버튼을
        살짝 왼쪽으로 밀어내고, X 버튼은 항상 찌그러지지 않는 정원(正圓)으로 고정한다.
        (PC 레이아웃은 그대로 유지) */
+    /* PC에서도 제목 줄이 X 버튼 자리까지 밀고 들어가 "초기화" 버튼과 겹치던 문제라
+       기기 구분 없이 항상 여백을 준다. */
+    .wallpaper-modal-box .yt-modal-title {
+      padding-right: 40px;
+    }
+
     @media (pointer: coarse) {
-      body.rm-device-mobile .wallpaper-modal-box .yt-modal-title {
-        padding-right: 40px;
-      }
       body.rm-device-mobile .wallpaper-modal-close-btn {
         top: 12px;
         right: 12px;
@@ -10171,6 +10174,46 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
     const wallpaperGrid = document.getElementById('wallpaper-grid');
     const wallpaperResetBtn = document.getElementById('wallpaper-reset-btn');
 
+    // 원본 배경 이미지(수 MB급 고해상도)를 선택 창 썸네일에 그대로 쓰면 30장 가까이
+    // 동시 디코딩되면서 렉이 걸린다. 처음 표시될 때 canvas로 작게 축소한 데이터URL을
+    // 한 번만 만들어 캐싱해두고, 이후로는 그 축소판만 재사용한다.
+    const wallpaperThumbCache = new Map(); // imgPath -> dataURL(축소판) | 'loading'
+
+    function getWallpaperThumbSrc(imgPath, onReady) {
+      if (wallpaperThumbCache.has(imgPath)) {
+        const cached = wallpaperThumbCache.get(imgPath);
+        if (cached !== 'loading') onReady(cached);
+        return;
+      }
+      wallpaperThumbCache.set(imgPath, 'loading');
+      const img = new Image();
+      img.onload = () => {
+        // 썸네일 카드 실제 표시 크기 기준으로 축소 (표시 폭이 대략 130px 안팎이므로
+        // 여유 있게 240px 폭으로 축소하면 화질과 용량 균형이 맞는다)
+        const targetW = 240;
+        const scale = targetW / img.naturalWidth;
+        const targetH = Math.max(1, Math.round(img.naturalHeight * scale));
+        const canvas = document.createElement('canvas');
+        canvas.width = targetW;
+        canvas.height = targetH;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+        let dataUrl;
+        try {
+          dataUrl = canvas.toDataURL('image/jpeg', 0.72);
+        } catch (e) {
+          dataUrl = imgPath; // 캔버스 사용이 막힌 환경(예: CORS)이면 원본으로 폴백
+        }
+        wallpaperThumbCache.set(imgPath, dataUrl);
+        onReady(dataUrl);
+      };
+      img.onerror = () => {
+        wallpaperThumbCache.set(imgPath, imgPath); // 실패 시 원본 경로로 폴백
+        onReady(imgPath);
+      };
+      img.src = imgPath;
+    }
+
     function renderWallpaperGrid() {
       if (!wallpaperGrid) return;
       wallpaperGrid.innerHTML = '';
@@ -10181,8 +10224,11 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
 
         const thumb = document.createElement('div');
         thumb.className = 'wallpaper-thumb' + (isActive ? ' active' : '');
-        thumb.style.backgroundImage = `url('${imgPath}')`;
         thumb.title = imgPath.split('/').pop();
+        // 렉 방지: 원본 대신 축소판이 준비되는 대로 채워 넣는다 (캐시돼 있으면 즉시 표시)
+        getWallpaperThumbSrc(imgPath, (src) => {
+          thumb.style.backgroundImage = `url('${src}')`;
+        });
 
         // 선택된 순서를 숫자 배지로 표시 (1~4) — 선택/해제 상태를 한눈에 파악하기 쉽도록
         const check = document.createElement('div');
@@ -12802,7 +12848,7 @@ function initRM(){
  const counts=()=>{try{return JSON.parse(localStorage.getItem('playCompletionCounts')||'{}')}catch(e){return{}}};
  function addToCurrentPlaylist(x){if(!x)return;if(typeof currentPlaylist==='undefined'||!currentPlaylist)currentPlaylist=[];currentPlaylist.push(x);currentPlayIndex=currentPlaylist.length-1;try{savePlaylistToStorage()}catch(e){}if(typeof playTrackByListIndex==='function')playTrackByListIndex(currentPlayIndex,true);sync();renderLyrics();renderCurrentPlaylist()}
  function play(item){addToCurrentPlaylist(item)}
- function card(item,n){let d=document.createElement('div');d.className='rm-track-card';d.innerHTML='<img class="rm-track-cover" alt=""><div class="rm-track-name"></div><div class="rm-track-meta"></div>';d.querySelector('img').src=item.album.cover||'리센느1.webp';d.querySelector('.rm-track-name').textContent=item.track.name;d.querySelector('.rm-track-meta').textContent=n?`${n}회 재생 완료`:item.album.title;d.onclick=()=>play(item);return d}
+ function card(item,n){let d=document.createElement('div');d.className='rm-track-card';d.innerHTML='<img class="rm-track-cover" alt=""><div class="rm-track-name"></div><div class="rm-track-meta"></div>';d.querySelector('img').src=item.album.cover||'리센느1.webp';d.querySelector('.rm-track-name').textContent=item.track.name;d.querySelector('.rm-track-meta').textContent=n?`${n}회 재생`:item.album.title;d.onclick=()=>play(item);return d}
  function dateKeyKST(){const now=new Date();const kst=new Date(now.getTime()+9*3600000);return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`}
  function dayIndex(){const epoch=Date.UTC(2020,0,1);const [y,m,d]=dateKeyKST().split('-').map(Number);return Math.floor((Date.UTC(y,m-1,d)-epoch)/86400000)}
  function seededShuffle(a){a=a.slice();let seed=0x9e3779b9;for(const ch of 'RESCENE-DAILY-RECOMMEND'){seed=(seed^ch.charCodeAt(0))*1664525+1013904223>>>0}for(let i=a.length-1;i>0;i--){seed=(seed*1664525+1013904223)>>>0;let j=seed%(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
