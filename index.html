@@ -4756,11 +4756,12 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
       "background/RESCENE_MINAMI_Wallpaper.jpg",
       "background/RESCENE_WONI_Wallpaper.jpg",
       "background/RESCENE_ZENA_Wallpaper.jpg",
-      "background/음악중심 트리플 크라운 축하 이미지.png"
+      "background/음악중심 트리플 크라운 축하 이미지.png",
+      "background/MAY_11_축전 이미지.JPG"
     ];
 
     // 저장된 배경이 없을 때(첫 방문) 기본으로 보여줄 배경화면
-    const DEFAULT_BACKGROUND = "background/MAY_11_축전 이미지.JPG";
+    const DEFAULT_BACKGROUND = "background/음악중심 트리플 크라운 축하 이미지.png";
 
     /* ----------------------------------
        여러 배경화면 동시 표시 (최대 4장) + 자유 2D 드래그
@@ -12848,7 +12849,7 @@ function initRM(){
  const counts=()=>{try{return JSON.parse(localStorage.getItem('playCompletionCounts')||'{}')}catch(e){return{}}};
  function addToCurrentPlaylist(x){if(!x)return;if(typeof currentPlaylist==='undefined'||!currentPlaylist)currentPlaylist=[];currentPlaylist.push(x);currentPlayIndex=currentPlaylist.length-1;try{savePlaylistToStorage()}catch(e){}if(typeof playTrackByListIndex==='function')playTrackByListIndex(currentPlayIndex,true);sync();renderLyrics();renderCurrentPlaylist()}
  function play(item){addToCurrentPlaylist(item)}
- function card(item,n){let d=document.createElement('div');d.className='rm-track-card';d.innerHTML='<img class="rm-track-cover" alt=""><div class="rm-track-name"></div><div class="rm-track-meta"></div>';d.querySelector('img').src=item.album.cover||'리센느1.webp';d.querySelector('.rm-track-name').textContent=item.track.name;d.querySelector('.rm-track-meta').textContent=n?`${n}회 재생`:item.album.title;d.onclick=()=>play(item);return d}
+ function card(item,n){let d=document.createElement('div');d.className='rm-track-card';d.innerHTML='<img class="rm-track-cover" alt=""><div class="rm-track-name"></div><div class="rm-track-meta"></div>';d.querySelector('img').src=item.album.cover||'리센느1.webp';d.querySelector('.rm-track-name').textContent=item.track.name;d.querySelector('.rm-track-meta').textContent=n?`${n}회 재생 완료`:item.album.title;d.onclick=()=>play(item);return d}
  function dateKeyKST(){const now=new Date();const kst=new Date(now.getTime()+9*3600000);return `${kst.getUTCFullYear()}-${String(kst.getUTCMonth()+1).padStart(2,'0')}-${String(kst.getUTCDate()).padStart(2,'0')}`}
  function dayIndex(){const epoch=Date.UTC(2020,0,1);const [y,m,d]=dateKeyKST().split('-').map(Number);return Math.floor((Date.UTC(y,m-1,d)-epoch)/86400000)}
  function seededShuffle(a){a=a.slice();let seed=0x9e3779b9;for(const ch of 'RESCENE-DAILY-RECOMMEND'){seed=(seed^ch.charCodeAt(0))*1664525+1013904223>>>0}for(let i=a.length-1;i>0;i--){seed=(seed*1664525+1013904223)>>>0;let j=seed%(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
