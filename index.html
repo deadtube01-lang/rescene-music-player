@@ -3342,8 +3342,8 @@ body.rm-mobile-mode .wild-charmander-wrapper{z-index:10010!important}
 body.light-mode{--rm-bg:#f7f7fa;--rm-surface:#eeeef4;--rm-text:#17171d;--rm-sub:#777784;--rm-line:rgba(0,0,0,.08)}
 body{display:block!important;min-height:100dvh!important;padding:0!important;overflow-x:hidden!important;overflow-y:auto!important;background:var(--rm-bg)!important}
 body:not(.rm-device-desktop) .player-wrapper,body:not(.rm-device-desktop) .theme-toggle-row,body:not(.rm-device-desktop) .wallpaper-controls,body:not(.rm-device-desktop) #pokeball-spawn-btn,body:not(.rm-device-desktop) #captured-list-btn,body:not(.rm-device-desktop) #captured-list-panel,body:not(.rm-device-desktop) #wild-toggle-btn,body:not(.rm-device-desktop) #photocard-gacha-btn,body:not(.rm-device-desktop) #mobile-bottom-nav,body:not(.rm-device-desktop) #mobile-mini-player,body:not(.rm-device-desktop) #mobile-home-view{display:none!important}
-#rm-mobile-app{display:flex;position:relative;z-index:10000;min-height:100dvh;flex-direction:column;background:radial-gradient(circle at 90% -10%,rgba(252,111,207,.18),transparent 35%),radial-gradient(circle at -10% 35%,rgba(139,124,255,.14),transparent 30%),var(--rm-bg);color:var(--rm-text);padding-bottom:calc(76px + env(safe-area-inset-bottom))}
-.rm-page{display:none;min-height:calc(100dvh - 76px);padding:18px 18px 110px}.rm-page.is-active{display:block}
+#rm-mobile-app{display:flex;position:relative;overflow-x:hidden;z-index:10000;min-height:100dvh;flex-direction:column;background:radial-gradient(circle at 90% -10%,rgba(252,111,207,.18),transparent 35%),radial-gradient(circle at -10% 35%,rgba(139,124,255,.14),transparent 30%),var(--rm-bg);color:var(--rm-text);padding-bottom:calc(76px + env(safe-area-inset-bottom))}
+.rm-page{display:none;min-height:calc(100dvh - 76px);padding:18px 18px 110px}.rm-page.is-active{display:block}.rm-page.rm-slide{position:absolute;top:0;left:0;right:0;z-index:2;will-change:transform}
 .rm-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:24px}.rm-brand{display:flex;align-items:center;gap:10px}.rm-brand-mark{width:34px;height:34px;border-radius:10px;object-fit:cover}.rm-brand-title{font-size:19px;font-weight:800;letter-spacing:-.5px}.rm-brand-sub{margin-top:2px;color:var(--rm-sub);font-size:10px}
 .rm-icon-btn{width:38px;height:38px;border:0;border-radius:50%;background:transparent;color:var(--rm-text);font-size:19px;display:grid;place-items:center}.rm-section{margin-bottom:30px}.rm-section-head{display:flex;align-items:end;justify-content:space-between;margin-bottom:13px}.rm-section-title{font-size:21px;line-height:1.1;font-weight:800;letter-spacing:-.6px}.rm-section-caption{color:var(--rm-sub);font-size:11px}
 .rm-carousel{display:flex;gap:15px;overflow-x:auto;margin-right:-18px;padding:2px 18px 8px 0;scroll-snap-type:x mandatory;scrollbar-width:none;-webkit-overflow-scrolling:touch}.rm-carousel::-webkit-scrollbar{display:none}
@@ -3370,7 +3370,7 @@ body.light-mode .rm-nav-btn.active span:first-child{color:var(--rm-accent)}
 /* rm-player-actions removed - now using rm-player-controls-row */.rm-lp-speed{display:flex;align-items:center;gap:6px;margin:6px 70px 4px;max-width:calc(100% - 140px);color:var(--rm-sub);font-size:9px;letter-spacing:.3px}.rm-lp-speed input{flex:1;min-width:0;height:2px;-webkit-appearance:none;appearance:none;border-radius:2px;background:rgba(0,0,0,.12);outline:none;cursor:pointer;accent-color:var(--rm-accent)}.rm-lp-speed input::-webkit-slider-runnable-track{height:2px;border-radius:2px;background:rgba(0,0,0,.12)}.rm-lp-speed input::-webkit-slider-thumb{-webkit-appearance:none;width:10px;height:10px;margin-top:-4px;border-radius:50%;background:#FC6FCF;border:0;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer}.rm-lp-speed input::-moz-range-track{height:2px;border-radius:2px;background:rgba(0,0,0,.12)}.rm-lp-speed input::-moz-range-thumb{width:10px;height:10px;border-radius:50%;background:#FC6FCF;border:0;cursor:pointer}.rm-lp-speed-value{min-width:28px;text-align:right;color:var(--rm-text);font-weight:700;font-size:10px}.rm-player-option{border:0;background:transparent;color:var(--rm-sub);font-size:22px;width:44px;height:44px}.rm-player-option.active{color:var(--rm-accent)}
 .rm-current-playlist{margin-top:12px;border-top:1px solid var(--rm-line);padding-top:12px}.rm-current-playlist-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}.rm-current-playlist-title{font-size:16px;font-weight:800;margin-bottom:0}.rm-current-clear-btn{border:1px solid var(--rm-line);background:transparent;color:var(--rm-sub);font-size:11px;font-weight:700;padding:5px 10px;border-radius:20px}.rm-current-clear-btn:active{background:rgba(255,255,255,.08)}.rm-current-list{display:grid;gap:7px}.rm-current-item{display:flex;align-items:center;gap:10px;padding:9px;border:0;border-radius:9px;background:var(--rm-surface);color:var(--rm-text);text-align:left}.rm-current-item.active{background:linear-gradient(120deg,rgba(252,111,207,.22),rgba(139,124,255,.18));box-shadow:inset 0 0 0 1px rgba(252,111,207,.35)}.rm-current-num{width:20px;text-align:center;color:var(--rm-sub);font-size:11px}.rm-current-copy{min-width:0;flex:1}.rm-current-name{display:block;font-size:12px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-current-album{display:block;margin-top:2px;color:var(--rm-sub);font-size:9px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-current-state{font-size:10px;color:var(--rm-accent);font-weight:800}.rm-lyrics{position:relative;margin-top:12px;height:160px;max-height:24vh;min-height:120px;overflow-y:auto;padding:0 6px;text-align:center;scrollbar-width:none;border-radius:14px;background:rgba(255,255,255,.035);border:1px solid var(--rm-line);overscroll-behavior:contain}.rm-lyrics::-webkit-scrollbar{display:none}.rm-lyrics-spacer{display:block;flex-shrink:0}.rm-lyric-line{color:var(--rm-sub);font-size:11px;line-height:1.4;padding:4px 6px;transition:.2s;word-break:keep-all}.rm-lyric-line.active{color:var(--rm-text);font-size:14px;font-weight:800;line-height:1.5}.rm-lyrics-empty{color:var(--rm-sub);font-size:13px;padding:18px 0}
 body.rm-device-tablet .rm-lyric-line{font-size:16px}body.rm-device-tablet .rm-lyric-line.active{font-size:21px}
-#rm-player-sheet{position:fixed;top:0;left:0;right:0;bottom:calc(61px + env(safe-area-inset-bottom));z-index:10040;display:none;flex-direction:column;background:radial-gradient(circle at 50% 8%,rgba(252,111,207,.24),transparent 34%),var(--rm-bg);padding:10px 22px 14px;overflow-y:auto}#rm-player-sheet.open{display:flex}
+#rm-player-sheet{position:fixed;top:0;left:0;right:0;bottom:calc(61px + env(safe-area-inset-bottom));z-index:10040;display:flex;flex-direction:column;background:radial-gradient(circle at 50% 8%,rgba(252,111,207,.24),transparent 34%),var(--rm-bg);padding:10px 22px 14px;overflow-y:auto;transform:translateY(100%);opacity:0;visibility:hidden;pointer-events:none;will-change:transform;transition:transform .38s cubic-bezier(.22,.61,.36,1),opacity .3s ease,visibility 0s linear .38s}#rm-player-sheet.open{transform:translateY(0);opacity:1;visibility:visible;pointer-events:auto;transition:transform .38s cubic-bezier(.22,.61,.36,1),opacity .3s ease,visibility 0s linear 0s}#rm-player-sheet.rm-dragging{transition:none!important}
 body.rm-sheet-open #rm-mini-player{display:none!important}.rm-sheet-top{display:flex;align-items:center;justify-content:space-between;height:26px}.rm-sheet-label{font-size:10px;letter-spacing:1.8px;font-weight:800;color:var(--rm-sub)}.rm-sheet-cover{width:min(64vw,270px) !important;aspect-ratio:1 !important;object-fit:cover !important;border-radius:13px;margin:10px auto 14px;box-shadow:0 24px 60px rgba(0,0,0,.38)}.rm-sheet-title{font-size:19px;font-weight:850;letter-spacing:-.7px;line-height:1.15;margin-top:6px}.rm-sheet-album{color:var(--rm-sub);font-size:12px;margin-top:4px}.rm-sheet-progress{margin:8px 0 0}
 .rm-range{
   width:100%;
@@ -12782,7 +12782,62 @@ function initRM(){
  function renderChips(){chips.innerHTML='';defs.forEach(([k,l])=>{let b=document.createElement('button');b.className='rm-chip'+(cat===k?' active':'');b.textContent=l;b.onclick=()=>{cat=k;renderChips();search()};chips.appendChild(b)})}
  function search(){let q=(input.value||'').trim().toLowerCase(),list=tracks();if(cat==='favorite'){let f=typeof favoriteTracks!=='undefined'?favoriteTracks:[];list=list.filter(x=>f.includes(getTrackKey(x.album.id,x.track.name)))}else if(cat==='views-high'){list.sort((a,b)=>(viewCountsData[b.track.src]||0)-(viewCountsData[a.track.src]||0))}else if(cat!=='all')list=list.filter(x=>x.album.type===cat);if(q)list=list.filter(x=>(x.track.name||'').toLowerCase().includes(q)||(x.album.title||'').toLowerCase().includes(q));results.innerHTML='';if(!list.length){results.innerHTML='<div class="rm-empty">검색 결과가 없습니다.</div>';return}list.forEach((x,i)=>{let r=document.createElement('div');r.className='rm-result';r.innerHTML='<img class="rm-result-cover" alt=""><div class="rm-result-info"><div class="rm-result-name"></div><div class="rm-result-album"></div></div><span class="rm-result-views loading"><span class="eye">👁</span><span class="view-number">-</span></span><button class="rm-result-play">▶</button>';r.dataset.idx=i;r.querySelector('img').src=x.album.cover||'리센느1.webp';r.querySelector('.rm-result-name').textContent=x.track.name;r.querySelector('.rm-result-album').textContent=x.album.title;r.onclick=()=>{addToCurrentPlaylist(x)};r.querySelector('button').onclick=e=>{e.stopPropagation();addToCurrentPlaylist(x)};results.appendChild(r)});
   const ids=[...new Set(list.map(x=>x.track.src))]; if(typeof fetchViewCounts==='function'&&typeof getYoutubeApiKey==='function'){fetchViewCounts(ids,getYoutubeApiKey()).then(()=>{list.forEach((x,i)=>{const row=results.querySelector('.rm-result[data-idx="'+i+'"]');if(!row)return;const v=viewCountsData[x.track.src];const box=row.querySelector('.rm-result-views');if(v!=null){box.classList.remove('loading');box.querySelector('.view-number').textContent=formatViewCount(v)}})})}}
- function tab(k){Object.entries(pages).forEach(([n,p])=>p.classList.toggle('is-active',n===k));navs.forEach(n=>n.classList.toggle('active',n.dataset.rmNav===k));if(k==='home')home();if(k==='search'){renderChips();search()}scrollTo(0,0)}
+ let rmTabAnimating=false;
+ function tab(k,opts){
+   opts=opts||{};
+   const order=['home','search','more'];
+   const activeEntry=Object.entries(pages).find(([,p])=>p.classList.contains('is-active'));
+   const activeName=activeEntry?activeEntry[0]:null;
+   navs.forEach(n=>n.classList.toggle('active',n.dataset.rmNav===k));
+   if(activeName===k){
+     if(k==='home')home();if(k==='search'){renderChips();search()}
+     return;
+   }
+   if(!activeName||opts.noAnim||rmTabAnimating){
+     Object.entries(pages).forEach(([n,p])=>p.classList.toggle('is-active',n===k));
+     if(k==='home')home();if(k==='search'){renderChips();search()}
+     scrollTo(0,0);
+     return;
+   }
+   const fromIdx=order.indexOf(activeName),toIdx=order.indexOf(k);
+   const direction=(toIdx>fromIdx)?1:-1;
+   rmSlideTab(pages[activeName],pages[k],direction);
+   if(k==='home')home();if(k==='search'){renderChips();search()}
+   scrollTo(0,0);
+ }
+ // 홈/검색/더보기 탭을 좌우로 부드럽게 슬라이드하며 전환한다.
+ // direction: 1이면 다음 탭(오른쪽에서 들어와 왼쪽으로 나감), -1이면 이전 탭(반대 방향)
+ function rmSlideTab(fromPage,toPage,direction){
+   if(!fromPage||!toPage||fromPage===toPage)return;
+   rmTabAnimating=true;
+   fromPage.classList.add('rm-slide');
+   toPage.classList.add('rm-slide');
+   toPage.style.display='block';
+   toPage.style.transition='none';
+   toPage.style.transform='translateX('+(direction>0?'100%':'-100%')+')';
+   void toPage.offsetWidth; // 강제 리플로우로 초기 위치를 먼저 확정
+   requestAnimationFrame(()=>{
+     const ease='transform .34s cubic-bezier(.22,.61,.36,1)';
+     fromPage.style.transition=ease;
+     toPage.style.transition=ease;
+     fromPage.style.transform='translateX('+(direction>0?'-100%':'100%')+')';
+     toPage.style.transform='translateX(0)';
+   });
+   let done=false;
+   const finish=()=>{
+     if(done)return;done=true;
+     fromPage.classList.remove('is-active','rm-slide');
+     fromPage.style.transform='';fromPage.style.transition='';fromPage.style.display='';
+     toPage.classList.add('is-active');
+     toPage.classList.remove('rm-slide');
+     toPage.style.transform='';toPage.style.transition='';toPage.style.display='';
+     toPage.removeEventListener('transitionend',onEnd);
+     rmTabAnimating=false;
+   };
+   const onEnd=(e)=>{ if(e.target===toPage&&e.propertyName==='transform')finish(); };
+   toPage.addEventListener('transitionend',onEnd);
+   setTimeout(finish,420); // 트랜지션 이벤트 누락 대비 안전장치
+ }
  // ── 안드로이드 뒤로가기 버튼 / iOS 스와이프 뒤로가기 대응 ─────────────────
  // 탭 전환·재생 시트(전체화면 플레이어) 열기마다 history 항목을 하나씩 쌓아두고,
  // 뒤로가기(popstate)가 오면 그 항목에 맞춰 화면을 되돌린다. 이렇게 하면
@@ -12812,8 +12867,61 @@ function initRM(){
    tab(k);
    if(!rmPopping){try{history.pushState({rmScreen:'tab',tab:k},'')}catch(e){}}
  }
- function rmOpenSheet(){sheet.classList.add('open');document.body.classList.add('rm-sheet-open');sync();renderLyrics();if(!rmPopping){try{history.pushState({rmScreen:'sheet'},'')}catch(e){}}}
+ function rmOpenSheet(){sheet.classList.remove('rm-dragging');sheet.style.transform='';sheet.classList.add('open');document.body.classList.add('rm-sheet-open');sync();renderLyrics();if(!rmPopping){try{history.pushState({rmScreen:'sheet'},'')}catch(e){}}}
  function rmCloseSheet(){if(!rmPopping){try{history.back();return}catch(e){}}sheet.classList.remove('open');document.body.classList.remove('rm-sheet-open')}
+ // ── 재생 시트를 맨 위 상태에서 아래로 슬라이드해 부드럽게 닫는 제스처 ─────────────────
+ // 시트가 스크롤 맨 위에 있을 때 아래로 드래그를 시작하면 손가락을 따라 시트가 함께
+ // 내려가고, 일정 거리 이상 당기면 그대로 부드럽게 닫히고, 덜 당기면 원위치로 복귀한다.
+ ;(function setupSheetDragDismiss(){
+   if(!sheet) return;
+   const threshold=90;
+   const noDragSelector='input,textarea,button,.rm-range,input[type="range"]';
+   let startX=0,startY=0,curY=0,dragging=false,active=false;
+   sheet.addEventListener('touchstart',(e)=>{
+     if(!sheet.classList.contains('open'))return;
+     if(e.touches.length!==1)return;
+     if(e.target.closest(noDragSelector))return;
+     if(sheet.scrollTop>0)return;
+     startX=e.touches[0].clientX;startY=e.touches[0].clientY;curY=startY;dragging=false;active=true;
+   },{passive:true});
+   sheet.addEventListener('touchmove',(e)=>{
+     if(!active)return;
+     const t=e.touches[0];
+     const dy=t.clientY-startY,dx=t.clientX-startX;
+     if(!dragging){
+       if(Math.abs(dy)<8&&Math.abs(dx)<8)return;
+       if(dy<=0||Math.abs(dx)>Math.abs(dy)){active=false;return}
+       if(sheet.scrollTop>0){active=false;return}
+       dragging=true;
+       sheet.classList.add('rm-dragging');
+     }
+     if(sheet.scrollTop>0){
+       dragging=false;active=false;sheet.classList.remove('rm-dragging');sheet.style.transform='';
+       return;
+     }
+     curY=t.clientY;
+     const clamped=Math.max(0,dy);
+     sheet.style.transform='translateY('+clamped+'px)';
+     e.preventDefault();
+   },{passive:false});
+   const endDrag=()=>{
+     if(!active)return;
+     active=false;
+     if(!dragging)return;
+     dragging=false;
+     sheet.classList.remove('rm-dragging');
+     const dy=curY-startY;
+     if(dy>threshold){
+       sheet.style.transform='translateY(100%)';
+       rmCloseSheet();
+       setTimeout(()=>{sheet.style.transform=''},400);
+     }else{
+       sheet.style.transform='';
+     }
+   };
+   sheet.addEventListener('touchend',endDrag,{passive:true});
+   sheet.addEventListener('touchcancel',endDrag,{passive:true});
+ })();
  function rmOpenVideo(){const videoEl=document.getElementById('rm-video-sheet');if(videoEl)videoEl.classList.add('open');if(!rmPopping){try{history.pushState({rmScreen:'video'},'')}catch(e){}}}
  function rmCloseVideo(){if(!rmPopping){try{history.back();return}catch(e){}}const videoEl=document.getElementById('rm-video-sheet');if(videoEl)videoEl.classList.remove('open')}
  // ── 좌우 스와이프로 홈/검색/더보기 탭 이동 ─────────────────
@@ -13063,9 +13171,9 @@ function initRM(){
    // 미니플레이어 탭이 저장돼 있으면 복원
    try{
      const savedTab=localStorage.getItem('rescene_rm_tab');
-     if(savedTab&&['home','search','more'].includes(savedTab)) tab(savedTab);
-     else tab('home');
-   }catch(e){ tab('home'); }
+     if(savedTab&&['home','search','more'].includes(savedTab)) tab(savedTab,{noAnim:true});
+     else tab('home',{noAnim:true});
+   }catch(e){ tab('home',{noAnim:true}); }
    // 히스토리 스택의 시작점을 현재 탭으로 맞춰둔다(뒤로가기 시 기준점).
    try{history.replaceState({rmScreen:'tab',tab:(pages.home.classList.contains('is-active')?'home':(pages.search.classList.contains('is-active')?'search':'more'))},'')}catch(e){}
  })();
