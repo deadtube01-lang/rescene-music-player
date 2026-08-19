@@ -13394,7 +13394,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         const end = audio.trimEnd || audio.duration || 0;
         const dur = Math.max(0, end - start);
         const pos = Math.min(dur, Math.max(0, (audio.currentTime || 0) - start));
-        if (dur > 0 && isFinite(dur)) {
+        // 곡이 막 바뀜 직후에는 유튜브 iframe이 아직 새 영상의 실제 길이를 못 받아온 상태라
+        // audio.duration이 0이거나 이전 곡의 값을 들고 있을 수 있다. 이때 position이
+        // duration보다 크거나 같게 계산되면 OS가 "곡이 끝났다"고 착각해 재생을
+        // 중간에서 끓어버리는 원인이 되므로, 이런 비정상 상태에서는 잠금화면
+        // 진행 정보를 아예 갱신하지 않고 다음 tick을 기다린다.
+        if (dur > 0 && isFinite(dur) && pos < dur) {
           navigator.mediaSession.setPositionState({ duration: dur, playbackRate: 1, position: pos });
         }
       }
@@ -13402,11 +13407,16 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
   setupMediaSession();
   setInterval(updateMediaSessionMeta, 1000);
-  // 재생/일시정지가 바뀌는 즉시(1초 기다리지 않고) 세션 상태를 갱신
+  // 재생/일시정지가 바뀌는 즉시(1초 기다리지 않고) 세션 상태를 갱신.
+  // 'loadedmetadata'/'durationchange'도 함께 걸어서, 다음 곡으로 넘어가는
+  // 순간 유튜브 iframe이 아직 이전 곡의 전체 길이를 들고 있는 상태에서
+  // setPositionState가 먼저 불려 잠금화면에 "트림 안 된 원본 길이"가
+  // 찍히는 문제(및 이로 인해 OS가 재생을 조기 종료 처리하는 문제)를 막는다.
   document.addEventListener('DOMContentLoaded', () => {
     if (typeof audio !== 'undefined' && audio) {
-      audio.addEventListener('play', updateMediaSessionMeta);
-      audio.addEventListener('pause', updateMediaSessionMeta);
+      ['play', 'pause', 'loadedmetadata', 'durationchange'].forEach(ev =>
+        audio.addEventListener(ev, updateMediaSessionMeta)
+      );
     }
   });
 
