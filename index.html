@@ -2,9 +2,20 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>RESCENE Music Player</title>
   <link rel="icon" href="logo.ico" type="image/x-icon">
+
+  <!-- PWA: 홈 화면에 추가(설치)할 수 있게 하는 매니페스트 + 아이콘/테마 설정.
+       설치된 상태(standalone)로 실행되면 일반 브라우저 탭보다 백그라운드
+       미디어 재생이 더 안정적으로 유지되는 경향이 있다. -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="RESCENE">
+  <link rel="apple-touch-icon" href="리센느1.webp">
 
   <meta property="og:title" content="RESCENE Music Player">
   <meta property="og:type" content="website">
@@ -10353,6 +10364,34 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
       });
     }
 
+    // 70% 이상 청취 시 "자주 들은 곡" 카운트를 기록하는 공용 함수.
+    // 화면이 꺼지거나 앱이 백그라운드로 가면 브라우저가 setInterval/timeupdate
+    // 폴링을 강하게 스로틀링(지연)하거나 완전히 멈춰버려서, 그 상태로 곡을 다
+    // 들어도 70% 시점 체크가 누락되는 경우가 있었다. 그래서 이 체크를
+    // timeupdate뿐 아니라 visibilitychange(화면 꺼짐/복귀), pause 시점에도
+    // 함께 호출해서 놓치지 않도록 한다.
+    function checkAndRecordCompletion() {
+      if (!audio || !audio.src) return;
+      const effectiveStart = audio.trimStart || 0;
+      const effectiveEnd = audio.trimEnd || audio.duration;
+      const effectiveDuration = effectiveEnd - effectiveStart;
+      if (!effectiveDuration) return;
+      const relTime = Math.max(0, (audio.currentTime || 0) - effectiveStart);
+      if (!rm70CountedForCurrentPlay && relTime / effectiveDuration >= 0.7) {
+        rm70CountedForCurrentPlay = true;
+        if (window.__recordTrackCompleted) {
+          const __curItem = currentPlaylist[currentPlayIndex];
+          const __key = __curItem ? getTrackKey(__curItem.album.id, __curItem.track.name) : audio.src;
+          window.__recordTrackCompleted(__key);
+        }
+      }
+    }
+
+    // 화면이 꺼지거나 다른 앱으로 전환되어 탭이 백그라운드로 갈 때, 그리고 다시
+    // 돌아왔을 때 모두 한 번씩 체크해서 폴링이 멈춰있던 구간을 놓치지 않게 한다.
+    document.addEventListener('visibilitychange', checkAndRecordCompletion);
+    window.addEventListener('pagehide', checkAndRecordCompletion);
+
     if (audio) {
       audio.addEventListener('timeupdate', () => {
         if (!audio.src) return; // 재생목록 초기화 등으로 src가 비워진 뒤 뒤늦게 들어온 이벤트는 무시
@@ -10373,18 +10412,7 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
           if (currentTimeEl) currentTimeEl.innerText = `${curM}:${curS < 10 ? '0' : ''}${curS}`;
 
           // "자주 들은 곡" 카운트: 곡 길이와 무관하게 70% 이상 들으면 1회로 집계.
-          // currentPlaylist[currentPlayIndex] 대신, 지금 실제로 로드돼 재생 중인
-          // 영상 ID(audio.src)를 직접 사용한다 — 재생목록 인덱스가 어떤 이유로
-          // 어긋나 있어도(예: 빠르게 곡을 넘기는 도중) 항상 "지금 들리는 곡"이
-          // 정확히 카운트되도록 하기 위함.
-          if (!rm70CountedForCurrentPlay && relTime / effectiveDuration >= 0.7) {
-            rm70CountedForCurrentPlay = true;
-            if (window.__recordTrackCompleted && audio.src) {
-              const __curItem = currentPlaylist[currentPlayIndex];
-              const __key = __curItem ? getTrackKey(__curItem.album.id, __curItem.track.name) : audio.src;
-              window.__recordTrackCompleted(__key);
-            }
-          }
+          checkAndRecordCompletion();
         }
         updateLyricsHighlight(audio.currentTime || 0);
       });
@@ -10398,9 +10426,12 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
         if (durationTimeEl) durationTimeEl.innerText = `${durM}:${durS < 10 ? '0' : ''}${durS}`;
       });
 
+      audio.addEventListener('pause', checkAndRecordCompletion);
+
       audio.addEventListener('ended', () => {
         // 안전장치: timeupdate에서 70% 도달 카운트가 어떤 이유로든 누락된 채
         // 곡이 끝까지 재생된 경우, 여기서 마지막으로 한 번 카운트한다.
+        checkAndRecordCompletion();
         if (!rm70CountedForCurrentPlay && window.__recordTrackCompleted && audio.src) {
           rm70CountedForCurrentPlay = true;
           const __curItem2 = currentPlaylist[currentPlayIndex];
@@ -13233,10 +13264,19 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   function setupMediaSession(){
     if (!('mediaSession' in navigator)) return;
     try {
-      navigator.mediaSession.setActionHandler('play', () => { if (typeof togglePlay === 'function' && !isCurrentlyPlaying()) togglePlay(); });
-      navigator.mediaSession.setActionHandler('pause', () => { if (typeof togglePlay === 'function' && isCurrentlyPlaying()) togglePlay(); });
-      navigator.mediaSession.setActionHandler('previoustrack', () => { if (typeof handlePrevTrack === 'function') handlePrevTrack(); });
-      navigator.mediaSession.setActionHandler('nexttrack', () => { if (typeof handleNextTrack === 'function') handleNextTrack(); });
+      navigator.mediaSession.setActionHandler('play', () => { if (typeof togglePlay === 'function' && !isCurrentlyPlaying()) togglePlay(); updateMediaSessionMeta(); });
+      navigator.mediaSession.setActionHandler('pause', () => { if (typeof togglePlay === 'function' && isCurrentlyPlaying()) togglePlay(); updateMediaSessionMeta(); });
+      navigator.mediaSession.setActionHandler('previoustrack', () => { if (typeof handlePrevTrack === 'function') handlePrevTrack(); setTimeout(updateMediaSessionMeta, 100); });
+      navigator.mediaSession.setActionHandler('nexttrack', () => { if (typeof handleNextTrack === 'function') handleNextTrack(); setTimeout(updateMediaSessionMeta, 100); });
+      // 잠금화면 진행바(seek) 지원: OS가 "실제로 살아있는 재생 세션"으로 더 확실히
+      // 인식하게 해서 백그라운드 절전으로 끊길 확률을 줄여준다.
+      navigator.mediaSession.setActionHandler('seekto', (details) => {
+        try {
+          if (typeof audio === 'undefined' || !audio) return;
+          const start = audio.trimStart || 0;
+          if (typeof details.seekTime === 'number') audio.currentTime = start + details.seekTime;
+        } catch(e){}
+      });
     } catch(e){}
   }
   function updateMediaSessionMeta(){
@@ -13250,10 +13290,36 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         album: (albumEl && albumEl.textContent) || ''
       });
       navigator.mediaSession.playbackState = isCurrentlyPlaying() ? 'playing' : 'paused';
+      // 진행바(재생 위치) 정보까지 전달 — OS/브라우저가 "정상적으로 진행 중인
+      // 미디어 세션"으로 인식하는 근거가 되어, 화면이 꺼져도 세션이 유지될
+      // 가능성을 높여준다.
+      if (typeof audio !== 'undefined' && audio && typeof navigator.mediaSession.setPositionState === 'function') {
+        const start = audio.trimStart || 0;
+        const end = audio.trimEnd || audio.duration || 0;
+        const dur = Math.max(0, end - start);
+        const pos = Math.min(dur, Math.max(0, (audio.currentTime || 0) - start));
+        if (dur > 0 && isFinite(dur)) {
+          navigator.mediaSession.setPositionState({ duration: dur, playbackRate: 1, position: pos });
+        }
+      }
     } catch(e){}
   }
   setupMediaSession();
   setInterval(updateMediaSessionMeta, 1000);
+  // 재생/일시정지가 바뀌는 즉시(1초 기다리지 않고) 세션 상태를 갱신
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof audio !== 'undefined' && audio) {
+      audio.addEventListener('play', updateMediaSessionMeta);
+      audio.addEventListener('pause', updateMediaSessionMeta);
+    }
+  });
+
+  // PWA: 서비스워커 등록. 홈 화면에 설치(Add to Home Screen)할 수 있게 해주고,\n  // 설치된 상태(standalone)로 실행하면 일반 브라우저 탭보다 백그라운드 미디어\n  // 세션이 더 안정적으로 유지되는 경향이 있다.
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    });
+  }
 
   // 화면이 켜져 있는 동안만이라도(포그라운드) 화면 자동 꺼짐으로 인한
   // 재생 중단을 줄이기 위한 Wake Lock (지원 브라우저 한정, 백그라운드에는 효과 없음)
