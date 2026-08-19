@@ -78,6 +78,15 @@
       pointer-events: none;
 }
 
+    /* 모바일에서는 사진 비율이 화면과 안 맞아도 늘어나 보이지 않도록,
+       늘려서 채우기(100% 100%) 대신 비율을 유지한 채 화면을 가득 채우고
+       남는 부분만 잘리는 cover 방식으로 자동 조정한다. */
+    @media (pointer: coarse) {
+      body.rm-device-mobile .bg-layer {
+        background-size: cover;
+      }
+    }
+
     /* 몬스터볼 장난감: 배경화면(z-index -1)보다는 위, 카드 UI 패널(z-index 50 이상)
        보다는 아래 -- "배경 위를 굴러다니는 소품"처럼 보이게 한다. */
     .pokeball-toy {
@@ -3279,6 +3288,10 @@ body:not(.rm-device-desktop) .player-wrapper,body:not(.rm-device-desktop) .theme
 .rm-results{margin-top:5px}.rm-result{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--rm-line)}.rm-result-cover{width:54px;height:54px;border-radius:7px;object-fit:cover;flex:none}.rm-result-info{min-width:0;flex:1}.rm-result-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-result-album{margin-top:4px;color:var(--rm-sub);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-result-play{width:34px;height:34px;border:0;border-radius:50%;background:var(--rm-surface);color:var(--rm-text);display:grid;place-items:center}.rm-result-views{display:flex;align-items:center;gap:4px;color:var(--rm-sub);font-size:10px;white-space:nowrap;flex:none}.rm-result-views .eye{font-size:11px}.rm-result-views.loading{opacity:.55}
 .rm-video-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.rm-video-btn{min-height:56px;border:0;border-radius:12px;background:var(--rm-surface);color:var(--rm-text);font-size:12px;font-weight:700;padding:10px 8px}.rm-more-list{display:grid}.rm-more-item{width:100%;min-height:62px;border:0;border-bottom:1px solid var(--rm-line);background:transparent;color:var(--rm-text);display:flex;align-items:center;gap:13px;text-align:left;padding:10px 0}.rm-more-icon{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:var(--rm-surface);font-size:20px;flex:none}.rm-more-copy{flex:1}.rm-more-title{font-size:14px;font-weight:750;display:block}.rm-more-desc{margin-top:3px;color:var(--rm-sub);font-size:10px;display:block}.rm-chevron{color:var(--rm-sub)}.rm-toggle{width:48px;height:28px;border-radius:999px;padding:3px;background:#393942;display:flex;align-items:center}.rm-toggle:after{content:'';width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}.rm-toggle.on{background:linear-gradient(135deg,var(--rm-accent),var(--rm-accent2))}.rm-toggle.on:after{transform:translateX(20px)}
 #rm-mini-player{position:fixed;left:0;right:0;bottom:calc(61px + env(safe-area-inset-bottom));z-index:10020;height:62px;padding:7px 14px;display:none;align-items:center;gap:10px;background:rgba(19,19,25,.96);border-top:1px solid var(--rm-line);box-shadow:0 -8px 28px rgba(0,0,0,.22);backdrop-filter:blur(18px)}#rm-mini-player.has-track{display:flex}.rm-mini-cover{width:48px;height:48px;border-radius:6px;object-fit:cover}.rm-mini-copy{min-width:0;flex:1}.rm-mini-title{font-size:12px;font-weight:750;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-mini-sub{margin-top:3px;color:#d9dbe3;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-mini-play{width:40px;height:40px;border:0;border-radius:50%;background:var(--rm-text);color:var(--rm-bg);font-size:15px}
+/* 라이트모드에서는 뮤직 플레이어바(미니 플레이어)도 밝은 배경 + 어두운 글자로 바꿔 시인성을 높인다 */
+body.light-mode #rm-mini-player{background:rgba(255,255,255,.97);border-top:1px solid rgba(0,0,0,.08);box-shadow:0 -8px 24px rgba(0,0,0,.08)}
+body.light-mode .rm-mini-title{color:#17171d}
+body.light-mode .rm-mini-sub{color:#6b6b78}
 #rm-bottom-nav{position:fixed;left:0;right:0;bottom:0;height:calc(61px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);z-index:10030;display:grid;grid-template-columns:repeat(3,1fr);background:rgba(10,10,14,.97);border-top:1px solid var(--rm-line);backdrop-filter:blur(18px)}.rm-nav-btn{border:0;background:transparent;color:#f7f7fa!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:700}.rm-nav-btn span:first-child{font-size:19px}.rm-nav-btn.active{color:#ffffff!important}.rm-nav-btn.active span:first-child{color:var(--rm-accent)}
 /* 라이트모드에서는 하단 네비게이션 바를 밝은 배경 + 어두운 글자로 바꿔 시인성을 높인다 */
 body.light-mode #rm-bottom-nav{background:rgba(255,255,255,.97);border-top:1px solid rgba(0,0,0,.08);box-shadow:0 -2px 14px rgba(0,0,0,.08)}
@@ -3416,6 +3429,7 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
 <button class="rm-video-btn" data-video-action="걷기">걷기</button><button class="rm-video-btn" data-video-action="불꽃세례(feat.거제야호)">불꽃세례</button><button class="rm-video-btn" data-video-action="오이쉬">오이쉬</button><button class="rm-video-btn" data-video-action="메이 개인기">메이 개인기</button><button class="rm-video-btn" data-video-action="너도? 나도!">너도? 나도</button><button class="rm-video-btn" data-video-action="메리오">메리오</button>
 </div></section>
 <section class="rm-section"><div class="rm-section-head"><h2 class="rm-section-title">기능</h2></div><div class="rm-more-list">
+<button class="rm-more-item" id="rm-wallpaper-btn"><span class="rm-more-icon">🖼️</span><span class="rm-more-copy"><span class="rm-more-title">배경화면 변경</span><span class="rm-more-desc">원하는 배경화면을 골라 화면에 꽉 채워 표시해요</span></span><span class="rm-chevron">›</span></button>
 <button class="rm-more-item" id="rm-gacha-btn"><span class="rm-more-icon">🃏</span><span class="rm-more-copy"><span class="rm-more-title">포토카드 뽑기</span><span class="rm-more-desc">RESCENE 홀로카드를 바로 뽑아볼 수 있어요</span></span><span class="rm-chevron">›</span></button>
 <button class="rm-more-item" id="rm-wild-item"><span class="rm-more-icon">🔥</span><span class="rm-more-copy"><span class="rm-more-title">야생 원이 파이리</span><span class="rm-more-desc">켜기 전까지 항상 비활성화 상태</span></span><span class="rm-toggle" id="rm-wild-toggle"></span></button>
 </div></section>
@@ -4733,9 +4747,14 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
     // 가로는 원본 비율 그대로 계산한다. 아직 원본 크기를 모르면 활성 개수만큼
     // 균등 분할한 값을 임시로 사용하다가, 로딩되면 정확한 값으로 다시 계산된다.
     function getLayerWidth(url) {
+      const containerW = bgLayersContainer ? bgLayersContainer.clientWidth : window.innerWidth;
+      // 모바일에서는 사진마다 비율이 달라 드래그로 위치를 맞추기 번거로우므로,
+      // 화면 폭에 꽉 채우고(자동으로 잘라서) 비율이 안 맞아도 항상 화면을 가득 채우게 한다.
+      if (document.body.classList.contains('rm-device-mobile')) {
+        return containerW;
+      }
       const size = bgNaturalSizeCache.get(url);
       const containerH = bgLayersContainer ? bgLayersContainer.clientHeight : window.innerHeight;
-      const containerW = bgLayersContainer ? bgLayersContainer.clientWidth : window.innerWidth;
       if (size && size.width && size.height && containerH) {
         return containerH * (size.width / size.height);
       }
@@ -12714,20 +12733,40 @@ function initRM(){
    // 눈에 띔)가 있었다. rmSeeking 플래그로 드래그 중엔 sync()가 rp.value를
    // 건드리지 않게 막는다.
    // + 안드로이드에서 "슬라이더는 잘 움직이는데 실제 재생 위치는 그대로"였던
-   //   원인: 이 플레이어는 유튜브 iframe(seekTo)으로 재생되는데, 손가락으로
-   //   끄는 동안(touchmove/input) 매 프레임마다 seekTo()를 연달아 호출하면
-   //   유튜브 플레이어가 중간 seek 요청들을 대부분 무시/취소해버려 마지막
-   //   위치로 정확히 이동하지 않는 경우가 있었다. 이제 드래그 중에는 슬라이더
-   //   와 시간 표시만 갱신하고, 실제 seekTo(=audio.currentTime 설정)는 손을
-   //   뗀 시점(release) 한 번만 호출한다.
+   //   진짜 원인: 이 플레이어는 유튜브 iframe(seekTo)으로 재생되는데, seekTo()를
+   //   호출한 직후에도 유튜브 플레이어가 버퍼링을 마치기 전까지는
+   //   getCurrentTime()이 잠깐(수백ms~1초 가량) 여전히 "옮기기 전" 위치를
+   //   돌려준다. 그런데 손을 뗀 직후 곧바로 rmSeeking을 꺼버리면, 그 사이에
+   //   0.25~0.3초 간격으로 도는 sync()가 그 옛날 값을 읽어와 슬라이더를 다시
+   //   원래 자리로 되돌려버려서(=화면상 "이동 안 함"처럼 보임) 결과적으로
+   //   안드로이드에서 유독 심하게 "움직이기는 하는데 그 위치로 안 감"으로 보였다.
+   //   이제 seekTo 이후에는 실제 재생 위치가 목표 지점 근처까지 따라올 때까지
+   //   (최대 1.5초) rmSeeking을 계속 켜둬서 sync()가 되돌리지 못하게 막는다.
    const rmBeginSeek=()=>{rmSeeking=true};
    const rmEndSeek=()=>{
-     if(audio){let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st;if(d>0)audio.currentTime=st+(Number(rp.value)/1000)*d;}
-     rmSeeking=false;
-     sync();
+     if(!audio){rmSeeking=false;return;}
+     let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st;
+     if(!(d>0)){rmSeeking=false;sync();return;}
+     const target=st+(Number(rp.value)/1000)*d;
+     audio.currentTime=target;
+     rmSeeking=true;
+     const deadline=Date.now()+1500;
+     const waitForSeek=()=>{
+       if(!audio){rmSeeking=false;sync();return;}
+       const now=audio.currentTime||0;
+       if(Math.abs(now-target)<1||Date.now()>deadline){
+         rmSeeking=false;
+         sync();
+       }else{
+         requestAnimationFrame(waitForSeek);
+       }
+     };
+     requestAnimationFrame(waitForSeek);
    };
-   // Pointer capture: PC/Android 드래그 (실제 seek는 pointerup에서 한 번만)
-   rp.addEventListener('pointerdown',e=>{rmBeginSeek();try{rp.setPointerCapture?.(e.pointerId)}catch(_){}});
+   // Android/iOS 모두 native 터치 드래그를 그대로 쓰는 게 가장 안정적이라
+   // 별도의 pointer capture는 걸지 않는다(일부 안드로이드 웹뷰에서 slider의
+   // 자체 드래그 처리와 충돌해 값 갱신이 씹히는 경우가 있었다).
+   rp.addEventListener('pointerdown',rmBeginSeek);
    rp.addEventListener('pointerup',rmEndSeek);
    rp.addEventListener('pointercancel',rmEndSeek);
    // 드래그 중(input): 화면(슬라이더 위치·시간 텍스트)만 갱신, 재생 위치는 아직 안 바꿈
@@ -12758,6 +12797,8 @@ function initRM(){
  }
  document.getElementById('rm-theme-btn').onclick=()=>{if(typeof themeToggleBtn!=='undefined'&&themeToggleBtn)themeToggleBtn.click();else document.body.classList.toggle('light-mode')};
  document.getElementById('rm-gacha-btn').onclick=()=>document.getElementById('photocard-gacha-btn')?.click();
+ // 더보기 탭의 "배경화면 변경" 버튼: PC버전과 동일한 배경화면 선택 모달을 그대로 연다.
+ document.getElementById('rm-wallpaper-btn').onclick=()=>{if(typeof isBgLocked!=='undefined'&&isBgLocked){toastMsg('배경화면이 잠겨 있어요');return}if(typeof openWallpaperModal==='function')openWallpaperModal();};
  const wt=document.getElementById('rm-wild-toggle'),wi=document.getElementById('rm-wild-item');function wildUI(){wt.classList.toggle('on',localStorage.getItem('wildEncounterEnabled')==='on')}wi.onclick=()=>{document.getElementById('wild-toggle-btn')?.click();wildUI();toastMsg(localStorage.getItem('wildEncounterEnabled')==='on'?'야생 원이 파이리를 켰어요':'야생 원이 파이리를 껐어요')};wildUI();
  document.querySelectorAll('.rm-video-btn').forEach(b=>b.onclick=()=>{let wanted=b.dataset.videoAction,orig=[...document.querySelectorAll('.charmander-act-btn')].find(x=>(x.textContent||'').trim()===wanted);if(orig){orig.click();let v=document.getElementById('charmander-video'),mv=document.getElementById('rm-mobile-video');if(v&&v.src){mv.src=v.currentSrc||v.src;document.getElementById('rm-video-title').textContent=wanted;rmOpenVideo();mv.play().catch(()=>{})}}else toastMsg('동영상을 찾을 수 없어요')});
  document.getElementById('rm-video-close').onclick=()=>{let v=document.getElementById('rm-mobile-video');v.pause();v.removeAttribute('src');rmCloseVideo()};
