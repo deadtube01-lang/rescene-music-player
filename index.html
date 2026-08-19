@@ -3050,13 +3050,18 @@
 
     /* ===================================================================
        모바일 뮤직앱 UI (1단계: 골격)
-       - 아래 규칙들은 max-width:768px 에서만 적용되므로 PC 화면(768px 초과)에는
-         전혀 영향을 주지 않는다.
+       - 아래 규칙들은 (pointer: coarse), 즉 "터치가 주 입력인 기기"에서만
+         적용되므로 마우스가 주 입력인 PC/맥에는 전혀 영향을 주지 않는다.
+       - 화면 폭(max-width) 기준이 아니므로, 아이패드를 가로로 눕혀 폭이
+         1024px보다 넓어져도(예: 1194px) 계속 모바일 UI가 유지된다.
+         (예전엔 max-width 조건이 같이 걸려 있어서, 아이패드를 가로 모드로
+         두면 이 블록 전체가 안 먹혀서 #rm-mobile-app이 스타일 없이
+         빈 뼈대로만 렌더링되는 버그가 있었다.)
        - 하단 탭바(홈/검색/더보기) + 기존 파이리/가방/포토카드 버튼 숨김만 우선 적용.
     =================================================================== */
     #mobile-bottom-nav { display: none; }
 
-    @media (max-width: 1024px) and (pointer: coarse) {
+    @media (pointer: coarse) {
       /* 파이리 소환 버튼(몬스터볼), 가방(포획 목록) 버튼, 포토카드 뽑기 버튼은
          모바일 홈 화면에서는 숨긴다. (더보기 탭에서 다시 노출될 예정: 2단계 이후) */
       #pokeball-spawn-btn,
@@ -3256,7 +3261,7 @@
       }
     }
   
-@media(max-width:1024px) and (pointer:coarse){
+@media(pointer:coarse){
 body.rm-mobile-mode .wild-charmander-wrapper{z-index:10010!important}
 
 :root{--rm-bg:#09090d;--rm-surface:#17171e;--rm-text:#f7f7fa;--rm-sub:#a7a7b3;--rm-accent:#fc6fcf;--rm-accent2:#8b7cff;--rm-line:rgba(255,255,255,.08)}
