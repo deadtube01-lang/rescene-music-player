@@ -78,12 +78,14 @@
       pointer-events: none;
 }
 
-    /* 모바일에서는 사진 비율이 화면과 안 맞아도 늘어나 보이지 않도록,
-       늘려서 채우기(100% 100%) 대신 비율을 유지한 채 화면을 가득 채우고
-       남는 부분만 잘리는 cover 방식으로 자동 조정한다. */
+    /* 모바일에서는 레이어의 실제 크기(width/height)를 JS에서 이미지 원본 비율에
+       맞게 정확히 계산해서 넣어주므로(applyLayerPosition의 모바일 분기 참고),
+       background-size는 늘림/자름 없이 그 크기 그대로 채우면 된다. 예전에는
+       여기서 cover를 강제해서, 세로를 화면 높이에 맞추면 폭이 화면보다 넓어지는
+       그룹 사진의 경우 양옆(멤버들)이 잘려 나가는 문제가 있었다. */
     @media (pointer: coarse) {
       body.rm-device-mobile .bg-layer {
-        background-size: cover;
+        background-size: 100% 100%;
       }
     }
 
@@ -2616,6 +2618,27 @@
       background: rgba(0, 0, 0, 0.16);
     }
 
+    /* 모바일 전용: "초기화" 버튼이 제목 줄 오른쪽 끝까지 밀려나면서 우측 상단에
+       고정된 X(닫기) 버튼과 겹쳐, 두 버튼이 하나의 길쭉한 모양으로 붙어 보이던
+       문제 수정. 제목 줄 오른쪽에 X 버튼 자리만큼 여백을 둬서 초기화 버튼을
+       살짝 왼쪽으로 밀어내고, X 버튼은 항상 찌그러지지 않는 정원(正圓)으로 고정한다.
+       (PC 레이아웃은 그대로 유지) */
+    @media (pointer: coarse) {
+      body.rm-device-mobile .wallpaper-modal-box .yt-modal-title {
+        padding-right: 40px;
+      }
+      body.rm-device-mobile .wallpaper-modal-close-btn {
+        top: 12px;
+        right: 12px;
+        width: 28px;
+        height: 28px;
+        aspect-ratio: 1 / 1;
+        box-sizing: border-box;
+        flex: none;
+        z-index: 3;
+      }
+    }
+
     .wallpaper-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -3319,9 +3342,9 @@ body:not(.rm-device-desktop) .player-wrapper,body:not(.rm-device-desktop) .theme
 .rm-track-card{flex:0 0 148px;scroll-snap-align:start;min-width:0}.rm-track-cover{width:148px;height:148px;object-fit:cover;border-radius:12px;display:block;background:var(--rm-surface);box-shadow:0 8px 24px rgba(0,0,0,.22)}.rm-track-name{margin-top:9px;font-size:13px;font-weight:700;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-track-meta{margin-top:4px;color:var(--rm-sub);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-empty{color:var(--rm-sub);font-size:13px;padding:10px 0}
 .rm-search-wrap{position:sticky;top:0;z-index:5;padding:2px 0 16px;background:linear-gradient(var(--rm-bg) 80%,transparent)}.rm-search{display:flex;align-items:center;gap:9px;height:48px;padding:0 14px;border-radius:13px;background:var(--rm-surface);border:1px solid var(--rm-line)}.rm-search span{color:var(--rm-sub);font-size:17px}.rm-search input{width:100%;border:0;outline:0;background:transparent;color:var(--rm-text);font-size:15px}.rm-search input::placeholder{color:var(--rm-sub)}
 .rm-chip-row{display:flex;gap:8px;overflow-x:auto;padding-top:12px;scrollbar-width:none}.rm-chip-row::-webkit-scrollbar{display:none}.rm-chip{flex:0 0 auto;border:0;border-radius:999px;padding:9px 14px;background:var(--rm-surface);color:var(--rm-sub);font-size:12px;font-weight:700}.rm-chip.active{color:#fff;background:linear-gradient(135deg,var(--rm-accent),var(--rm-accent2))}
-.rm-results{margin-top:5px}.rm-result{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--rm-line)}.rm-result-cover{width:54px;height:54px;border-radius:7px;object-fit:cover;flex:none}.rm-result-info{min-width:0;flex:1}.rm-result-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-result-album{margin-top:4px;color:var(--rm-sub);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-result-play{width:34px;height:34px;border:0;border-radius:50%;background:var(--rm-surface);color:var(--rm-text);display:grid;place-items:center}.rm-result-views{display:flex;align-items:center;gap:4px;color:var(--rm-sub);font-size:10px;white-space:nowrap;flex:none}.rm-result-views .eye{font-size:11px}.rm-result-views.loading{opacity:.55}
+.rm-results{margin-top:5px}.rm-result{display:flex;align-items:center;gap:12px;padding:9px 0;border-bottom:1px solid var(--rm-line)}.rm-result-cover{width:54px;height:54px;border-radius:7px;object-fit:cover;flex:none}.rm-result-info{min-width:0;flex:1}.rm-result-name{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-result-album{margin-top:4px;color:var(--rm-sub);font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-result-play{width:34px;height:34px;flex:none;box-sizing:border-box;border:0;border-radius:50%;background:var(--rm-surface);color:var(--rm-text);display:grid;place-items:center}.rm-result-views{display:flex;align-items:center;gap:4px;color:var(--rm-sub);font-size:10px;white-space:nowrap;flex:none}.rm-result-views .eye{font-size:11px}.rm-result-views.loading{opacity:.55}
 .rm-video-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.rm-video-btn{min-height:56px;border:0;border-radius:12px;background:var(--rm-surface);color:var(--rm-text);font-size:12px;font-weight:700;padding:10px 8px}.rm-more-list{display:grid}.rm-more-item{width:100%;min-height:62px;border:0;border-bottom:1px solid var(--rm-line);background:transparent;color:var(--rm-text);display:flex;align-items:center;gap:13px;text-align:left;padding:10px 0}.rm-more-icon{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:var(--rm-surface);font-size:20px;flex:none}.rm-more-copy{flex:1}.rm-more-title{font-size:14px;font-weight:750;display:block}.rm-more-desc{margin-top:3px;color:var(--rm-sub);font-size:10px;display:block}.rm-chevron{color:var(--rm-sub)}.rm-toggle{width:48px;height:28px;border-radius:999px;padding:3px;background:#393942;display:flex;align-items:center}.rm-toggle:after{content:'';width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}.rm-toggle.on{background:linear-gradient(135deg,var(--rm-accent),var(--rm-accent2))}.rm-toggle.on:after{transform:translateX(20px)}
-#rm-mini-player{position:fixed;left:0;right:0;bottom:calc(61px + env(safe-area-inset-bottom));z-index:10020;height:62px;padding:7px 14px;display:none;align-items:center;gap:10px;background:rgba(19,19,25,.96);border-top:1px solid var(--rm-line);box-shadow:0 -8px 28px rgba(0,0,0,.22);backdrop-filter:blur(18px)}#rm-mini-player.has-track{display:flex}.rm-mini-cover{width:48px;height:48px;border-radius:6px;object-fit:cover}.rm-mini-copy{min-width:0;flex:1}.rm-mini-title{font-size:12px;font-weight:750;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-mini-sub{margin-top:3px;color:#d9dbe3;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-mini-play{width:40px;height:40px;border:0;border-radius:50%;background:var(--rm-text);color:var(--rm-bg);font-size:15px}
+#rm-mini-player{position:fixed;left:0;right:0;bottom:calc(61px + env(safe-area-inset-bottom));z-index:10020;height:62px;padding:7px 14px;display:none;align-items:center;gap:10px;background:rgba(19,19,25,.96);border-top:1px solid var(--rm-line);box-shadow:0 -8px 28px rgba(0,0,0,.22);backdrop-filter:blur(18px);overflow:hidden}#rm-mini-player.has-track{display:flex}.rm-mini-progress{position:absolute;top:0;left:0;right:0;height:2.5px;background:rgba(255,255,255,.14)}.rm-mini-progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#FC6FCF,#01ACCE)}body.light-mode .rm-mini-progress{background:rgba(0,0,0,.08)}.rm-mini-cover{width:48px;height:48px;border-radius:6px;object-fit:cover;flex:none}.rm-mini-copy{min-width:0;flex:1}.rm-mini-title{font-size:12px;font-weight:750;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-mini-sub{margin-top:3px;color:#d9dbe3;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-mini-play{width:40px;height:40px;flex:none;box-sizing:border-box;border:0;border-radius:50%;background:var(--rm-text);color:var(--rm-bg);font-size:15px}.rm-mini-playlist{width:34px;height:34px;flex:none;box-sizing:border-box;border:0;border-radius:50%;background:rgba(255,255,255,.1);color:#ffffff;display:grid;place-items:center}body.light-mode .rm-mini-playlist{background:rgba(0,0,0,.06);color:#17171d}
 /* 라이트모드에서는 뮤직 플레이어바(미니 플레이어)도 밝은 배경 + 어두운 글자로 바꿔 시인성을 높인다 */
 body.light-mode #rm-mini-player{background:rgba(255,255,255,.97);border-top:1px solid rgba(0,0,0,.08);box-shadow:0 -8px 24px rgba(0,0,0,.08)}
 body.light-mode .rm-mini-title{color:#17171d}
@@ -3479,7 +3502,7 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
 <button class="rm-more-item" id="rm-wild-item"><span class="rm-more-icon">🔥</span><span class="rm-more-copy"><span class="rm-more-title">야생 원이 파이리</span><span class="rm-more-desc">켜기 전까지 항상 비활성화 상태</span></span><span class="rm-toggle" id="rm-wild-toggle"></span></button>
 </div></section>
 </section>
-<div id="rm-mini-player"><img class="rm-mini-cover" id="rm-mini-cover" src="리센느1.webp" alt=""><div class="rm-mini-copy"><div class="rm-mini-title" id="rm-mini-title">재생 중인 곡 없음</div><div class="rm-mini-sub" id="rm-mini-sub">RESCENE</div></div><button class="rm-mini-play" id="rm-mini-play">▶</button></div>
+<div id="rm-mini-player"><div class="rm-mini-progress"><div class="rm-mini-progress-fill" id="rm-mini-progress-fill"></div></div><img class="rm-mini-cover" id="rm-mini-cover" src="리센느1.webp" alt=""><div class="rm-mini-copy"><div class="rm-mini-title" id="rm-mini-title">재생 중인 곡 없음</div><div class="rm-mini-sub" id="rm-mini-sub">RESCENE</div></div><button class="rm-mini-play" id="rm-mini-play">▶</button><button class="rm-mini-playlist" id="rm-mini-playlist" aria-label="재생목록" title="재생목록"><svg viewBox="0 0 24 24" width="19" height="19"><path fill="currentColor" d="M3 5h13v2H3V5zm0 6h13v2H3v-2zm0 6h9v2H3v-2zm15-9v9.28a2.5 2.5 0 1 0 1.5 2.29V10h2.5V8H18z"/></svg></button></div>
 <nav id="rm-bottom-nav"><button class="rm-nav-btn active" data-rm-nav="home"><span>⌂</span><span>홈</span></button><button class="rm-nav-btn" data-rm-nav="search"><span>⌕</span><span>검색</span></button><button class="rm-nav-btn" data-rm-nav="more"><span>☰</span><span>더보기</span></button></nav>
 </div>
 <div id="rm-player-sheet">
@@ -4729,11 +4752,10 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
     ---------------------------------- */
     let currentBgIndex = -1;
     let activeBackgrounds = []; // 각 항목: { url, offsetX, offsetY } — offsetX는 화면 기준 절대 left(px)
-    // 모바일(화면 폭 768px 이하)에서는 배경화면을 1장만 겹쳐 쓸 수 있도록 제한한다.
-    // (데스크탑 자유배치 드래그는 모바일에서 의미가 없고, 여러 장을 겹치면
-    //  좁은 화면에서 오히려 지저분해 보이기 때문)
+    // 모바일에서는 배경화면을 최대 3장까지 겹쳐 쓸 수 있도록 한다.
+    // (사진 한 장으로 화면 폭을 다 못 채우면, 2~3장을 나란히 골라서 채우면 되기 때문)
     function getMaxActiveBackgrounds() {
-      return document.body.classList.contains('rm-device-mobile') ? 1 : 4;
+      return document.body.classList.contains('rm-device-mobile') ? 3 : 4;
     }
 
     // 배경화면 잠금 상태: 켜져 있으면 배경화면의 변경(선택/이전/다음/랜덤)과
@@ -4791,15 +4813,14 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
     }
 
     // 사진 한 장의 레이어 폭(px)을 계산: 화면 높이에 꽉 채우고(늘리지 않음),
-    // 가로는 원본 비율 그대로 계산한다. 아직 원본 크기를 모르면 활성 개수만큼
-    // 균등 분할한 값을 임시로 사용하다가, 로딩되면 정확한 값으로 다시 계산된다.
+    // 가로는 원본 비율 그대로 계산한다. 모바일도 동일한 방식을 쓴다 — 화면 폭에
+    // 억지로 맞춰 늘리거나 잘라내면 인물 사진이 위아래로 늘어져 보이므로,
+    // 항상 원본 비율을 유지한 채 세로만 꽉 채운다(폭이 화면을 다 못 채우면
+    // 사용자가 배경화면을 2~3장 골라서 나란히 채우면 된다).
+    // 아직 원본 크기를 모르면 활성 개수만큼 균등 분할한 값을 임시로 쓰다가,
+    // 로딩되면 정확한 값으로 다시 계산된다.
     function getLayerWidth(url) {
       const containerW = bgLayersContainer ? bgLayersContainer.clientWidth : window.innerWidth;
-      // 모바일에서는 사진마다 비율이 달라 드래그로 위치를 맞추기 번거로우므로,
-      // 화면 폭에 꽉 채우고(자동으로 잘라서) 비율이 안 맞아도 항상 화면을 가득 채우게 한다.
-      if (document.body.classList.contains('rm-device-mobile')) {
-        return containerW;
-      }
       const size = bgNaturalSizeCache.get(url);
       const containerH = bgLayersContainer ? bgLayersContainer.clientHeight : window.innerHeight;
       if (size && size.width && size.height && containerH) {
@@ -4807,6 +4828,26 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
       }
       const n = Math.max(1, activeBackgrounds.length);
       return containerW / n;
+    }
+
+    // 모바일 전용: 사진 한 장이 배정된 슬롯(폭 slotWidth) 안에 "전체가 다 보이도록"
+    // 맞춘 크기를 계산한다. 세로를 꽉 채웠을 때 폭이 슬롯보다 넓어지는 사진(예: 멤버가
+    // 여럿 나오는 가로로 긴 그룹 사진)은, 대신 폭을 슬롯에 맞추고 세로를 비율대로
+    // 줄여서(레터박스) 양옆이 잘리지 않고 멤버 전원이 다 보이게 한다.
+    function getMobileFitSize(url, slotWidth, containerH) {
+      const size = bgNaturalSizeCache.get(url);
+      if (!size || !size.width || !size.height || !slotWidth || !containerH) {
+        return { width: slotWidth || 0, height: containerH || 0 };
+      }
+      const ratio = size.width / size.height;
+      const heightFillWidth = containerH * ratio;
+      if (heightFillWidth <= slotWidth) {
+        // 세로를 꽉 채워도 폭이 슬롯 안에 들어오는 사진(인물 위주 세로 사진 등)은
+        // 기존처럼 세로를 꽉 채운다.
+        return { width: heightFillWidth, height: containerH };
+      }
+      // 세로를 꽉 채우면 옆으로 넘쳐서 잘리는 사진 -> 폭을 슬롯에 맞추고 세로는 비율대로.
+      return { width: slotWidth, height: slotWidth / ratio };
     }
 
     // 배경을 처음 켤 때(사용자가 아직 드래그로 옮긴 적 없을 때)의 기본 배치 위치.
@@ -4823,7 +4864,26 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
     // 레이어 하나의 폭/위치(left)를 반영. 사용자가 아직 직접 드래그해서 옮긴 적
     // 없는 배경(userMoved가 아닌 경우)은 배경 개수가 바뀔 때마다 선택 순서에 맞는
     // 기본 위치로 다시 계산한다. 실제로 드래그한 배경은 그 자리에 고정된다.
+    // 모바일에는 드래그 UI 자체가 없으므로, 예전에 데스크탑에서 저장된 위치값이
+    // 남아 있더라도 항상 가운데 기본 위치를 다시 계산해서 한쪽으로 쏠리는 것을 막는다.
     function applyLayerPosition(layerEl, bg) {
+      const isMobile = document.body.classList.contains('rm-device-mobile');
+      if (isMobile) {
+        // 모바일: 드래그 UI가 없으므로, 사진 전체(특히 그룹 사진의 좌우 멤버들)가
+        // 잘리지 않고 항상 다 보이도록 슬롯 안에 "contain" 방식으로 맞추고 가운데 정렬한다.
+        const containerW = bgLayersContainer ? bgLayersContainer.clientWidth : window.innerWidth;
+        const containerH = bgLayersContainer ? bgLayersContainer.clientHeight : window.innerHeight;
+        const n = Math.max(1, activeBackgrounds.length);
+        const slotWidth = containerW / n;
+        const idx = Math.max(0, activeBackgrounds.indexOf(bg));
+        const { width, height } = getMobileFitSize(bg.url, slotWidth, containerH);
+        bg.offsetX = slotWidth * idx + (slotWidth - width) / 2;
+        layerEl.style.width = `${width}px`;
+        layerEl.style.height = `${height}px`;
+        layerEl.style.left = `${bg.offsetX}px`;
+        layerEl.style.top = `${(containerH - height) / 2}px`;
+        return;
+      }
       const width = getLayerWidth(bg.url);
       if (!bg.userMoved) {
         bg.offsetX = getDefaultLeftForBg(bg);
@@ -10098,7 +10158,7 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
 
     function openWallpaperModal() {
       renderWallpaperGrid();
-      // 화면 폭에 맞춰 "최대 N장" 안내 문구를 갱신 (모바일 1장 / 데스크탑 4장)
+      // 화면 폭에 맞춰 "최대 N장" 안내 문구를 갱신 (모바일 3장 / 데스크탑 4장)
       const maxN = getMaxActiveBackgrounds();
       const maxMsgEl = document.getElementById('wallpaper-max-msg');
       if (maxMsgEl) maxMsgEl.innerText = `원하는 배경화면을 최대 ${maxN}장까지 골라 함께 띄울 수 있어요.`;
@@ -10272,10 +10332,14 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
           if (currentTimeEl) currentTimeEl.innerText = `${curM}:${curS < 10 ? '0' : ''}${curS}`;
 
           // "자주 들은 곡" 카운트: 곡 길이와 무관하게 70% 이상 들으면 1회로 집계.
+          // currentPlaylist[currentPlayIndex] 대신, 지금 실제로 로드돼 재생 중인
+          // 영상 ID(audio.src)를 직접 사용한다 — 재생목록 인덱스가 어떤 이유로
+          // 어긋나 있어도(예: 빠르게 곡을 넘기는 도중) 항상 "지금 들리는 곡"이
+          // 정확히 카운트되도록 하기 위함.
           if (!rm70CountedForCurrentPlay && relTime / effectiveDuration >= 0.7) {
             rm70CountedForCurrentPlay = true;
-            if (window.__recordTrackCompleted && currentPlaylist && currentPlaylist[currentPlayIndex]) {
-              window.__recordTrackCompleted(currentPlaylist[currentPlayIndex].track.src);
+            if (window.__recordTrackCompleted && audio.src) {
+              window.__recordTrackCompleted(audio.src);
             }
           }
         }
@@ -10294,9 +10358,9 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
       audio.addEventListener('ended', () => {
         // 안전장치: timeupdate에서 70% 도달 카운트가 어떤 이유로든 누락된 채
         // 곡이 끝까지 재생된 경우, 여기서 마지막으로 한 번 카운트한다.
-        if (!rm70CountedForCurrentPlay && window.__recordTrackCompleted && currentPlaylist && currentPlaylist[currentPlayIndex]) {
+        if (!rm70CountedForCurrentPlay && window.__recordTrackCompleted && audio.src) {
           rm70CountedForCurrentPlay = true;
-          window.__recordTrackCompleted(currentPlaylist[currentPlayIndex].track.src);
+          window.__recordTrackCompleted(audio.src);
         }
         handleNextTrack();
       });
@@ -12806,9 +12870,9 @@ function initRM(){
  }
 
  function renderCurrentPlaylist(){const box=document.getElementById('rm-current-list');if(!box)return;box.innerHTML='';const list=typeof currentPlaylist!=='undefined'?currentPlaylist||[]:[];if(!list.length){box.innerHTML='<div class="rm-empty">재생목록이 비어 있어요.</div>';return}list.forEach((it,i)=>{const d=document.createElement('button');d.className='rm-current-item'+(i===currentPlayIndex?' active':'');d.innerHTML='<span class="rm-current-num">'+(i+1)+'</span><span class="rm-current-copy"><span class="rm-current-name"></span> <span class="rm-current-album"></span></span>'+(i===currentPlayIndex?'<span class="rm-current-state">재생 중</span>':'');d.querySelector('.rm-current-name').textContent=it.track.name;d.querySelector('.rm-current-album').textContent=it.album.title;d.onclick=()=>{currentPlayIndex=i;playTrackByListIndex(i,true);sync();renderLyrics();renderCurrentPlaylist()};box.appendChild(d)})}
- function sync(){let x=item();if(!x){mini.classList.remove('has-track');renderCurrentPlaylist();return}mini.classList.add('has-track');let cover=x.album.cover||'리센느1.webp';document.getElementById('rm-mini-cover').src=cover;document.getElementById('rm-mini-title').textContent=x.track.name;document.getElementById('rm-mini-sub').textContent=x.album.title;document.getElementById('rm-sheet-cover').src=cover;document.getElementById('rm-sheet-title').textContent=x.track.name;document.getElementById('rm-sheet-album').textContent=x.album.title;let playing=audio&&!audio.paused&&!audio.ended;document.getElementById('rm-mini-play').innerHTML=playing?'Ⅱ':'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';document.getElementById('rm-play').innerHTML=playing?'Ⅱ':'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';document.getElementById('rm-lp-record').classList.toggle('playing',playing);syncFav();let sh=document.getElementById('rm-shuffle'),rp=document.getElementById('rm-repeat');sh.classList.toggle('active',!!isShuffle);rp.classList.toggle('active',repeatMode!=='none');const ri=document.getElementById('rm-repeat-icon');if(ri)ri.innerHTML=repeatMode==='one'?'<path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/><text x="12" y="14.5" font-size="8.5" font-weight="bold" text-anchor="middle" fill="currentColor">1</text>':'<path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>';if(audio){let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st,rel=Math.max(0,(audio.currentTime||0)-st);if(d>0){const rp=document.getElementById('rm-progress');if(rp&&!rmSeeking){rp.value=Math.round(rel/d*1000);rp.style.setProperty('--value',(Number(rp.value)/1000).toFixed(4));}document.getElementById('rm-time-current').textContent=fmt(rmSeeking&&rp?(Number(rp.value)/1000*d):rel);document.getElementById('rm-time-duration').textContent=fmt(d)}}const speed=document.getElementById('rm-lp-speed');if(speed){const val=Number(speed.value)||1.8;document.getElementById('rm-lp-speed-value').textContent=val.toFixed(1)+'s';document.getElementById('rm-lp-record').style.animationDuration=val+'s'}updateLyricsActive();renderCurrentPlaylist()}
+ function sync(){let x=item();if(!x){mini.classList.remove('has-track');const mp0=document.getElementById('rm-mini-progress-fill');if(mp0)mp0.style.width='0%';renderCurrentPlaylist();return}mini.classList.add('has-track');let cover=x.album.cover||'리센느1.webp';document.getElementById('rm-mini-cover').src=cover;document.getElementById('rm-mini-title').textContent=x.track.name;document.getElementById('rm-mini-sub').textContent=x.album.title;document.getElementById('rm-sheet-cover').src=cover;document.getElementById('rm-sheet-title').textContent=x.track.name;document.getElementById('rm-sheet-album').textContent=x.album.title;let playing=audio&&!audio.paused&&!audio.ended;document.getElementById('rm-mini-play').innerHTML=playing?'Ⅱ':'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';document.getElementById('rm-play').innerHTML=playing?'Ⅱ':'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';document.getElementById('rm-lp-record').classList.toggle('playing',playing);syncFav();let sh=document.getElementById('rm-shuffle'),rp=document.getElementById('rm-repeat');sh.classList.toggle('active',!!isShuffle);rp.classList.toggle('active',repeatMode!=='none');const ri=document.getElementById('rm-repeat-icon');if(ri)ri.innerHTML=repeatMode==='one'?'<path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/><text x="12" y="14.5" font-size="8.5" font-weight="bold" text-anchor="middle" fill="currentColor">1</text>':'<path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>';if(audio){let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st,rel=Math.max(0,(audio.currentTime||0)-st);const mp=document.getElementById('rm-mini-progress-fill');if(d>0){const rp=document.getElementById('rm-progress');if(rp&&!rmSeeking){rp.value=Math.round(rel/d*1000);rp.style.setProperty('--value',(Number(rp.value)/1000).toFixed(4));}document.getElementById('rm-time-current').textContent=fmt(rmSeeking&&rp?(Number(rp.value)/1000*d):rel);document.getElementById('rm-time-duration').textContent=fmt(d);if(mp)mp.style.width=Math.min(100,Math.max(0,rel/d*100))+'%'}else if(mp){mp.style.width='0%'}}const speed=document.getElementById('rm-lp-speed');if(speed){const val=Number(speed.value)||1.8;document.getElementById('rm-lp-speed-value').textContent=val.toFixed(1)+'s';document.getElementById('rm-lp-record').style.animationDuration=val+'s'}updateLyricsActive();renderCurrentPlaylist()}
  function toastMsg(s){toast.textContent=s;toast.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toast.classList.remove('show'),1400)}
- navs.forEach(b=>b.onclick=()=>rmGoToTab(b.dataset.rmNav));input.oninput=search;mini.onclick=()=>{rmOpenSheet()};document.getElementById('rm-mini-play').onclick=e=>{e.stopPropagation();togglePlay();setTimeout(sync,80)};
+ navs.forEach(b=>b.onclick=()=>rmGoToTab(b.dataset.rmNav));input.oninput=search;mini.onclick=()=>{rmOpenSheet()};document.getElementById('rm-mini-play').onclick=e=>{e.stopPropagation();togglePlay();setTimeout(sync,80)};document.getElementById('rm-mini-playlist').onclick=e=>{e.stopPropagation();rmOpenSheet();setTimeout(()=>{document.querySelector('.rm-current-playlist')?.scrollIntoView({behavior:'smooth',block:'start'})},60)};
  document.getElementById('rm-sheet-close').onclick=()=>{rmCloseSheet()};
  document.getElementById('rm-current-clear').onclick=()=>{document.getElementById('clear-playlist-btn')?.click();sync();renderLyrics();renderCurrentPlaylist()};document.getElementById('rm-play').onclick=()=>{togglePlay();setTimeout(sync,80)};
  document.getElementById('rm-prev').onclick=()=>{handlePrevTrack();setTimeout(()=>{renderLyrics();sync()},80)};document.getElementById('rm-next').onclick=()=>{handleNextTrack();setTimeout(()=>{renderLyrics();sync()},80)};
@@ -12888,7 +12952,7 @@ function initRM(){
    rp.addEventListener('touchend',rmEndSeek,{passive:true});
    rp.addEventListener('touchcancel',rmEndSeek,{passive:true});
  }
- document.getElementById('rm-theme-btn').onclick=()=>{if(typeof themeToggleBtn!=='undefined'&&themeToggleBtn)themeToggleBtn.click();else document.body.classList.toggle('light-mode')};
+ document.getElementById('rm-theme-btn').onclick=()=>{if(typeof themeToggleBtn!=='undefined'&&themeToggleBtn)themeToggleBtn.click();else document.body.classList.toggle('light-mode');const tb=document.getElementById('rm-theme-btn');if(tb)tb.textContent=document.body.classList.contains('light-mode')?'☀️':'🌙'};
  document.getElementById('rm-gacha-btn').onclick=()=>document.getElementById('photocard-gacha-btn')?.click();
  // 더보기 탭의 "배경화면 변경" 버튼: PC버전과 동일한 배경화면 선택 모달을 그대로 연다.
  document.getElementById('rm-wallpaper-btn').onclick=()=>{if(typeof isBgLocked!=='undefined'&&isBgLocked){toastMsg('배경화면이 잠겨 있어요');return}if(typeof openWallpaperModal==='function')openWallpaperModal();};
