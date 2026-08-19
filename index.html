@@ -3280,6 +3280,11 @@ body:not(.rm-device-desktop) .player-wrapper,body:not(.rm-device-desktop) .theme
 .rm-video-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.rm-video-btn{min-height:56px;border:0;border-radius:12px;background:var(--rm-surface);color:var(--rm-text);font-size:12px;font-weight:700;padding:10px 8px}.rm-more-list{display:grid}.rm-more-item{width:100%;min-height:62px;border:0;border-bottom:1px solid var(--rm-line);background:transparent;color:var(--rm-text);display:flex;align-items:center;gap:13px;text-align:left;padding:10px 0}.rm-more-icon{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;background:var(--rm-surface);font-size:20px;flex:none}.rm-more-copy{flex:1}.rm-more-title{font-size:14px;font-weight:750;display:block}.rm-more-desc{margin-top:3px;color:var(--rm-sub);font-size:10px;display:block}.rm-chevron{color:var(--rm-sub)}.rm-toggle{width:48px;height:28px;border-radius:999px;padding:3px;background:#393942;display:flex;align-items:center}.rm-toggle:after{content:'';width:22px;height:22px;border-radius:50%;background:#fff;transition:.2s}.rm-toggle.on{background:linear-gradient(135deg,var(--rm-accent),var(--rm-accent2))}.rm-toggle.on:after{transform:translateX(20px)}
 #rm-mini-player{position:fixed;left:0;right:0;bottom:calc(61px + env(safe-area-inset-bottom));z-index:10020;height:62px;padding:7px 14px;display:none;align-items:center;gap:10px;background:rgba(19,19,25,.96);border-top:1px solid var(--rm-line);box-shadow:0 -8px 28px rgba(0,0,0,.22);backdrop-filter:blur(18px)}#rm-mini-player.has-track{display:flex}.rm-mini-cover{width:48px;height:48px;border-radius:6px;object-fit:cover}.rm-mini-copy{min-width:0;flex:1}.rm-mini-title{font-size:12px;font-weight:750;color:#ffffff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-mini-sub{margin-top:3px;color:#d9dbe3;font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.rm-mini-play{width:40px;height:40px;border:0;border-radius:50%;background:var(--rm-text);color:var(--rm-bg);font-size:15px}
 #rm-bottom-nav{position:fixed;left:0;right:0;bottom:0;height:calc(61px + env(safe-area-inset-bottom));padding-bottom:env(safe-area-inset-bottom);z-index:10030;display:grid;grid-template-columns:repeat(3,1fr);background:rgba(10,10,14,.97);border-top:1px solid var(--rm-line);backdrop-filter:blur(18px)}.rm-nav-btn{border:0;background:transparent;color:#f7f7fa!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;font-weight:700}.rm-nav-btn span:first-child{font-size:19px}.rm-nav-btn.active{color:#ffffff!important}.rm-nav-btn.active span:first-child{color:var(--rm-accent)}
+/* 라이트모드에서는 하단 네비게이션 바를 밝은 배경 + 어두운 글자로 바꿔 시인성을 높인다 */
+body.light-mode #rm-bottom-nav{background:rgba(255,255,255,.97);border-top:1px solid rgba(0,0,0,.08);box-shadow:0 -2px 14px rgba(0,0,0,.08)}
+body.light-mode .rm-nav-btn{color:#6b6b78!important}
+body.light-mode .rm-nav-btn.active{color:#17171d!important}
+body.light-mode .rm-nav-btn.active span:first-child{color:var(--rm-accent)}
 #rm-player-sheet .rm-sheet-cover{display:none}
 .rm-lp-record{width:min(78vw,330px);height:min(78vw,330px);aspect-ratio:auto;flex:0 0 auto;border-radius:50%;background:#111;position:relative;margin:34px auto 25px;box-shadow:0 12px 45px rgba(0,0,0,.42),inset 0 0 14px rgba(255,255,255,.08);overflow:hidden;display:grid;place-items:center;animation:rmLpSpin 3s linear infinite;animation-play-state:paused}
 .rm-lp-record.playing{animation-play-state:running}.rm-lp-grooves{position:absolute;inset:0;border-radius:50%;background:repeating-radial-gradient(circle at center,transparent,transparent 4px,rgba(255,255,255,.05) 5px,transparent 6px);z-index:2}.rm-lp-cover{width:60% !important;height:60% !important;object-fit:cover !important;border-radius:50%;z-index:1;box-shadow:0 0 5px rgba(0,0,0,.8);display:block;background:transparent}.rm-lp-hole{position:absolute;width:7px;height:7px;border-radius:50%;background:#0d1117;border:2px solid #333;z-index:3}
@@ -3335,6 +3340,9 @@ body.rm-sheet-open #rm-mini-player{display:none!important}.rm-sheet-top{display:
 .rm-pc-repeat{color:var(--rm-text);opacity:1}
 .rm-pc-repeat.active{opacity:1;color:#01ACCE}
 .rm-player-fav{border:0;background:transparent;color:var(--rm-text);font-size:22px}
+/* 좋아요(♥) 버튼: 기존보다 크게, 활성화 시 PC버전과 동일한 핑크 외부광선 애니메이션 적용 */
+#rm-sheet-fav{width:52px;height:52px;font-size:28px}
+#rm-sheet-fav.active{animation:pinkGlowPulse 2s infinite ease-in-out}
 .rm-player-volume{display:flex;align-items:center;gap:10px;margin-top:28px;color:var(--rm-sub)}
 .rm-player-volume input{flex:1;accent-color:var(--rm-text)}
 #rm-video-sheet{position:fixed;inset:0;z-index:10060;display:none;align-items:flex-end;background:rgba(0,0,0,.72)}#rm-video-sheet.open{display:flex}.rm-video-sheet-inner{width:100%;max-height:82dvh;overflow:auto;background:var(--rm-bg);border-radius:20px 20px 0 0;padding:14px 16px calc(22px + env(safe-area-inset-bottom))}.rm-video-sheet-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}.rm-video-close{border:0;background:transparent;color:var(--rm-text);font-size:22px}#rm-mobile-video{width:100%;max-height:58dvh;object-fit:contain;background:#000;border-radius:12px}
@@ -12574,7 +12582,19 @@ function initRM(){
    tab((state&&state.tab)||'home');
  }
  window.addEventListener('popstate',e=>{rmPopping=true;rmApplyState(e.state);rmPopping=false});
- function rmGoToTab(k){tab(k);if(!rmPopping){try{history.pushState({rmScreen:'tab',tab:k},'')}catch(e){}}}
+ function rmGoToTab(k){
+   // 뮤직 플레이어 풀스크린 시트(또는 동영상 시트)가 열려있는 상태에서 하단 탭을
+   // 누르면, 탭 자체는 바뀌지만 시트가 안 닫혀서 화면 위를 그대로 덮고 있어
+   // "눌러도 반응이 없다"처럼 보였다. 탭 이동 전에 열려있는 시트부터 닫는다.
+   const videoEl=document.getElementById('rm-video-sheet');
+   if(sheet.classList.contains('open')||document.body.classList.contains('rm-sheet-open')||(videoEl&&videoEl.classList.contains('open'))){
+     sheet.classList.remove('open');
+     document.body.classList.remove('rm-sheet-open');
+     if(videoEl)videoEl.classList.remove('open');
+   }
+   tab(k);
+   if(!rmPopping){try{history.pushState({rmScreen:'tab',tab:k},'')}catch(e){}}
+ }
  function rmOpenSheet(){sheet.classList.add('open');document.body.classList.add('rm-sheet-open');sync();renderLyrics();if(!rmPopping){try{history.pushState({rmScreen:'sheet'},'')}catch(e){}}}
  function rmCloseSheet(){if(!rmPopping){try{history.back();return}catch(e){}}sheet.classList.remove('open');document.body.classList.remove('rm-sheet-open')}
  function rmOpenVideo(){const videoEl=document.getElementById('rm-video-sheet');if(videoEl)videoEl.classList.add('open');if(!rmPopping){try{history.pushState({rmScreen:'video'},'')}catch(e){}}}
@@ -12673,7 +12693,7 @@ function initRM(){
    rmLyrics.scrollTo({top: target, behavior: instant ? 'auto' : 'smooth'});
  }
 
- function renderCurrentPlaylist(){const box=document.getElementById('rm-current-list');if(!box)return;box.innerHTML='';const list=typeof currentPlaylist!=='undefined'?currentPlaylist||[]:[];if(!list.length){box.innerHTML='<div class="rm-empty">재생목록이 비어 있어요.</div>';return}list.forEach((it,i)=>{const d=document.createElement('button');d.className='rm-current-item'+(i===currentPlayIndex?' active':'');d.innerHTML='<span class="rm-current-num">'+(i+1)+'</span><span class="rm-current-copy"><span class="rm-current-name"></span><span class="rm-current-album"></span></span>'+(i===currentPlayIndex?'<span class="rm-current-state">재생 중</span>':'');d.querySelector('.rm-current-name').textContent=it.track.name;d.querySelector('.rm-current-album').textContent=it.album.title;d.onclick=()=>{currentPlayIndex=i;playTrackByListIndex(i,true);sync();renderLyrics();renderCurrentPlaylist()};box.appendChild(d)})}
+ function renderCurrentPlaylist(){const box=document.getElementById('rm-current-list');if(!box)return;box.innerHTML='';const list=typeof currentPlaylist!=='undefined'?currentPlaylist||[]:[];if(!list.length){box.innerHTML='<div class="rm-empty">재생목록이 비어 있어요.</div>';return}list.forEach((it,i)=>{const d=document.createElement('button');d.className='rm-current-item'+(i===currentPlayIndex?' active':'');d.innerHTML='<span class="rm-current-num">'+(i+1)+'</span><span class="rm-current-copy"><span class="rm-current-name"></span> <span class="rm-current-album"></span></span>'+(i===currentPlayIndex?'<span class="rm-current-state">재생 중</span>':'');d.querySelector('.rm-current-name').textContent=it.track.name;d.querySelector('.rm-current-album').textContent=it.album.title;d.onclick=()=>{currentPlayIndex=i;playTrackByListIndex(i,true);sync();renderLyrics();renderCurrentPlaylist()};box.appendChild(d)})}
  function sync(){let x=item();if(!x){mini.classList.remove('has-track');renderCurrentPlaylist();return}mini.classList.add('has-track');let cover=x.album.cover||'리센느1.webp';document.getElementById('rm-mini-cover').src=cover;document.getElementById('rm-mini-title').textContent=x.track.name;document.getElementById('rm-mini-sub').textContent=x.album.title;document.getElementById('rm-sheet-cover').src=cover;document.getElementById('rm-sheet-title').textContent=x.track.name;document.getElementById('rm-sheet-album').textContent=x.album.title;let playing=audio&&!audio.paused&&!audio.ended;document.getElementById('rm-mini-play').innerHTML=playing?'Ⅱ':'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';document.getElementById('rm-play').innerHTML=playing?'Ⅱ':'<svg viewBox="0 0 24 24"><path fill="currentColor" d="M8 5v14l11-7z"/></svg>';document.getElementById('rm-lp-record').classList.toggle('playing',playing);syncFav();let sh=document.getElementById('rm-shuffle'),rp=document.getElementById('rm-repeat');sh.classList.toggle('active',!!isShuffle);rp.classList.toggle('active',repeatMode!=='none');const ri=document.getElementById('rm-repeat-icon');if(ri)ri.innerHTML=repeatMode==='one'?'<path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/><text x="12" y="14.5" font-size="8.5" font-weight="bold" text-anchor="middle" fill="currentColor">1</text>':'<path fill="currentColor" d="M7 7h10v3l4-4-4-4v3H5v6h2V7zm10 10H7v-3l-4 4 4 4v-3h12v-6h-2v4z"/>';if(audio){let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st,rel=Math.max(0,(audio.currentTime||0)-st);if(d>0){const rp=document.getElementById('rm-progress');if(rp&&!rmSeeking){rp.value=Math.round(rel/d*1000);rp.style.setProperty('--value',(Number(rp.value)/1000).toFixed(4));}document.getElementById('rm-time-current').textContent=fmt(rmSeeking&&rp?(Number(rp.value)/1000*d):rel);document.getElementById('rm-time-duration').textContent=fmt(d)}}const speed=document.getElementById('rm-lp-speed');if(speed){const val=Number(speed.value)||1.8;document.getElementById('rm-lp-speed-value').textContent=val.toFixed(1)+'s';document.getElementById('rm-lp-record').style.animationDuration=val+'s'}updateLyricsActive();renderCurrentPlaylist()}
  function toastMsg(s){toast.textContent=s;toast.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>toast.classList.remove('show'),1400)}
  navs.forEach(b=>b.onclick=()=>rmGoToTab(b.dataset.rmNav));input.oninput=search;mini.onclick=()=>{rmOpenSheet()};document.getElementById('rm-mini-play').onclick=e=>{e.stopPropagation();togglePlay();setTimeout(sync,80)};
@@ -12683,7 +12703,7 @@ function initRM(){
  document.getElementById('rm-shuffle').onclick=()=>{if(shuffleBtn)shuffleBtn.click();sync()};document.getElementById('rm-repeat').onclick=()=>{if(repeatBtn)repeatBtn.click();sync()};
  document.getElementById('rm-sheet-fav').onclick=()=>{if(lpFavBtn)lpFavBtn.click();sync();search()};
  document.getElementById('rm-lp-speed').oninput=e=>{const v=Number(e.target.value)||1.8;document.getElementById('rm-lp-speed-value').textContent=v.toFixed(1)+'s';document.getElementById('rm-lp-record').style.animationDuration=v+'s'};
- document.getElementById('rm-progress').oninput=e=>{if(!audio)return;let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st;if(d>0)audio.currentTime=st+e.target.value/1000*d;sync()};
+ document.getElementById('rm-progress').oninput=e=>{if(!audio)return;rmSeeking=true;let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st;if(d>0){e.target.style.setProperty('--value',(Number(e.target.value)/1000).toFixed(4));document.getElementById('rm-time-current').textContent=fmt(e.target.value/1000*d)}};
  // 모바일 플레이어 아이콘은 PC 플레이어의 실제 SVG를 그대로 복제해 항상 동일하게 유지
  function syncDesktopPlayerIcons(){ const map=[['rm-shuffle','shuffle-btn'],['rm-prev','prev-btn'],['rm-play','play-btn'],['rm-next','next-btn']]; map.forEach(([m,d])=>{const a=document.getElementById(m),b=document.getElementById(d); if(a&&b){ const src=b.querySelector('svg,span'); if(src){ const holder=a.querySelector('svg,span'); if(holder) holder.outerHTML=src.outerHTML; else a.innerHTML=src.outerHTML; } } }); }
  syncDesktopPlayerIcons();
@@ -12693,25 +12713,33 @@ function initRM(){
    // 덮어써서 손가락으로 옮긴 위치가 도로 튕겨 돌아가는 문제(주로 안드로이드에서
    // 눈에 띔)가 있었다. rmSeeking 플래그로 드래그 중엔 sync()가 rp.value를
    // 건드리지 않게 막는다.
+   // + 안드로이드에서 "슬라이더는 잘 움직이는데 실제 재생 위치는 그대로"였던
+   //   원인: 이 플레이어는 유튜브 iframe(seekTo)으로 재생되는데, 손가락으로
+   //   끄는 동안(touchmove/input) 매 프레임마다 seekTo()를 연달아 호출하면
+   //   유튜브 플레이어가 중간 seek 요청들을 대부분 무시/취소해버려 마지막
+   //   위치로 정확히 이동하지 않는 경우가 있었다. 이제 드래그 중에는 슬라이더
+   //   와 시간 표시만 갱신하고, 실제 seekTo(=audio.currentTime 설정)는 손을
+   //   뗀 시점(release) 한 번만 호출한다.
    const rmBeginSeek=()=>{rmSeeking=true};
    const rmEndSeek=()=>{
-     rmSeeking=false;
      if(audio){let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st;if(d>0)audio.currentTime=st+(Number(rp.value)/1000)*d;}
+     rmSeeking=false;
      sync();
    };
-   // Pointer capture: PC/Android 드래그
+   // Pointer capture: PC/Android 드래그 (실제 seek는 pointerup에서 한 번만)
    rp.addEventListener('pointerdown',e=>{rmBeginSeek();try{rp.setPointerCapture?.(e.pointerId)}catch(_){}});
    rp.addEventListener('pointerup',rmEndSeek);
    rp.addEventListener('pointercancel',rmEndSeek);
+   // 드래그 중(input): 화면(슬라이더 위치·시간 텍스트)만 갱신, 재생 위치는 아직 안 바꿈
    rp.addEventListener('input',()=>{
      rmSeeking=true;
      if(audio){
        let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st;
-       if(d>0){ audio.currentTime=st+(Number(rp.value)/1000)*d; document.getElementById('rm-time-current').textContent=fmt(Number(rp.value)/1000*d); rp.style.setProperty('--value',(Number(rp.value)/1000).toFixed(4)); }
+       if(d>0){ document.getElementById('rm-time-current').textContent=fmt(Number(rp.value)/1000*d); rp.style.setProperty('--value',(Number(rp.value)/1000).toFixed(4)); }
      }
    });
    rp.addEventListener('change',rmEndSeek);
-   // iOS Safari: touch 이벤트로 직접 값 계산
+   // iOS Safari 등 일부 환경 대비 touch 이벤트로도 화면만 갱신(실제 seek는 touchend에서)
    rp.addEventListener('touchstart',e=>{e.stopPropagation();rmBeginSeek();},{passive:true});
    rp.addEventListener('touchmove',e=>{
      e.stopPropagation();
@@ -12722,7 +12750,7 @@ function initRM(){
      rp.style.setProperty('--value',ratio.toFixed(4));
      if(audio){
        let st=audio.trimStart||0,en=audio.trimEnd||audio.duration,d=en-st;
-       if(d>0){ audio.currentTime=st+ratio*d; document.getElementById('rm-time-current').textContent=fmt(ratio*d); }
+       if(d>0){ document.getElementById('rm-time-current').textContent=fmt(ratio*d); }
      }
    },{passive:true});
    rp.addEventListener('touchend',rmEndSeek,{passive:true});
