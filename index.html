@@ -13237,8 +13237,32 @@ function initRM(){
  const wt=document.getElementById('rm-wild-toggle'),wi=document.getElementById('rm-wild-item');function wildUI(){wt.classList.toggle('on',localStorage.getItem('wildEncounterEnabled')==='on')}wi.onclick=()=>{document.getElementById('wild-toggle-btn')?.click();wildUI();toastMsg(localStorage.getItem('wildEncounterEnabled')==='on'?'야생 원이 파이리를 켰어요':'야생 원이 파이리를 껐어요')};wildUI();
  document.querySelectorAll('.rm-video-btn').forEach(b=>b.onclick=()=>{let wanted=b.dataset.videoAction,orig=[...document.querySelectorAll('.charmander-act-btn')].find(x=>(x.textContent||'').trim()===wanted);if(orig){orig.click();let v=document.getElementById('charmander-video'),mv=document.getElementById('rm-mobile-video');if(v&&v.src){mv.src=v.src||v.currentSrc;document.getElementById('rm-video-title').textContent=wanted;rmOpenVideo();mv.play().catch(()=>{})}}else toastMsg('동영상을 찾을 수 없어요')});
  document.getElementById('rm-video-close').onclick=()=>{let v=document.getElementById('rm-mobile-video');v.pause();v.removeAttribute('src');rmCloseVideo()};
- if(audio)['play','playing','pause','ended','timeupdate','loadedmetadata','durationchange'].forEach(ev=>audio.addEventListener(ev,()=>{if(ev==='ended')home();if(ev==='play'||ev==='loadedmetadata')renderLyrics();sync()}));
- window.addEventListener('rescene-play-history-updated',home);window.addEventListener('storage',e=>{if(e.key==='rescene_favorites'||e.key==='playCompletionCounts')home()});setInterval(sync,300);home();renderChips();search();
+ if(audio)['play','playing','pause','ended','timeupdate','loadedmetadata','durationchange'].forEach(ev=>audio.addEventListener(ev,()=>{if(ev==='ended')home();if(ev==='play'||ev==='loadedmetadata')renderLyrics();
+   // timeupdate는 유튜브 shim이 0.25초마다 쏘는 이벤트라 화면이 안 보일 때도
+   // 그대로 두면 위의 rmStartSyncLoop 스로틀링을 우회해 계속 무거운 sync()를
+   // 부르게 된다. 화면이 안 보이는 동안엔 진행바 갱신이 어차피 보이지 않으니
+   // timeupdate에 의한 즉시 갱신만 건너뛰고, 다른 이벤트(재생/일시정지/곡전환
+   // 등 상태 변화가 중요한 이벤트)는 화면 상태와 무관하게 그대로 반영한다.
+   if(ev==='timeupdate' && document.hidden) return;
+   sync()}));
+ window.addEventListener('rescene-play-history-updated',home);window.addEventListener('storage',e=>{if(e.key==='rescene_favorites'||e.key==='playCompletionCounts')home()});
+ // 화면이 보이지 않을 때(백그라운드/화면꺼짐)는 어차피 사용자가 볼 수 없는
+ // UI 갱신(0.3초마다 DOM 통째로 다시 그리기)을 계속 돌릴 필요가 없다.
+ // 이 반복 타이머가 화면 꺼짐 상태에서 브라우저의 백그라운드 리소스 회수를
+ // 더 앞당기는 요인이 될 수 있어서, 화면이 안 보이는 동안은 주기를 크게
+ // 늘려 부하를 최소화하고, 화면으로 돌아오면 즉시 원래 주기로 복원한다.
+ let rmSyncTimer=null;
+ function rmStartSyncLoop(){
+   if(rmSyncTimer) clearInterval(rmSyncTimer);
+   const interval = document.hidden ? 4000 : 300;
+   rmSyncTimer = setInterval(sync, interval);
+ }
+ document.addEventListener('visibilitychange', ()=>{
+   rmStartSyncLoop();
+   if(!document.hidden) sync(); // 복귀 즉시 최신 상태로 한번 갱신
+ });
+ rmStartSyncLoop();
+ home();renderChips();search();
  // 새로고침 후 재생목록·현재 곡 복원: PC 코드가 localStorage에 저장해 둔 값을 읽어
  // 모바일 UI(미니플레이어·네비게이션)에 반영한다.
  (function restoreMobileState(){
