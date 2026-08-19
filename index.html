@@ -10364,6 +10364,21 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
       });
     }
 
+    // "자주 들은 곡" 카운트를 localStorage에 직접 저장하는 함수.
+    // 예전에는 별도 <script> 블록에서 정의한 window.__recordTrackCompleted를
+    // 통해 간접 호출했는데, 배포 과정에서 그 블록이 누락되는 문제가 있어서
+    // (window.__recordTrackCompleted가 undefined가 되어 카운트가 조용히 씹힘)
+    // 이 함수가 쓰이는 자리에서 직접 정의해 그 의존성을 없앴다.
+    function recordTrackCompletedDirect(videoId) {
+      if (!videoId) return;
+      try {
+        var counts = JSON.parse(localStorage.getItem('playCompletionCounts') || '{}');
+        counts[videoId] = (counts[videoId] || 0) + 1;
+        localStorage.setItem('playCompletionCounts', JSON.stringify(counts));
+        window.dispatchEvent(new CustomEvent('rescene-play-history-updated'));
+      } catch (e) { /* 저장 실패 시 무시 */ }
+    }
+
     // 70% 이상 청취 시 "자주 들은 곡" 카운트를 기록하는 공용 함수.
     // 화면이 꺼지거나 앱이 백그라운드로 가면 브라우저가 setInterval/timeupdate
     // 폴링을 강하게 스로틀링(지연)하거나 완전히 멈춰버려서, 그 상태로 곡을 다
@@ -10379,11 +10394,9 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
       const relTime = Math.max(0, (audio.currentTime || 0) - effectiveStart);
       if (!rm70CountedForCurrentPlay && relTime / effectiveDuration >= 0.7) {
         rm70CountedForCurrentPlay = true;
-        if (window.__recordTrackCompleted) {
-          const __curItem = currentPlaylist[currentPlayIndex];
-          const __key = __curItem ? getTrackKey(__curItem.album.id, __curItem.track.name) : audio.src;
-          window.__recordTrackCompleted(__key);
-        }
+        const __curItem = currentPlaylist[currentPlayIndex];
+        const __key = __curItem ? getTrackKey(__curItem.album.id, __curItem.track.name) : audio.src;
+        recordTrackCompletedDirect(__key);
       }
     }
 
@@ -10432,11 +10445,11 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
         // 안전장치: timeupdate에서 70% 도달 카운트가 어떤 이유로든 누락된 채
         // 곡이 끝까지 재생된 경우, 여기서 마지막으로 한 번 카운트한다.
         checkAndRecordCompletion();
-        if (!rm70CountedForCurrentPlay && window.__recordTrackCompleted && audio.src) {
+        if (!rm70CountedForCurrentPlay && audio.src) {
           rm70CountedForCurrentPlay = true;
           const __curItem2 = currentPlaylist[currentPlayIndex];
           const __key2 = __curItem2 ? getTrackKey(__curItem2.album.id, __curItem2.track.name) : audio.src;
-          window.__recordTrackCompleted(__key2);
+          recordTrackCompletedDirect(__key2);
         }
         handleNextTrack();
       });
