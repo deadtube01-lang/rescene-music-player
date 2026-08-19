@@ -2580,6 +2580,40 @@
       max-width: 420px;
       max-height: 80vh;
       overflow-y: auto;
+      position: relative;
+    }
+
+    /* 배경화면 모달 우측 상단 닫기(X) 버튼 */
+    .wallpaper-modal-close-btn {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      width: 30px;
+      height: 30px;
+      border: none;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.12);
+      color: #ffffff;
+      font-size: 15px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2;
+    }
+
+    .wallpaper-modal-close-btn:hover {
+      background: rgba(255, 255, 255, 0.22);
+    }
+
+    body.light-mode .wallpaper-modal-close-btn {
+      background: rgba(0, 0, 0, 0.08);
+      color: #1a1a1a;
+    }
+
+    body.light-mode .wallpaper-modal-close-btn:hover {
+      background: rgba(0, 0, 0, 0.16);
     }
 
     .wallpaper-grid {
@@ -3370,6 +3404,17 @@ body.rm-device-desktop #rm-player-sheet,
 body.rm-device-desktop #rm-video-sheet,
 body.rm-device-desktop .rm-toast{display:none!important}
 body.rm-device-mobile #rm-mobile-app{display:flex!important}
+/* 모바일 화면(#rm-mobile-app)은 기본적으로 var(--rm-bg) 단색으로 완전히 덮여 있어서,
+   그 뒤(z-index:-1)에 깔리는 실제 배경화면 사진(#bg-layers)이 선택해도 전혀 보이지
+   않았다. 배경화면이 1장 이상 선택된 상태(body.rm-mobile-has-wallpaper)에서는 단색 대신
+   반투명 스크림만 얹어서 사진이 비쳐 보이도록 한다(글자 가독성은 유지). */
+body.rm-mobile-has-wallpaper#rm-device-mobile #rm-mobile-app,
+body.rm-device-mobile.rm-mobile-has-wallpaper #rm-mobile-app{
+  background:radial-gradient(circle at 90% -10%,rgba(252,111,207,.18),transparent 35%),radial-gradient(circle at -10% 35%,rgba(139,124,255,.14),transparent 30%),rgba(9,9,13,.6)!important;
+}
+body.rm-device-mobile.light-mode.rm-mobile-has-wallpaper #rm-mobile-app{
+  background:radial-gradient(circle at 90% -10%,rgba(252,111,207,.18),transparent 35%),radial-gradient(circle at -10% 35%,rgba(139,124,255,.14),transparent 30%),rgba(247,247,250,.6)!important;
+}
 body.rm-device-mobile .player-wrapper,
 body.rm-device-mobile .theme-toggle-row,
 body.rm-device-mobile .wallpaper-controls,
@@ -3552,11 +3597,13 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
     })();
 
     /* -------------------------------------------------------------
-       "자주 들은 곡" 트래킹: 한 곡이 처음부터 끝까지 재생 완료되었을 때만
-       카운트한다. 재생 중이던 트랙의 ended 이벤트(자연 종료 또는
-       trimEnd 도달로 인한 종료 모두 포함)가 발생하는 시점 = "끝까지 재생됨"
-       이므로 이 시점에만 카운트를 올린다. localStorage에 영구 저장.
-       (다음 단계에서 홈 화면 "자주 들은 곡" 캐러셀이 이 데이터를 사용)
+       "자주 들은 곡" 트래킹: 곡 길이와 상관없이 재생 진행률이 70% 이상이면
+       카운트한다(끝까지 다 듣지 않아도 됨). 실제 70% 도달 판정은
+       audio의 timeupdate 이벤트에서 하고, 자연 종료(ended) 시점에는
+       혹시 70% 판정이 누락됐을 경우를 대비한 안전장치로만 카운트한다.
+       한 번의 재생(같은 곡을 다시 반복 재생하는 경우 포함)당 최대 1회만
+       카운트되도록 rm70CountedForCurrentPlay 플래그로 중복 카운트를 막는다.
+       localStorage에 영구 저장.
     ------------------------------------------------------------- */
     (function () {
       var STORAGE_KEY = 'playCompletionCounts';
@@ -3572,9 +3619,8 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
           localStorage.setItem(STORAGE_KEY, JSON.stringify(counts));
         } catch (e) { /* 무시 */ }
       }
-      window.__recordTrackCompleted = function (videoId, effectiveDuration) {
+      window.__recordTrackCompleted = function (videoId) {
         if (!videoId) return;
-        if (typeof effectiveDuration === 'number' && effectiveDuration < 60) return;
         var counts = loadCounts();
         counts[videoId] = (counts[videoId] || 0) + 1;
         saveCounts(counts);
@@ -3881,6 +3927,7 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
   <!-- 배경화면 선택 모달 -->
   <div id="wallpaper-modal" class="yt-modal-overlay">
     <div class="yt-modal-box wallpaper-modal-box">
+      <button class="wallpaper-modal-close-btn" id="wallpaper-modal-close-btn" aria-label="닫기" title="닫기">✕</button>
       <div class="yt-modal-title">
         <span style="font-size:20px;line-height:1;">🖼️</span>
         <span>배경화면 선택</span>
@@ -4787,6 +4834,9 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
 
     function renderBackgroundLayers() {
   if (!bgLayersContainer) return;
+  // 모바일 화면은 배경화면이 하나라도 선택돼 있을 때만 자기 배경을 반투명하게
+  // 바꿔서, 뒤에 깔린 배경화면 사진이 비쳐 보이도록 한다.
+  document.body.classList.toggle('rm-mobile-has-wallpaper', activeBackgrounds.length > 0);
   bgLayersContainer.innerHTML = '';
   getZOrderedBackgrounds().forEach(({ bg, zIndex }) => {
     preloadBgNaturalSize(bg.url);
@@ -4972,6 +5022,10 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
     let currentPlayIndex = 0;
     let isShowingFavoritesOnly = false;
     let searchQuery = '';
+    // 현재 재생 중인 트랙이 "자주 들은 곡"으로 이미 카운트됐는지 여부.
+    // 새 트랙이 시작될 때마다(같은 곡 반복 재생 포함) false로 초기화되고,
+    // 재생 진행률이 70%를 넘는 순간 한 번만 true로 바뀌며 카운트된다.
+    let rm70CountedForCurrentPlay = false;
 
     let isShuffle = false;
     let repeatMode = 'none';
@@ -9656,6 +9710,7 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
       if (playIdx >= currentPlaylist.length) playIdx = currentPlaylist.length - 1;
 
       currentPlayIndex = playIdx;
+      rm70CountedForCurrentPlay = false; // 새 트랙(반복 재생 포함) 시작 -> 카운트 여부 초기화
       try { savePlaylistToStorage(); } catch (e) {}
       const item = currentPlaylist[currentPlayIndex];
 
@@ -10036,6 +10091,11 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
       });
     }
 
+    // 배경화면 모달이 열려 있는 동안 히스토리 항목을 하나 쌓아서, 모바일에서
+    // 뒤로가기(하드웨어 백 버튼/제스처)를 눌렀을 때 앱을 나가는 대신 이 모달만
+    // 닫히도록 한다.
+    let wallpaperModalHistoryPushed = false;
+
     function openWallpaperModal() {
       renderWallpaperGrid();
       // 화면 폭에 맞춰 "최대 N장" 안내 문구를 갱신 (모바일 1장 / 데스크탑 4장)
@@ -10049,11 +10109,29 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
         hintEl.dataset.defaultText = defaultText;
       }
       if (wallpaperModal) wallpaperModal.classList.add('open');
+      if (!wallpaperModalHistoryPushed) {
+        wallpaperModalHistoryPushed = true;
+        try { history.pushState({ rmWallpaperModal: true }, document.title); } catch (e) {}
+      }
     }
 
-    function closeWallpaperModal() {
+    // fromPopState가 true면 이미 뒤로가기로 히스토리가 소비된 상태이므로
+    // history.back()을 다시 호출하지 않는다(무한 루프 방지).
+    function closeWallpaperModal(fromPopState) {
       if (wallpaperModal) wallpaperModal.classList.remove('open');
+      if (wallpaperModalHistoryPushed) {
+        wallpaperModalHistoryPushed = false;
+        if (!fromPopState) {
+          try { history.back(); } catch (e) {}
+        }
+      }
     }
+
+    window.addEventListener('popstate', () => {
+      if (wallpaperModal && wallpaperModal.classList.contains('open')) {
+        closeWallpaperModal(true);
+      }
+    });
 
     if (wallpaperBtn) {
       wallpaperBtn.addEventListener('click', (e) => {
@@ -10063,7 +10141,7 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
       });
     }
 
-    // 닫기 버튼은 없애고, 모달 바깥(어두운 배경)을 클릭하면 닫히도록 한다.
+    // 우측 상단 닫기(X) 버튼 + 모달 바깥(어두운 배경) 클릭 모두로 닫을 수 있게 한다.
     // 배경화면 초기화: 선택해둔 배경(들)과 사용자가 옮겨놓은 위치까지 전부 지워서
     // 처음(배경 없음) 상태로 되돌린다.
     if (wallpaperResetBtn) {
@@ -10074,6 +10152,14 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
         saveActiveBackgroundsToStorage();
         renderBackgroundLayers();
         renderWallpaperGrid();
+      });
+    }
+
+    const wallpaperModalCloseBtn = document.getElementById('wallpaper-modal-close-btn');
+    if (wallpaperModalCloseBtn) {
+      wallpaperModalCloseBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        closeWallpaperModal();
       });
     }
 
@@ -10184,6 +10270,14 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
           const curM = Math.floor(relTime / 60);
           const curS = Math.floor(relTime % 60);
           if (currentTimeEl) currentTimeEl.innerText = `${curM}:${curS < 10 ? '0' : ''}${curS}`;
+
+          // "자주 들은 곡" 카운트: 곡 길이와 무관하게 70% 이상 들으면 1회로 집계.
+          if (!rm70CountedForCurrentPlay && relTime / effectiveDuration >= 0.7) {
+            rm70CountedForCurrentPlay = true;
+            if (window.__recordTrackCompleted && currentPlaylist && currentPlaylist[currentPlayIndex]) {
+              window.__recordTrackCompleted(currentPlaylist[currentPlayIndex].track.src);
+            }
+          }
         }
         updateLyricsHighlight(audio.currentTime || 0);
       });
@@ -10198,12 +10292,11 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
       });
 
       audio.addEventListener('ended', () => {
-        // 끝까지 재생 완료된 시점(자연 종료 / trimEnd 도달 모두 포함) = "자주 들은 곡" 집계 대상.
-        if (window.__recordTrackCompleted && currentPlaylist && currentPlaylist[currentPlayIndex]) {
-          window.__recordTrackCompleted(
-             currentPlaylist[currentPlayIndex].track.src,
-             (audio.trimEnd || audio.duration) - (audio.trimStart || 0)
-           );
+        // 안전장치: timeupdate에서 70% 도달 카운트가 어떤 이유로든 누락된 채
+        // 곡이 끝까지 재생된 경우, 여기서 마지막으로 한 번 카운트한다.
+        if (!rm70CountedForCurrentPlay && window.__recordTrackCompleted && currentPlaylist && currentPlaylist[currentPlayIndex]) {
+          rm70CountedForCurrentPlay = true;
+          window.__recordTrackCompleted(currentPlaylist[currentPlayIndex].track.src);
         }
         handleNextTrack();
       });
@@ -12579,7 +12672,7 @@ function initRM(){
   }
   const bySrc=new Map(all.map(x=>[String(x.track.src),x])); return hist[today].map(k=>bySrc.get(String(k))).filter(Boolean);
 }
- function home(){let c=counts();let f=tracks().filter(x=>(c[x.track.src]||0)>0&&dur(x)>=60).sort((a,b)=>(c[b.track.src]||0)-(c[a.track.src]||0));freq.innerHTML='';if(!f.length)freq.innerHTML='<div class="rm-empty">자주 들은 곡이 없어요</div>';else f.slice(0,12).forEach(x=>freq.appendChild(card(x,c[x.track.src])));rec.innerHTML='';dailyRecommendations().forEach(x=>rec.appendChild(card(x)))}
+ function home(){let c=counts();let f=tracks().filter(x=>(c[x.track.src]||0)>0).sort((a,b)=>(c[b.track.src]||0)-(c[a.track.src]||0));freq.innerHTML='';if(!f.length)freq.innerHTML='<div class="rm-empty">자주 들은 곡이 없어요</div>';else f.slice(0,12).forEach(x=>freq.appendChild(card(x,c[x.track.src])));rec.innerHTML='';dailyRecommendations().forEach(x=>rec.appendChild(card(x)))}
  const defs=[['all','전체'],['single','SINGLE'],['ep','EP'],['ost','OST'],['cover','COVER'],['featuring','피처링'],['views-high','조회수'],['favorite','좋아요']];
  function renderChips(){chips.innerHTML='';defs.forEach(([k,l])=>{let b=document.createElement('button');b.className='rm-chip'+(cat===k?' active':'');b.textContent=l;b.onclick=()=>{cat=k;renderChips();search()};chips.appendChild(b)})}
  function search(){let q=(input.value||'').trim().toLowerCase(),list=tracks();if(cat==='favorite'){let f=typeof favoriteTracks!=='undefined'?favoriteTracks:[];list=list.filter(x=>f.includes(getTrackKey(x.album.id,x.track.name)))}else if(cat==='views-high'){list.sort((a,b)=>(viewCountsData[b.track.src]||0)-(viewCountsData[a.track.src]||0))}else if(cat!=='all')list=list.filter(x=>x.album.type===cat);if(q)list=list.filter(x=>(x.track.name||'').toLowerCase().includes(q)||(x.album.title||'').toLowerCase().includes(q));results.innerHTML='';if(!list.length){results.innerHTML='<div class="rm-empty">검색 결과가 없습니다.</div>';return}list.forEach(x=>{let r=document.createElement('div');r.className='rm-result';r.innerHTML='<img class="rm-result-cover" alt=""><div class="rm-result-info"><div class="rm-result-name"></div><div class="rm-result-album"></div></div><span class="rm-result-views loading"><span class="eye">👁</span><span class="view-number">-</span></span><button class="rm-result-play">▶</button>';r.querySelector('img').src=x.album.cover||'리센느1.webp';r.querySelector('.rm-result-name').textContent=x.track.name;r.querySelector('.rm-result-album').textContent=x.album.title;r.onclick=()=>{addToCurrentPlaylist(x)};r.querySelector('button').onclick=e=>{e.stopPropagation();addToCurrentPlaylist(x)};results.appendChild(r)});
