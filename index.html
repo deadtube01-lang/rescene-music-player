@@ -13237,32 +13237,8 @@ function initRM(){
  const wt=document.getElementById('rm-wild-toggle'),wi=document.getElementById('rm-wild-item');function wildUI(){wt.classList.toggle('on',localStorage.getItem('wildEncounterEnabled')==='on')}wi.onclick=()=>{document.getElementById('wild-toggle-btn')?.click();wildUI();toastMsg(localStorage.getItem('wildEncounterEnabled')==='on'?'야생 원이 파이리를 켰어요':'야생 원이 파이리를 껐어요')};wildUI();
  document.querySelectorAll('.rm-video-btn').forEach(b=>b.onclick=()=>{let wanted=b.dataset.videoAction,orig=[...document.querySelectorAll('.charmander-act-btn')].find(x=>(x.textContent||'').trim()===wanted);if(orig){orig.click();let v=document.getElementById('charmander-video'),mv=document.getElementById('rm-mobile-video');if(v&&v.src){mv.src=v.src||v.currentSrc;document.getElementById('rm-video-title').textContent=wanted;rmOpenVideo();mv.play().catch(()=>{})}}else toastMsg('동영상을 찾을 수 없어요')});
  document.getElementById('rm-video-close').onclick=()=>{let v=document.getElementById('rm-mobile-video');v.pause();v.removeAttribute('src');rmCloseVideo()};
- if(audio)['play','playing','pause','ended','timeupdate','loadedmetadata','durationchange'].forEach(ev=>audio.addEventListener(ev,()=>{if(ev==='ended')home();if(ev==='play'||ev==='loadedmetadata')renderLyrics();
-   // timeupdate는 유튜브 shim이 0.25초마다 쏘는 이벤트라 화면이 안 보일 때도
-   // 그대로 두면 위의 rmStartSyncLoop 스로틀링을 우회해 계속 무거운 sync()를
-   // 부르게 된다. 화면이 안 보이는 동안엔 진행바 갱신이 어차피 보이지 않으니
-   // timeupdate에 의한 즉시 갱신만 건너뛰고, 다른 이벤트(재생/일시정지/곡전환
-   // 등 상태 변화가 중요한 이벤트)는 화면 상태와 무관하게 그대로 반영한다.
-   if(ev==='timeupdate' && document.hidden) return;
-   sync()}));
- window.addEventListener('rescene-play-history-updated',home);window.addEventListener('storage',e=>{if(e.key==='rescene_favorites'||e.key==='playCompletionCounts')home()});
- // 화면이 보이지 않을 때(백그라운드/화면꺼짐)는 어차피 사용자가 볼 수 없는
- // UI 갱신(0.3초마다 DOM 통째로 다시 그리기)을 계속 돌릴 필요가 없다.
- // 이 반복 타이머가 화면 꺼짐 상태에서 브라우저의 백그라운드 리소스 회수를
- // 더 앞당기는 요인이 될 수 있어서, 화면이 안 보이는 동안은 주기를 크게
- // 늘려 부하를 최소화하고, 화면으로 돌아오면 즉시 원래 주기로 복원한다.
- let rmSyncTimer=null;
- function rmStartSyncLoop(){
-   if(rmSyncTimer) clearInterval(rmSyncTimer);
-   const interval = document.hidden ? 4000 : 300;
-   rmSyncTimer = setInterval(sync, interval);
- }
- document.addEventListener('visibilitychange', ()=>{
-   rmStartSyncLoop();
-   if(!document.hidden) sync(); // 복귀 즉시 최신 상태로 한번 갱신
- });
- rmStartSyncLoop();
- home();renderChips();search();
+ if(audio)['play','playing','pause','ended','timeupdate','loadedmetadata','durationchange'].forEach(ev=>audio.addEventListener(ev,()=>{if(ev==='ended')home();if(ev==='play'||ev==='loadedmetadata')renderLyrics();sync()}));
+ window.addEventListener('rescene-play-history-updated',home);window.addEventListener('storage',e=>{if(e.key==='rescene_favorites'||e.key==='playCompletionCounts')home()});setInterval(sync,300);home();renderChips();search();
  // 새로고침 후 재생목록·현재 곡 복원: PC 코드가 localStorage에 저장해 둔 값을 읽어
  // 모바일 UI(미니플레이어·네비게이션)에 반영한다.
  (function restoreMobileState(){
@@ -13463,6 +13439,297 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) requestWakeLock(); });
   setInterval(requestWakeLock, 5000);
+})();
+</script>
+
+<!-- ============================================================
+     리듬게임 모드 (테스트: Deja Vu 전용)
+     - 자동 생성된 채보(비트 간격 기반)로 시작. 추후 직접 박자를
+       찍어서 수정할 수 있도록 노트 데이터를 한 곳(RM_CHARTS)에
+       분리해 두었다.
+     ============================================================ -->
+<style>
+  #rg-launch-btn{
+    position:fixed; right:16px; bottom:16px; z-index:9998;
+    width:48px; height:48px; border-radius:50%;
+    background:rgba(18,22,28,0.65); border:1px solid rgba(255,255,255,0.25);
+    backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    box-shadow:0 4px 15px rgba(0,0,0,0.3); cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    font-size:22px; color:#fff; transition:transform .2s ease;
+  }
+  #rg-launch-btn:hover{ transform:translateY(-2px); }
+  #rg-overlay{
+    display:none; position:fixed; inset:0; z-index:99999;
+    background:#05070c; color:#fff; flex-direction:column;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  #rg-overlay.show{ display:flex; }
+  #rg-top{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:10px 14px; flex:0 0 auto;
+  }
+  #rg-top .rg-stat{ font-size:14px; opacity:.85; }
+  #rg-score{ font-size:20px; font-weight:700; }
+  #rg-close{
+    background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2);
+    color:#fff; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:14px;
+  }
+  #rg-field{
+    position:relative; flex:1 1 auto; overflow:hidden;
+    display:flex; justify-content:center;
+    background:linear-gradient(180deg,#0b0e14 0%,#05070c 80%);
+  }
+  #rg-lanes{
+    position:relative; width:min(420px,92%); height:100%;
+    display:flex; gap:6px;
+  }
+  .rg-lane{
+    position:relative; flex:1; height:100%;
+    background:rgba(255,255,255,0.03);
+    border-left:1px solid rgba(255,255,255,0.06);
+    border-right:1px solid rgba(255,255,255,0.06);
+    overflow:hidden;
+  }
+  .rg-hitline{
+    position:absolute; left:0; right:0; bottom:14%;
+    height:4px; background:rgba(252,111,207,0.85);
+    box-shadow:0 0 10px rgba(252,111,207,0.8);
+  }
+  .rg-note{
+    position:absolute; left:6%; right:6%; height:22px; border-radius:6px;
+    background:linear-gradient(180deg,#8fd3ff,#4f8cff);
+    box-shadow:0 2px 8px rgba(79,140,255,0.6);
+    top:-30px;
+  }
+  .rg-key-hint{
+    position:absolute; left:0; right:0; bottom:2%;
+    text-align:center; font-size:13px; font-weight:700;
+    color:rgba(255,255,255,0.5); pointer-events:none;
+  }
+  .rg-lane.rg-active{ background:rgba(252,111,207,0.12); }
+  #rg-judge{
+    position:absolute; top:22%; left:50%; transform:translateX(-50%);
+    font-size:22px; font-weight:800; opacity:0; pointer-events:none;
+    text-shadow:0 2px 6px rgba(0,0,0,0.6);
+  }
+  #rg-bottom{ flex:0 0 auto; padding:14px; display:flex; justify-content:center; gap:10px; }
+  #rg-bottom button{
+    padding:10px 18px; border-radius:10px; border:1px solid rgba(255,255,255,0.2);
+    background:rgba(255,255,255,0.08); color:#fff; font-size:14px; cursor:pointer;
+  }
+  #rg-msg{ text-align:center; font-size:13px; opacity:.6; padding:0 14px 8px; }
+</style>
+
+<button id="rg-launch-btn" title="리듬게임">🎮</button>
+
+<div id="rg-overlay">
+  <div id="rg-top">
+    <div class="rg-stat">COMBO <span id="rg-combo">0</span></div>
+    <div id="rg-score">0</div>
+    <button id="rg-close">닫기 ✕</button>
+  </div>
+  <div id="rg-msg"></div>
+  <div id="rg-field">
+    <div id="rg-judge"></div>
+    <div id="rg-lanes">
+      <div class="rg-lane" data-lane="0"><div class="rg-hitline"></div><div class="rg-key-hint">D</div></div>
+      <div class="rg-lane" data-lane="1"><div class="rg-hitline"></div><div class="rg-key-hint">F</div></div>
+      <div class="rg-lane" data-lane="2"><div class="rg-hitline"></div><div class="rg-key-hint">J</div></div>
+      <div class="rg-lane" data-lane="3"><div class="rg-hitline"></div><div class="rg-key-hint">K</div></div>
+    </div>
+  </div>
+  <div id="rg-bottom">
+    <button id="rg-restart">처음부터 다시 ▶</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ----------------------------------------------------------------
+  // 채보(노트) 데이터. 지금은 BPM 기반으로 자동 생성하지만, 나중에
+  // 직접 타이밍을 찍어서 이 객체의 notes 배열을 손으로 교체/추가하면
+  // 그대로 반영된다. { time: 초, lane: 0~3 }
+  // ----------------------------------------------------------------
+  const RM_CHARTS = {
+    'deja vu': { bpm: 125, offset: 0.45, hand: null }
+  };
+
+  function autoGenerateNotes(duration, bpm, offset){
+    const interval = 60 / bpm;
+    const notes = [];
+    let t = offset, i = 0;
+    while (t < duration - 2) {
+      notes.push({ time: t, lane: (i * 7 + 3) % 4 });
+      if (i % 8 === 5) notes.push({ time: t + interval / 2, lane: (i * 5 + 1) % 4 });
+      t += interval;
+      i++;
+    }
+    return notes;
+  }
+
+  function matchChart(title){
+    const key = (title || '').toLowerCase();
+    for (const k in RM_CHARTS) if (key.indexOf(k) !== -1) return RM_CHARTS[k];
+    return null;
+  }
+
+  // ----------------------------------------------------------------
+  // 게임 상태
+  // ----------------------------------------------------------------
+  const overlay = document.getElementById('rg-overlay');
+  const msgEl = document.getElementById('rg-msg');
+  const judgeEl = document.getElementById('rg-judge');
+  const scoreEl = document.getElementById('rg-score');
+  const comboEl = document.getElementById('rg-combo');
+  const laneEls = Array.from(document.querySelectorAll('.rg-lane'));
+  const APPROACH = 1.5; // 노트가 판정선까지 내려오는 데 걸리는 시간(초)
+  const HIT_LINE_RATIO = 0.86; // 필드 높이 대비 판정선 위치(위에서부터)
+  const KEY_MAP = { d: 0, f: 1, j: 2, k: 3 };
+
+  let notes = [];
+  let noteEls = [];
+  let score = 0, combo = 0;
+  let running = false;
+  let rafId = null;
+  let fieldH = 0;
+
+  function getAudio(){ try { return (typeof audio !== 'undefined') ? audio : null; } catch(e){ return null; } }
+  function getTitle(){ const el = document.getElementById('song-title'); return el ? el.textContent : ''; }
+
+  function resetGame(){
+    score = 0; combo = 0;
+    scoreEl.textContent = '0';
+    comboEl.textContent = '0';
+    noteEls.forEach(n => n.el && n.el.remove());
+    noteEls = [];
+  }
+
+  function buildNotes(){
+    const a = getAudio();
+    const dur = (a && a.duration && isFinite(a.duration)) ? a.duration : 210;
+    const chart = matchChart(getTitle());
+    if (chart) {
+      msgEl.textContent = 'Deja Vu 전용 자동 채보로 플레이 중 (박자는 추후 직접 다듬을 예정)';
+      notes = autoGenerateNotes(dur, chart.bpm, chart.offset);
+    } else {
+      msgEl.textContent = '현재 재생 중인 곡의 전용 채보가 없어 기본 패턴으로 생성했어요.';
+      notes = autoGenerateNotes(dur, 120, 0.6);
+    }
+    noteEls = notes.map(n => ({ ...n, el: null, hit: false, missed: false }));
+  }
+
+  function spawnVisibleNotes(nowT){
+    fieldH = laneEls[0].clientHeight;
+    noteEls.forEach(n => {
+      if (n.el || n.hit || n.missed) return;
+      if (n.time - nowT <= APPROACH && n.time - nowT > -0.3) {
+        const el = document.createElement('div');
+        el.className = 'rg-note';
+        laneEls[n.lane].appendChild(el);
+        n.el = el;
+      }
+    });
+  }
+
+  function updatePositions(nowT){
+    const hitY = fieldH * HIT_LINE_RATIO;
+    noteEls.forEach(n => {
+      if (!n.el) return;
+      const progress = 1 - (n.time - nowT) / APPROACH; // 0 → 1
+      const y = progress * hitY - 30;
+      n.el.style.top = y + 'px';
+      if (!n.hit && !n.missed && nowT - n.time > 0.18) {
+        n.missed = true;
+        combo = 0;
+        comboEl.textContent = '0';
+        showJudge('MISS', '#ff5d7a');
+        n.el.remove();
+        n.el = null;
+      }
+    });
+  }
+
+  function showJudge(text, color){
+    judgeEl.textContent = text;
+    judgeEl.style.color = color;
+    judgeEl.style.opacity = '1';
+    judgeEl.style.transform = 'translateX(-50%) translateY(0px)';
+    clearTimeout(showJudge._t);
+    showJudge._t = setTimeout(() => { judgeEl.style.opacity = '0'; }, 260);
+  }
+
+  function attemptHit(lane){
+    const a = getAudio();
+    if (!a) return;
+    const nowT = a.currentTime || 0;
+    let best = null, bestDiff = Infinity;
+    noteEls.forEach(n => {
+      if (n.hit || n.missed || n.lane !== lane) return;
+      const diff = Math.abs(n.time - nowT);
+      if (diff < bestDiff) { bestDiff = diff; best = n; }
+    });
+    laneEls[lane].classList.add('rg-active');
+    setTimeout(() => laneEls[lane].classList.remove('rg-active'), 100);
+    if (!best || bestDiff > 0.22) return; // 판정 범위 밖 → 그냥 무시(헛침)
+    best.hit = true;
+    if (best.el) { best.el.remove(); best.el = null; }
+    combo++;
+    comboEl.textContent = String(combo);
+    if (bestDiff <= 0.08) { score += 100; showJudge('PERFECT', '#7dffb0'); }
+    else { score += 60; showJudge('GOOD', '#ffe27d'); }
+    scoreEl.textContent = String(score);
+  }
+
+  function loop(){
+    const a = getAudio();
+    if (!a) { rafId = requestAnimationFrame(loop); return; }
+    const nowT = a.currentTime || 0;
+    spawnVisibleNotes(nowT);
+    updatePositions(nowT);
+    if (running) rafId = requestAnimationFrame(loop);
+  }
+
+  function startGame(){
+    const a = getAudio();
+    if (!a) { msgEl.textContent = '먼저 곡을 재생해주세요.'; return; }
+    resetGame();
+    buildNotes();
+    running = true;
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = requestAnimationFrame(loop);
+  }
+
+  function stopGame(){
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    noteEls.forEach(n => n.el && n.el.remove());
+  }
+
+  document.getElementById('rg-launch-btn').addEventListener('click', () => {
+    overlay.classList.add('show');
+    startGame();
+  });
+  document.getElementById('rg-close').addEventListener('click', () => {
+    stopGame();
+    overlay.classList.remove('show');
+  });
+  document.getElementById('rg-restart').addEventListener('click', () => {
+    const a = getAudio();
+    if (a) { try { a.currentTime = 0; a.play && a.play(); } catch(e){} }
+    startGame();
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!overlay.classList.contains('show')) return;
+    const lane = KEY_MAP[e.key.toLowerCase()];
+    if (lane !== undefined) attemptHit(lane);
+  });
+  laneEls.forEach(el => {
+    el.addEventListener('pointerdown', () => attemptHit(parseInt(el.dataset.lane, 10)));
+  });
 })();
 </script>
 </body>
