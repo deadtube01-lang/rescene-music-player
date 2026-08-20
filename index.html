@@ -13509,6 +13509,19 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2);
     color:#fff; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:14px;
   }
+  /* 노트 싱크(오디오와의 타이밍 오차) 조절 UI */
+  #rg-sync-ctrl{
+    display:flex; align-items:center; gap:6px;
+    background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.15);
+    border-radius:20px; padding:3px 6px;
+  }
+  #rg-sync-ctrl button{
+    width:22px; height:22px; border-radius:50%; border:none;
+    background:rgba(252,111,207,0.25); color:#fff; font-size:14px; font-weight:700;
+    cursor:pointer; display:flex; align-items:center; justify-content:center; line-height:1;
+  }
+  #rg-sync-ctrl button:active{ background:rgba(252,111,207,0.5); }
+  #rg-sync-text{ font-size:11px; opacity:.85; min-width:38px; text-align:center; }
   #rg-title-row{ text-align:center; font-size:13px; opacity:.75; padding:0 14px 8px; }
   #rg-field{
     position:relative; flex:1 1 auto; overflow:hidden;
@@ -13532,24 +13545,37 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     background:#05070c; pointer-events:none;
   }
   #rg-lanes{
-    position:relative; z-index:1; width:min(420px,92%); height:100%;
-    display:flex; gap:6px;
+    position:relative; z-index:1; width:min(460px,98%); height:100%;
+    display:flex; gap:0;
   }
   .rg-lane{
     position:relative; flex:1; height:100%;
     background:rgba(255,255,255,0.03);
-    border-left:1px solid rgba(255,255,255,0.06);
-    border-right:1px solid rgba(255,255,255,0.06);
+    border-left:1px solid rgba(255,255,255,0.05);
+    border-right:1px solid rgba(255,255,255,0.05);
     overflow:hidden;
   }
-  /* 판정 구간을 표시 (이전보다 좁게 — 실제 판정 타이밍도 함께 좁혔음) */
+  /* 판정 구간을 표시 (키 이름과의 간격을 줄이기 위해 더 아래쪽으로 내림) */
   .rg-hitzone{
-    position:absolute; left:0; right:0; bottom:calc(14% - 11px);
+    position:absolute; left:0; right:0; bottom:calc(7% - 11px);
     height:22px;
     background:linear-gradient(180deg,rgba(252,111,207,0) 0%,rgba(252,111,207,0.22) 50%,rgba(252,111,207,0) 100%);
     border-top:3px solid rgba(252,111,207,0.95);
     border-bottom:3px solid rgba(252,111,207,0.95);
     box-shadow:0 0 16px rgba(252,111,207,0.55);
+  }
+  /* 롱노트를 누르고 있는 동안 판정선 부근에서 터지는 지속 이펙트 */
+  .rg-hold-fx{
+    position:absolute; left:50%; bottom:calc(7% - 11px);
+    width:60px; height:60px; margin-left:-30px; margin-bottom:-19px;
+    border-radius:50%; pointer-events:none; z-index:2;
+    background:radial-gradient(circle, rgba(255,224,140,0.85) 0%, rgba(255,184,79,0.35) 45%, rgba(255,184,79,0) 75%);
+    animation: rgHoldFxPulse 0.5s ease-in-out infinite;
+    mix-blend-mode: screen;
+  }
+  @keyframes rgHoldFxPulse{
+    0%, 100%{ transform:scale(0.85); opacity:0.65; }
+    50%{ transform:scale(1.25); opacity:1; }
   }
   .rg-note{
     position:absolute; left:6%; right:6%; height:14px; border-radius:6px;
@@ -13675,6 +13701,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 <div id="rg-overlay">
   <div id="rg-top">
     <button id="rg-restart">다시하기</button>
+    <div id="rg-sync-ctrl">
+      <button id="rg-sync-minus" title="노트를 더 빨리 내려오게">−</button>
+      <span id="rg-sync-text">0ms</span>
+      <button id="rg-sync-plus" title="노트를 더 늦게 내려오게">+</button>
+    </div>
     <div id="rg-score">0</div>
     <button id="rg-close">닫기 ✕</button>
   </div>
@@ -13723,11 +13754,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       drumStart: 9.6,           // 6마디째(=5*1.92=9.6초) = 뮤비 속 "햇살 젖은 바람" 보컬/드럼 시작 지점
       songEndTime: 180.80,      // 이 시각 이후로는 노트 생성 안 함
       videoId: 'ZbO9PBdFRdc',
-      videoEndTime: 196         // 3:16 에서 배경 영상 정지
-      // 드럼 악보를 그대로 옮기지 않고, 보컬 흐름에 맞춰 킥/스네어/슬랩과
-      // 롱노트가 섞인 리듬게임용 채보를 autoGenerateNotes()로 만든다(아래).
-      // drumStart 이전(인트로 구간)은 강박에만 살짝 노트를 두고, drumStart부터
-      // 본 패턴이 시작된다 — 뮤비 실제 드럼/보컬 시작 타이밍과 맞추기 위함.
+      videoEndTime: 196,        // 3:16 에서 배경 영상 정지
+      // 가사 타임스탬프(DEJA_VU_LYRICS, 위쪽 <script>에서 정의된 상수 — 같은 문서 내
+      // 다른 <script> 태그에서 top-level const로 선언돼도 이후 실행되는 스크립트에서
+      // 그대로 참조 가능함)를 그대로 채보 생성에 사용한다. buildLyricSyncedNotes()가
+      // 각 가사 줄을 음절 단위로 쪼개서 그 줄이 불리는 실제 구간에 노트를 배치하므로,
+      // 노트가 내려오는 타이밍이 가사 음절과 맞아떨어진다.
+      lyrics: DEJA_VU_LYRICS
+      // drumStart 이전(가사가 아직 안 나오는 인트로 구간)은 강박에만 살짝 노트를 두고,
+      // 가사가 시작되는 시점부터는 음절 기반 채보로 전환된다.
     }
   };
 
@@ -13748,86 +13783,455 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     return lane;
   }
 
+  // ----------------------------------------------------------------
+  // 채보를 정형화된 "패턴 블록" 단위로 이어 붙여서 만든다. 트릴/연타/계단/
+  // 대계단/겹계단(+알약)/동시치기/데님/롱잡/폭타 같은 리듬게임 기본 패턴들을
+  // 각각 블록으로 정의해두고, 곡 전체에 걸쳐 (고정 시드) 무작위로 하나씩
+  // 골라 이어 붙인다. 모든 패턴이 매번 다 나올 필요는 없고, 자연스럽게
+  // 섞여서 배치되면 된다.
+  // ----------------------------------------------------------------
   function autoGenerateNotes(duration, bpm, offset, drumStart){
     const beat = 60 / bpm;
+    const STEP = beat / 2;    // 8분음표 그리드 — 계단/동시치기/데님/롱잡 기본 단위
+    const STEP16 = beat / 4;  // 16분음표 그리드 — 트릴/연타/폭타처럼 빠른 구간용
     const rand = mulberry32(20260820);
     const notes = [];
     const start = Math.max(offset, 0);
     // 본격적인 드럼/보컬 패턴이 시작되는 실제 시각(뮤비 기준). 지정 안 되어 있으면
     // 곡 시작과 동시에 바로 본 패턴을 씀(이전 동작과 동일하게 하위호환).
     const fullStart = (typeof drumStart === 'number') ? Math.max(drumStart, start) : start;
-    let t = start, lastLane = -1;
 
-    while (t < duration - 1) {
-      // beatIndex는 루프 카운터(i)가 아니라 "start로부터 실제로 흐른 시간"에서
-      // 계산한다. 예전 방식(i%4)은 롱노트로 t가 여러 박 건너뛴 뒤에도 i는 1만
-      // 증가하기 때문에 강박/백박 위치가 실제 음악 그리드에서 어긋나 버렸다
-      // (이게 "박자가 안 맞는다"의 원인). 시간 기반으로 계산하면 롱노트 이후에도
-      // 항상 실제 마디/박 위치와 일치한다.
-      const beatsFromStart = Math.round((t - start) / beat);
-      const beatIndex = beatsFromStart % 4;
-      const isDownbeat = beatIndex === 0 || beatIndex === 2;  // 킥 성향(강박)
-      const isBackbeat = beatIndex === 1 || beatIndex === 3;  // 스네어/보컬 악센트 성향(백비트)
-      const roll = rand();
+    // ---- 패턴 블록 정의: { notes:[{dt, lane, len}], dur } 형태로 반환 ----
+    // dt = 블록 시작 시각으로부터의 상대 시각, lane = 0~3, len = 롱노트 길이(초, 0이면 일반 노트)
 
-      // drumStart 이전(인트로/전주 구간)에는 강박에만 아주 드문드문 노트를 둬서
-      // 아직 드럼이 본격적으로 들어오지 않은 구간이라는 느낌을 준다. 여기서
-      // 단조로운 반복 패턴을 만들지 않기 위해 촘촘한 킥/스네어/슬랩은 넣지 않음.
-      if (t < fullStart) {
-        if (isDownbeat && rand() < 0.5) {
-          const l = pickLane(rand, lastLane);
-          notes.push({ time: t, lane: l, len: 0, type: 'intro' });
-          lastLane = l;
+    function trill(){ // 1. 트릴 — 인접한 두 레인을 빠르게 왕복
+      const a = Math.floor(rand() * 4);
+      const b = a < 3 ? a + 1 : a - 1;
+      const arr = [];
+      for (let i = 0; i < 8; i++) arr.push({ dt: i * STEP16, lane: (i % 2 === 0 ? a : b), len: 0 });
+      return { notes: arr, dur: 8 * STEP16 };
+    }
+
+    function noteRoll(){ // 2. 연타 — 한 레인을 연속으로 두드림
+      const lane = Math.floor(rand() * 4);
+      const count = 6 + Math.floor(rand() * 3); // 6~8회
+      const arr = [];
+      for (let i = 0; i < count; i++) arr.push({ dt: i * STEP16, lane, len: 0 });
+      return { notes: arr, dur: count * STEP16 };
+    }
+
+    function stairs(){ // 3. 계단 — 레인이 한쪽 끝에서 다른 쪽 끝으로 순서대로 이동
+      const asc = rand() < 0.5;
+      const arr = [];
+      for (let i = 0; i < 4; i++) arr.push({ dt: i * STEP, lane: asc ? i : 3 - i, len: 0 });
+      return { notes: arr, dur: 4 * STEP };
+    }
+
+    function bigStairs(){ // 3-1. 대계단(왕복계단) — 끝까지 갔다가 다시 되돌아옴
+      const asc = rand() < 0.5;
+      const seq = asc ? [0, 1, 2, 3, 2, 1, 0, 1] : [3, 2, 1, 0, 1, 2, 3, 2];
+      const arr = seq.map((lane, i) => ({ dt: i * STEP, lane, len: 0 }));
+      return { notes: arr, dur: seq.length * STEP };
+    }
+
+    function overlapStairs(){ // 3-2. 겹계단 — 계단 이동 중간중간 인접 레인을 함께 눌러 "알약" 형태 추가
+      const asc = rand() < 0.5;
+      const base = asc ? [0, 1, 2, 3] : [3, 2, 1, 0];
+      const arr = [];
+      base.forEach((lane, i) => {
+        arr.push({ dt: i * STEP, lane, len: 0 });
+        if (rand() < 0.5) {
+          const pillLane = lane < 3 ? lane + 1 : lane - 1; // 알약(2개가 붙은 노트)
+          arr.push({ dt: i * STEP, lane: pillLane, len: 0 });
         }
-        t += beat;
-        continue;
-      }
+      });
+      return { notes: arr, dur: base.length * STEP };
+    }
 
-      // 프레이즈가 끝나는 지점(강박마다 확률적으로) — 보컬이 길게 끄는 구간을 롱노트 하나로
-      // 표현한다(머리+꼬리가 이어진 단일 노트 객체 — len>0인 노트 하나뿐, 별도 기본 노트를
-      // 덧붙이지 않는다). 다음 노트는 이 롱노트가 완전히 끝난 뒤부터 배치해서 같은 레인에서
-      // 겹치는 버그를 막는다.
-      if (beatsFromStart > 6 && beatIndex === 0 && roll < 0.20 && (duration - t) > beat * 4) {
-        const len = beat * (1.5 + Math.floor(rand() * 2)); // 약 1.5~3.5박 동안 유지
-        const l = pickLane(rand, lastLane);
-        notes.push({ time: t, lane: l, len: len, type: 'kick' });
-        lastLane = l;
-        t += len; // 롱노트 길이만큼 통째로 건너뛰어 같은 레인 겹침 방지
-        continue;
-      }
-
-      // 기본 박(킥 드럼) — 강박에는 항상 노트를 둬서 곡의 기본 리듬을 따라가게 함
-      if (isDownbeat) {
-        const l = pickLane(rand, lastLane);
-        notes.push({ time: t, lane: l, len: 0, type: 'kick' });
-        lastLane = l;
-      }
-
-      // 스네어/보컬 악센트(백비트) — 가끔 2노트 동시치기로 강조
-      if (isBackbeat) {
-        if (roll < 0.16) {
-          const l1 = pickLane(rand, lastLane);
+    function simultaneous(){ // 4. 동시치기 — 두 레인을 같이 누르는 패턴 반복
+      const arr = [];
+      let lastPair = -1;
+      for (let i = 0; i < 4; i++) {
+        const l1 = pickLane(rand, lastPair);
+        if (rand() < 0.6) {
           const l2 = pickLane(rand, l1);
-          notes.push({ time: t, lane: l1, len: 0, type: 'snare' });
-          notes.push({ time: t, lane: l2, len: 0, type: 'snare' });
-          lastLane = l2;
+          arr.push({ dt: i * STEP, lane: l1, len: 0 });
+          arr.push({ dt: i * STEP, lane: l2, len: 0 });
+          lastPair = l2;
         } else {
-          const l = pickLane(rand, lastLane);
-          notes.push({ time: t, lane: l, len: 0, type: 'snare' });
-          lastLane = l;
+          arr.push({ dt: i * STEP, lane: l1, len: 0 });
+          lastPair = l1;
         }
       }
+      return { notes: arr, dur: 4 * STEP };
+    }
 
-      // 보컬의 세부 음절 표현 — 8분음표 위치에 추가 노트를 얹어 촘촘한 구간을 만듦
-      if (roll > 0.5 && roll < 0.8) {
-        const l = pickLane(rand, lastLane);
-        notes.push({ time: t + beat / 2, lane: l, len: 0, type: 'slap' });
-        lastLane = l;
+    function denim(){ // 4-1. 데님(거미줄) — 두 레인을 교차로 왕복하다 한 번 겹쳐 누름
+      const a = Math.floor(rand() * 4);
+      const b = (a + 2) % 4;
+      const arr = [
+        { dt: 0,          lane: a, len: 0 },
+        { dt: STEP,       lane: b, len: 0 },
+        { dt: STEP * 2,   lane: a, len: 0 },
+        { dt: STEP * 2,   lane: b, len: 0 },
+        { dt: STEP * 3,   lane: a, len: 0 }
+      ];
+      return { notes: arr, dur: 4 * STEP };
+    }
+
+    function longJab(){ // 5. 롱잡(롱노트 + 잡노트) — 롱노트를 잡고 있는 동안 다른 레인을 짧게 침
+      const longLane = Math.floor(rand() * 4);
+      const jabLane = (longLane + 1) % 4;
+      const longLen = STEP * 3;
+      const arr = [
+        { dt: 0,        lane: longLane, len: longLen },
+        { dt: STEP,      lane: jabLane, len: 0 },
+        { dt: STEP * 2,  lane: (jabLane + 1) % 4, len: 0 }
+      ];
+      return { notes: arr, dur: longLen };
+    }
+
+    function chaos(){ // 6. 폭타 — 규칙 없이 몰아치는 구간
+      const arr = [];
+      const count = 6 + Math.floor(rand() * 5); // 6~10개
+      let lastLane = -1;
+      for (let i = 0; i < count; i++) {
+        const lane = pickLane(rand, lastLane);
+        arr.push({ dt: i * STEP16, lane, len: 0 });
+        lastLane = lane;
       }
+      return { notes: arr, dur: count * STEP16 };
+    }
 
+    const PATTERNS = [trill, noteRoll, stairs, bigStairs, overlapStairs, simultaneous, denim, longJab, chaos];
+
+    let t = start;
+
+    // drumStart 이전(인트로/전주 구간)에는 강박에만 아주 드문드문 노트를 둬서
+    // 아직 드럼이 본격적으로 들어오지 않은 구간이라는 느낌을 준다.
+    while (t < fullStart && t < duration - 1) {
+      const beatsFromStart = Math.round((t - start) / beat);
+      if (beatsFromStart % 2 === 0 && rand() < 0.5) {
+        notes.push({ time: t, lane: Math.floor(rand() * 4), len: 0 });
+      }
       t += beat;
     }
+    t = Math.max(t, fullStart);
+
+    // 본 패턴 구간 — 위 패턴 블록들을 (고정 시드로) 무작위로 골라 이어 붙인다.
+    // 블록 사이에는 짧은 숨 고르기 구간을 둬서 전부 몰아치기만 하지 않게 함.
+    while (t < duration - 1) {
+      const pick = PATTERNS[Math.floor(rand() * PATTERNS.length)];
+      const block = pick();
+      block.notes.forEach(n => {
+        const time = t + n.dt;
+        if (time <= duration - 1) notes.push({ time, lane: n.lane, len: n.len || 0 });
+      });
+      t += block.dur;
+      t += (rand() < 0.75) ? beat * 0.5 : beat * 1.5; // 블록 사이 쉼(75%는 짧게, 25%는 길게)
+    }
+
+    notes.sort((a, b) => a.time - b.time);
     return notes;
+  }
+
+  // ----------------------------------------------------------------
+  // 가사 음절 기반 채보 생성. RM_CHARTS에 lyrics(타임스탬프 배열)가 있는 곡은
+  // 이 함수로 채보를 만든다 — 위 autoGenerateNotes()의 임의 패턴 블록(트릴/
+  // 연타/폭타 등) 대신, 실제로 그 순간 불리는 가사 한 줄을 음절 단위로 쪼개서
+  // 그 줄이 불리는 구간(다음 줄이 시작되기 직전까지) 안에 균등하게 노트를
+  // 배치한다. 그래서 노트가 내려오는 타이밍 자체가 가사 음절과 맞아떨어지고,
+  // "I-I-I-I-I", "oh, oh, oh, ah"처럼 가사 자체가 반복되는 구간은 같은 레인이
+  // 이어지며 자연스러운 연타가 되어, 실제 노래와 무관하게 찍히던 기존 연타
+  // 패턴 문제도 함께 해결된다.
+  // ----------------------------------------------------------------
+  function tokenizeLyricLine(text){
+    if (!text) return [];
+    const words = text.trim().split(/\s+/).filter(Boolean);
+    const tokens = [];
+    words.forEach(word => {
+      // 하이픈으로 이어진 반복 의성어("I-I-I-I-I", "You-ou-ou")는 조각마다
+      // 별도 음절로 취급 — 실제로 한 음절씩 끊어 부르는 부분이기 때문.
+      word.split('-').filter(Boolean).forEach(part => {
+        // 장식용 문장부호(쉼표/괄호/따옴표 등)는 제거하고 실제 발음되는 부분만 남김
+        const clean = part.replace(/^[()\[\]"'.,!?…~]+|[()\[\]"'.,!?…~]+$/g, '');
+        if (!clean) return;
+        if (/[가-힣]/.test(clean)) {
+          // 한글은 한 글자 = 한 음절이므로 글자 단위로 그대로 쪼갠다.
+          for (const ch of clean) {
+            if (/[가-힣]/.test(ch)) tokens.push(ch);
+          }
+        } else {
+          // 영어 등은 모음 덩어리 개수로 음절 수를 대략 추정해서, 그만큼
+          // 같은 단어를 나눠 넣는다(단어 하나가 여러 음절에 걸쳐 불리는 것을 표현).
+          const syll = Math.max(1, (clean.toLowerCase().match(/[aeiouy]+/g) || []).length);
+          for (let i = 0; i < syll; i++) tokens.push(clean);
+        }
+      });
+    });
+    return tokens;
+  }
+
+  function assignLanesForTokens(tokens, rand, startLane){
+    const lanes = [];
+    // 동시치기(+ 알약)로 같은 타이밍에 추가로 눌러야 하는 레인들
+    const extra = [];
+    let prevLane = startLane;
+    let prevToken = null;
+
+    // 데님(거미줄): 토큰이 충분히 많은 줄이면 일정 확률로 연속 4음절 구간을
+    // 두 레인 교차 왕복(a-b-a-b)으로 덮어써서 실제 데님 패턴이 되게 한다.
+    let denimStart = -1, denimEnd = -1, denimA = -1, denimB = -1;
+    if (tokens.length >= 5 && rand() < 0.4) {
+      denimStart = Math.floor(rand() * (tokens.length - 4));
+      denimEnd = denimStart + 3;
+      denimA = Math.floor(rand() * 4);
+      denimB = (denimA + 2) % 4;
+    }
+
+    tokens.forEach((tok, idx) => {
+      const inDenim = denimStart >= 0 && idx >= denimStart && idx <= denimEnd;
+      let lane;
+      if (inDenim) {
+        lane = ((idx - denimStart) % 2 === 0) ? denimA : denimB;
+      } else if (prevToken !== null && tok.toLowerCase() === prevToken.toLowerCase()) {
+        // 가사 자체가 같은 음절을 반복하는 구간 → 같은 레인을 유지해서
+        // 실제 반복되는 발음과 일치하는 자연스러운 연타가 되게 한다.
+        lane = prevLane;
+      } else {
+        lane = pickLane(rand, prevLane);
+      }
+      lanes.push(lane);
+
+      // 동시치기(+겹계단 알약): 데님 구간이 아닌 음절 중 일부는 같은 타이밍에
+      // 다른 레인도 같이 눌러서 동시치기/알약 형태를 만든다.
+      if (!inDenim && idx > 0 && rand() < 0.16) {
+        extra.push({ idx, lane: pickLane(rand, lane) });
+      }
+
+      prevLane = lane;
+      prevToken = tok;
+    });
+    return { lanes, extra };
+  }
+
+  // 길게 늘여 부르는 느낌이 나는 단어/음절 — 이런 토큰이 한 줄의 마지막에 오고
+  // 뒤 여백이 충분하면 일반 노트 대신 롱노트로 바꿔서 "쭉 눌러 끄는" 감각을 준다.
+  const LONG_HOLD_WORDS = new Set([
+    'vu', 'all', 'light', 'ight', 'scent', 'voice', 'bright', 'whoa', 'yeah',
+    'ooh', 'oh', 'ah', 'time', 'high', 'mind', 'night'
+  ]);
+
+  // 가사 줄 사이 여백(전주/간주처럼 노래가 잠깐 비는 구간)을 그냥 비워두지 않고,
+  // 트릴/연타/계단/대계단/겹계단(알약)/동시치기/데님/롱잡/폭타 9종 패턴 조각을
+  // 골고루 섞어서 자연스럽게 채워준다.
+  function lyricGapFiller(rand, STEP, STEP16, prevLane, forcedKind){
+    const kind = (typeof forcedKind === 'number') ? forcedKind : Math.floor(rand() * 9);
+    const arr = [];
+    let lastLane = prevLane;
+    if (kind === 0) { // 1. 미니 트릴 — 인접 두 레인 왕복
+      const a = Math.floor(rand() * 4);
+      const b = a < 3 ? a + 1 : a - 1;
+      for (let i = 0; i < 4; i++) arr.push({ dt: i * STEP16, lane: (i % 2 === 0 ? a : b), len: 0 });
+      lastLane = arr[arr.length - 1].lane;
+      return { notes: arr, dur: 4 * STEP16, lastLane };
+    }
+    if (kind === 1) { // 2. 짧은 연타
+      const lane = Math.floor(rand() * 4);
+      for (let i = 0; i < 3; i++) arr.push({ dt: i * STEP16, lane, len: 0 });
+      lastLane = lane;
+      return { notes: arr, dur: 3 * STEP16, lastLane };
+    }
+    if (kind === 2) { // 3. 계단
+      const asc = rand() < 0.5;
+      for (let i = 0; i < 4; i++) arr.push({ dt: i * STEP, lane: asc ? i : 3 - i, len: 0 });
+      lastLane = arr[arr.length - 1].lane;
+      return { notes: arr, dur: 4 * STEP, lastLane };
+    }
+    if (kind === 3) { // 3-1. 대계단(왕복계단)
+      const asc = rand() < 0.5;
+      const seq = asc ? [0, 1, 2, 3, 2, 1, 0, 1] : [3, 2, 1, 0, 1, 2, 3, 2];
+      seq.forEach((lane, i) => arr.push({ dt: i * STEP, lane, len: 0 }));
+      lastLane = arr[arr.length - 1].lane;
+      return { notes: arr, dur: seq.length * STEP, lastLane };
+    }
+    if (kind === 4) { // 3-2. 겹계단(알약)
+      const asc = rand() < 0.5;
+      const base = asc ? [0, 1, 2, 3] : [3, 2, 1, 0];
+      base.forEach((lane, i) => {
+        arr.push({ dt: i * STEP, lane, len: 0 });
+        if (rand() < 0.5) {
+          const pillLane = lane < 3 ? lane + 1 : lane - 1;
+          arr.push({ dt: i * STEP, lane: pillLane, len: 0 });
+        }
+      });
+      lastLane = base[base.length - 1];
+      return { notes: arr, dur: base.length * STEP, lastLane };
+    }
+    if (kind === 5) { // 4. 동시치기 한 번 + 단타
+      const l1 = pickLane(rand, prevLane);
+      const l2 = pickLane(rand, l1);
+      arr.push({ dt: 0, lane: l1, len: 0 });
+      arr.push({ dt: 0, lane: l2, len: 0 });
+      arr.push({ dt: STEP, lane: pickLane(rand, l2), len: 0 });
+      lastLane = arr[arr.length - 1].lane;
+      return { notes: arr, dur: 2 * STEP, lastLane };
+    }
+    if (kind === 6) { // 4-1. 데님(거미줄)
+      const a = Math.floor(rand() * 4);
+      const b = (a + 2) % 4;
+      arr.push({ dt: 0, lane: a, len: 0 });
+      arr.push({ dt: STEP, lane: b, len: 0 });
+      arr.push({ dt: STEP * 2, lane: a, len: 0 });
+      arr.push({ dt: STEP * 2, lane: b, len: 0 });
+      arr.push({ dt: STEP * 3, lane: a, len: 0 });
+      lastLane = a;
+      return { notes: arr, dur: 4 * STEP, lastLane };
+    }
+    if (kind === 7) { // 5. 롱잡(롱노트 + 잡노트) — 짧은 갭 채움에도 롱노트를 섞어준다
+      const longLane = Math.floor(rand() * 4);
+      const jabLane = (longLane + 1) % 4;
+      const longLen = STEP * 3;
+      arr.push({ dt: 0, lane: longLane, len: longLen });
+      arr.push({ dt: STEP, lane: jabLane, len: 0 });
+      arr.push({ dt: STEP * 2, lane: (jabLane + 1) % 4, len: 0 });
+      lastLane = (jabLane + 1) % 4;
+      return { notes: arr, dur: longLen, lastLane };
+    }
+    // 6. 폭타 — 규칙 없이 몰아침
+    const count = 4 + Math.floor(rand() * 3);
+    let ll = prevLane;
+    for (let i = 0; i < count; i++) { const lane = pickLane(rand, ll); arr.push({ dt: i * STEP16, lane, len: 0 }); ll = lane; }
+    lastLane = ll;
+    return { notes: arr, dur: count * STEP16, lastLane };
+  }
+
+  function buildLyricSyncedNotes(lyrics, songEndTime, bpm, offset, drumStart){
+    const beat = 60 / bpm;
+    const STEP = beat / 2;
+    const STEP16 = beat / 4;
+    const rand = mulberry32(20260820);
+    const notes = [];
+    // 9종 패턴을 순환시켜서(랜덤 뽑기 대신) 곡 전체에 걸쳐 골고루 다 나오도록 강제한다.
+    let fillerCycle = 0;
+    const nextFillerKind = () => { const k = fillerCycle % 9; fillerCycle++; return k; };
+    const start = Math.max(offset, 0);
+    const fullStart = (typeof drumStart === 'number') ? Math.max(drumStart, start) : start;
+    const lines = (lyrics || []).filter(l => l && l.text && l.text.trim() && l.time < songEndTime);
+    let prevLane = -1;
+
+    // 첫 가사가 나오기 전(인트로) 구간엔 기존처럼 강박에만 드문드문 노트를 둔다.
+    let t = start;
+    const introEnd = lines.length ? Math.min(lines[0].time, fullStart) : fullStart;
+    while (t < introEnd && t < songEndTime - 1) {
+      const beatsFromStart = Math.round((t - start) / beat);
+      if (beatsFromStart % 2 === 0 && rand() < 0.5) {
+        const lane = pickLane(rand, prevLane);
+        notes.push({ time: t, lane, len: 0 });
+        prevLane = lane;
+      }
+      t += beat;
+    }
+
+    // 음절 사이 간격은 "실제로 한 음절을 발음하는 데 걸리는 자연스러운 길이"에
+    // 맞춰 고정한다(약 0.85비트). 예전에는 다음 줄 직전까지 억지로 늘려 채웠기
+    // 때문에, 음절 수가 많은 줄은 여백을 전부 잡아먹어 정작 길게 끄는 구간에서도
+    // 롱노트로 돌릴 시간이 안 남는 문제가 있었다. 이제는 음절 배치가 끝난 뒤
+    // 남는 시간을 그대로 "여백"으로 남겨서 롱노트/패턴 채움이 살아나게 한다.
+    const naturalSpacing = beat * 0.85;
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i];
+      const lineStart = Math.max(line.time, start);
+      if (lineStart >= songEndTime - 0.3) break;
+      const nextTime = (i + 1 < lines.length) ? lines[i + 1].time : songEndTime;
+      const gapAfterLine = Math.min(nextTime, songEndTime) - lineStart; // 다음 줄까지의 실제 여백(초)
+      // 다음 줄 노트와 겹치지 않도록 살짝 여유를 두고, 그 안에서만 음절을 배치
+      const available = Math.max(0.15, gapAfterLine - 0.12);
+      const tokens = tokenizeLyricLine(line.text);
+      if (!tokens.length) continue;
+
+      const spacing = tokens.length > 1 ? Math.min(naturalSpacing, available / (tokens.length - 1)) : 0;
+      const { lanes, extra } = assignLanesForTokens(tokens, rand, prevLane);
+      let lastNoteTime = lineStart;
+      let lastMainNote = null; // 마지막 음절 노트 참조(뒤에 extra를 더 push해도 흔들리지 않게)
+      tokens.forEach((tok, idx) => {
+        const time = lineStart + spacing * idx;
+        if (time > songEndTime - 0.2) return;
+        const n = { time, lane: lanes[idx], len: 0 };
+        notes.push(n);
+        lastNoteTime = time;
+        lastMainNote = n;
+      });
+      // 동시치기(+알약) 보조 노트: 원래 음절 노트와 같은 타이밍에 추가로 찍는다.
+      extra.forEach(e => {
+        const time = lineStart + spacing * e.idx;
+        if (time <= songEndTime - 0.2) notes.push({ time, lane: e.lane, len: 0 });
+      });
+      prevLane = lanes[lanes.length - 1];
+
+      // 줄의 마지막 음절이 길게 늘여 부르는 단어이고, 다음 줄까지 여백이 넉넉하면
+      // 마지막 노트를 롱노트로 바꿔서 "쭉 눌러 끄는" 감각을 살린다.
+      const lastTok = (tokens[tokens.length - 1] || '').toLowerCase();
+      const restAfterLastNote = Math.min(nextTime, songEndTime) - lastNoteTime;
+      const isHoldWord = LONG_HOLD_WORDS.has(lastTok);
+      if (restAfterLastNote >= 0.4 && (isHoldWord || gapAfterLine >= beat * 2.2) && lastMainNote) {
+        const lastNote = lastMainNote;
+        // 롱노트가 여백을 다 먹지 않도록 길이를 줄이고(최대 2비트),
+        // 패턴 하나가 들어갈 최소 시간(STEP*4 + 여유)은 항상 남겨둔다.
+        const reserveForPattern = restAfterLastNote >= (STEP * 4 + 0.5) ? STEP * 3 : 0;
+        const holdLen = Math.max(0.3, Math.min(restAfterLastNote - 0.15 - reserveForPattern, beat * 2));
+        lastNote.len = holdLen;
+
+        // 롱잡: 롱노트를 누르고 있는 동안 다른 레인을 짧게 쳐서 실제 롱잡 형태로 만든다.
+        if (holdLen >= STEP * 1.5) {
+          const jabLane = pickLane(rand, lastNote.lane);
+          const jabTime = lastNote.time + Math.min(holdLen * 0.55, holdLen - STEP * 0.4);
+          if (jabTime < songEndTime - 0.1) notes.push({ time: jabTime, lane: jabLane, len: 0 });
+        }
+
+        // 롱노트가 끝난 뒤에도 다음 줄까지 시간이 충분히 남으면(간주/전주급 공백),
+        // 그 여백을 패턴 조각으로 자연스럽게 채워준다.
+        let gt = lastNote.time + holdLen + STEP;
+        const gapEnd = Math.min(nextTime, songEndTime) - 0.25;
+        while (gt < gapEnd - STEP) {
+          const block = lyricGapFiller(rand, STEP, STEP16, prevLane, nextFillerKind());
+          let placed = false;
+          block.notes.forEach(n => {
+            const time = gt + n.dt;
+            if (time < gapEnd) { notes.push({ time, lane: n.lane, len: n.len || 0 }); placed = true; }
+          });
+          if (!placed) break;
+          prevLane = block.lastLane;
+          gt += block.dur + STEP * (rand() < 0.6 ? 1 : 2);
+        }
+      } else if (gapAfterLine >= beat * 3) {
+        // 롱노트를 안 붙이더라도 여백 자체가 매우 길면(간주 등)
+        // 그 구간을 패턴 조각으로 채워 넣어 완전히 비지 않게 한다.
+        let gt = lastNoteTime + beat;
+        const gapEnd = Math.min(nextTime, songEndTime) - 0.25;
+        while (gt < gapEnd - STEP) {
+          const block = lyricGapFiller(rand, STEP, STEP16, prevLane, nextFillerKind());
+          let placed = false;
+          block.notes.forEach(n => {
+            const time = gt + n.dt;
+            if (time < gapEnd) { notes.push({ time, lane: n.lane, len: n.len || 0 }); placed = true; }
+          });
+          if (!placed) break;
+          prevLane = block.lastLane;
+          gt += block.dur + STEP * (rand() < 0.6 ? 1 : 2);
+        }
+      }
+    }
+
+    notes.sort((a, b) => a.time - b.time);
+    // 같은 시각 + 같은 레인에 중복으로 찍힌 노트만 제거(동시치기 자체는 허용)
+    const seen = new Set();
+    return notes.filter(n => {
+      const key = n.time.toFixed(3) + ':' + n.lane;
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
   }
 
   function matchChart(title){
@@ -13854,9 +14258,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   const bgVideoCoverEl = document.getElementById('rg-bg-video-cover');
   const laneEls = Array.from(document.querySelectorAll('.rg-lane'));
   const keyHintEls = laneEls.map(el => el.querySelector('.rg-key-hint'));
+  const syncOffsetTextEl = document.getElementById('rg-sync-text');
+  const holdFxEls = [null, null, null, null]; // 레인별 롱노트 홀드 이펙트 엘리먼트
   const APPROACH = 1.5;         // 노트가 판정 구간까지 내려오는 데 걸리는 시간(초)
-  const HIT_LINE_RATIO = 0.86;  // 필드 높이 대비 판정 구간 중심 위치(위에서부터)
+  const HIT_LINE_RATIO = 0.93;  // 필드 높이 대비 판정 구간 중심 위치(위에서부터) — 키 힌트와의 간격을 줄이기 위해 아래로 내림
   const KEY_MAP = { d: 0, f: 1, j: 2, k: 3 };
+  // 노트 싱크 오프셋(초). 사용자가 게임 내 UI로 조절 가능. 양수면 노트가 더 늦게(오디오보다 뒤로)
+  // 판정되도록, 즉 체감상 노트가 더 늦게 내려오는 효과를 준다. localStorage에 저장해 다음 플레이에도 유지.
+  let noteSyncOffset = 0;
+  try { noteSyncOffset = parseFloat(localStorage.getItem('rg_sync_offset_v1')) || 0; } catch(e){}
 
   // 판정 범위(초) — 이전보다 좁게 줄임
   const JUDGE = {
@@ -13888,8 +14298,17 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   // 게임의 진행 시각/소리는 이제 배경 뮤비(ytBgPlayer)가 기준이다. 뮤직 플레이어의
   // 오디오는 게임 중엔 건드리지 않는다(재생 안 함) — 뮤비 소리만 들리게 하기 위함.
   function getGameTime(){
-    try { return (ytBgPlayer && ytBgReady && ytBgPlayer.getCurrentTime) ? ytBgPlayer.getCurrentTime() : 0; }
+    try {
+      const raw = (ytBgPlayer && ytBgReady && ytBgPlayer.getCurrentTime) ? ytBgPlayer.getCurrentTime() : 0;
+      return raw + noteSyncOffset;
+    }
     catch(e){ return 0; }
+  }
+
+  function setSyncOffset(v){
+    noteSyncOffset = Math.max(-0.5, Math.min(0.5, v));
+    try { localStorage.setItem('rg_sync_offset_v1', String(noteSyncOffset)); } catch(e){}
+    if (syncOffsetTextEl) syncOffsetTextEl.textContent = Math.round(noteSyncOffset * 1000) + 'ms';
   }
 
   function resetGame(){
@@ -13901,6 +14320,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     noteEls.forEach(n => n.el && n.el.remove());
     noteEls = [];
     activeHold = [null, null, null, null];
+    for (let i = 0; i < 4; i++) removeHoldFx(i);
     keyHintEls.forEach(el => el && el.classList.remove('rg-key-pressed'));
   }
 
@@ -13912,10 +14332,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     // 지난 뒤에 나오게 시작 시각을 보정한다 → 항상 맨 위에서부터 떨어지게 됨.
     const startOffset = Math.max(chart.offset, APPROACH + 0.05);
     // 손으로 옮긴 실제 채보(chart.notes)가 있으면 그것을 그대로 쓰고,
-    // 없는 곡(아직 준비 안 된 곡)만 기존처럼 자동 생성한다.
+    // 가사 타임스탬프(chart.lyrics)가 있는 곡은 가사 음절 기반 채보로,
+    // 둘 다 없는 곡(아직 준비 안 된 곡)만 기존처럼 임의 패턴으로 자동 생성한다.
     notes = chart.notes && chart.notes.length
       ? chart.notes.filter(n => n.time <= cutoff)
-      : autoGenerateNotes(cutoff, chart.bpm, startOffset, chart.drumStart);
+      : (chart.lyrics && chart.lyrics.length
+        ? buildLyricSyncedNotes(chart.lyrics, cutoff, chart.bpm, startOffset, chart.drumStart)
+        : autoGenerateNotes(cutoff, chart.bpm, startOffset, chart.drumStart));
     noteEls = notes.map(n => ({
       ...n, el: null, bodyEl: null,
       hit: false, missed: false,
@@ -14042,8 +14465,21 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     }, 280);
   }
 
+  function spawnHoldFx(lane){
+    removeHoldFx(lane);
+    const fx = document.createElement('div');
+    fx.className = 'rg-hold-fx';
+    laneEls[lane].appendChild(fx);
+    holdFxEls[lane] = fx;
+  }
+
+  function removeHoldFx(lane){
+    if (holdFxEls[lane]) { holdFxEls[lane].remove(); holdFxEls[lane] = null; }
+  }
+
   function finishHold(n, result){
     activeHold[n.lane] = null;
+    removeHoldFx(n.lane);
     if (result === 'success') {
       n.holdSuccess = true;
       addScore('GREAT');
@@ -14056,41 +14492,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     }
   }
 
-  // 노트 종류(킥/슬랩/스네어/하이햇)에 맞춰 효과음을 재생.
-  // 기본 볼륨: 킥 70%, 슬랩 30%, 스네어 40%, 클로즈 하이햇 35%, 오픈 하이햇 35%.
-  const NOTE_SOUND_MAP = {
-    kick:   { src: 'kick.mp3',         volume: 0.7 },
-    snare:  { src: 'snare.mp3',        volume: 0.4 },
-    slap:   { src: 'bbyam.mp3',        volume: 0.3 },
-    hihat:  { src: 'close hi-hat.mp3', volume: 0.35 },
-    ohihat: { src: 'open hi-hat.mp3',  volume: 0.35 }
-  };
-
-  // 동시에(짧은 시간 안에) 여러 키를 눌러 여러 효과음이 겹치면 소리가 합쳐져
-  // 지나치게 커지는 문제를 막기 위한 "더킹" 처리. 최근 짧은 시간창(120ms) 안에
-  // 함께 울린 소리 개수를 세어, 개수가 많아질수록 각 소리의 볼륨을 비례해서 줄인다.
-  const CONCURRENT_SOUND_WINDOW_MS = 120;
-  let recentSoundTimestamps = [];
-
-  function getConcurrencyDuckFactor(){
-    const now = performance.now();
-    recentSoundTimestamps = recentSoundTimestamps.filter(t => now - t < CONCURRENT_SOUND_WINDOW_MS);
-    recentSoundTimestamps.push(now);
-    const concurrency = recentSoundTimestamps.length;
-    // 1개면 1.0(원래 볼륨), 2개면 약 0.71, 3개면 약 0.58 ... 제곱근 비율로 자연스럽게 감쇠
-    return concurrency <= 1 ? 1 : 1 / Math.sqrt(concurrency);
-  }
-
-  function playNoteTypeSound(type){
-    try {
-      const def = NOTE_SOUND_MAP[type];
-      if (!def) return;
-      const a = new Audio(def.src);
-      const duck = getConcurrencyDuckFactor();
-      a.volume = Math.max(0, Math.min(1, def.volume * duck));
-      a.play().catch(() => {});
-    } catch(e){}
-  }
+  // 키를 눌러 노트를 맞췄을 때 별도의 타격 효과음은 재생하지 않는다
+  // (배경 뮤비 소리만 나오게 함).
 
   function attemptHit(lane){
     if (!running) return;
@@ -14105,13 +14508,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const tier = best ? tierFromDiff(bestDiff) : null;
     if (!best || !tier) return; // 판정 범위 밖(예: 롱노트 중간부터 누름) → 헛침(패널티 없음)
 
-    playNoteTypeSound(best.type);
-
     if (best.len > 0) {
       // 롱노트 시작(헤드) 판정 — 이후 꼬리까지 계속 눌러야 함
       best.hit = true;
       activeHold[lane] = best;
       if (best.el) best.el.classList.add('rg-long-active');
+      spawnHoldFx(lane);
       addScore(tier);
     } else {
       best.hit = true;
@@ -14315,7 +14717,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const playable = !!RM_CHARTS[song.key];
       const item = document.createElement('div');
       item.className = 'rg-song-item' + (playable ? '' : ' rg-disabled');
-      item.innerHTML = '<span>' + song.name + '</span><span class="rg-tag">' + (playable ? 'PLAY' : '준비중') + '</span>';
+      item.innerHTML = '<span>' + (playable ? song.name : '준비중') + '</span>';
       if (playable) {
         item.addEventListener('click', () => {
           selectBg.classList.remove('show');
@@ -14348,6 +14750,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   document.getElementById('rg-restart').addEventListener('click', () => {
     if (currentChart) startGame(currentChart);
   });
+  document.getElementById('rg-sync-minus').addEventListener('click', () => setSyncOffset(noteSyncOffset - 0.01));
+  document.getElementById('rg-sync-plus').addEventListener('click', () => setSyncOffset(noteSyncOffset + 0.01));
+  setSyncOffset(noteSyncOffset); // 저장된 값(또는 0)을 UI에 즉시 반영
 
   function setKeyPressed(lane, pressed){
     laneEls[lane].classList.toggle('rg-active', pressed);
