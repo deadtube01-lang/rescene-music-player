@@ -13720,11 +13720,84 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     'deja vu': {
       bpm: 125,
       offset: 0.45,
-      songEndTime: 180.80,      // 3:00.80 이후로는 노트 생성 안 함
+      songEndTime: 183.3,       // 마지막 마디(95마디) 끝 부근까지만 노트 생성
       videoId: 'ZbO9PBdFRdc',
-      videoEndTime: 199         // 3:19 에서 배경 영상 정지
+      videoEndTime: 196,        // 3:16 에서 배경 영상 정지
+      notes: buildDejaVuNotesFromSheet()  // 손으로 채보한 실제 악보 기반 노트
     }
   };
+
+  // ----------------------------------------------------------------
+  // 사용자가 올려준 드럼 악보(Deja Vu, ♩=125, 4/4, 총 95마디)를 그대로 옮긴 채보.
+  // 레인 매핑: lane0=킥(베이스드럼1, 파 자리) / lane1=스네어(높은 도 자리) /
+  //            lane2=클로즈 하이햇(높은 솔 자리, x) / lane3=오픈 하이햇(⊗ 표시)
+  // 마디마다 8분음표(8칸) 단위 그리드로 패턴을 넣고, 실제 재생 시각(초)으로 환산한다.
+  // 악보 이미지 해상도상 완전히 1:1로 픽셀 단위까지 확신할 수 없는 세부 리듬(타이/셋잇단 등)은
+  // 눈에 보이는 큰 흐름(구간별 반복 패턴)을 기준으로 옮겼으니, 특정 마디가 실제와 다르면
+  // 마디 번호를 알려주면 그 부분만 바로 고칠 수 있음.
+  // ----------------------------------------------------------------
+  function buildDejaVuNotesFromSheet(){
+    const bpm = 125;
+    const beat = 60 / bpm;
+    const eighth = beat / 2;
+    const barOffset = 0.45; // 1마디 시작 시각(=chart.offset)
+    const LANE = { KICK: 0, SNARE: 1, HAT: 2, OHAT: 3 };
+
+    // 8분음표 그리드(0~7칸) 패턴들. 각 칸에 들어갈 레인들의 배열(동시치기면 여러 개).
+    const REST = () => [[], [], [], [], [], [], [], []];
+    // 절(verse) 그루브: 킥-스네어가 번갈아 나오는 멜로디 라인(하이햇 없음)
+    const VERSE = () => [[LANE.KICK], [], [LANE.SNARE], [], [LANE.KICK], [LANE.KICK], [LANE.SNARE], []];
+    // 킥 단독(스파스): 마디 12~15 구간
+    const KICK_SOLO = () => [[LANE.KICK], [], [], [], [LANE.KICK], [], [], []];
+    // 클로즈 하이햇 8비트 그루브 + 킥/스네어 백비트
+    const HAT_GROOVE = () => [
+      [LANE.HAT, LANE.KICK], [LANE.HAT], [LANE.HAT, LANE.SNARE], [LANE.HAT],
+      [LANE.HAT, LANE.KICK], [LANE.HAT], [LANE.HAT, LANE.SNARE], [LANE.HAT]
+    ];
+    // 오픈/클로즈 하이햇이 번갈아 나오는 전환 구간(⊗ / x)
+    const HAT_OPEN_MIX = () => [
+      [LANE.OHAT, LANE.KICK], [], [LANE.HAT], [],
+      [LANE.OHAT, LANE.KICK], [], [LANE.HAT], []
+    ];
+
+    // 마디(1-indexed) 구간별 패턴 배정 — 이미지 1~4의 마디 번호(1~95)에 맞춤
+    const sectionOf = (m) => {
+      if (m >= 1 && m <= 5) return REST;
+      if (m >= 6 && m <= 11) return VERSE;
+      if (m >= 12 && m <= 15) return KICK_SOLO;
+      if (m >= 16 && m <= 21) return HAT_GROOVE;
+      if (m >= 22 && m <= 24) return HAT_OPEN_MIX;
+      if (m >= 25 && m <= 37) return HAT_GROOVE;
+      if (m >= 38 && m <= 41) return REST;
+      if (m >= 42 && m <= 44) return HAT_GROOVE;
+      if (m === 45) return REST;
+      if (m >= 46 && m <= 55) return VERSE;
+      if (m >= 56 && m <= 74) return HAT_GROOVE;
+      if (m >= 75 && m <= 77) return HAT_OPEN_MIX;
+      if (m >= 78 && m <= 82) return REST;
+      if (m >= 83 && m <= 90) return HAT_OPEN_MIX;
+      if (m >= 91 && m <= 94) return HAT_GROOVE;
+      return REST; // 95(마지막 종지 마디)
+    };
+
+    const TOTAL_BARS = 95;
+    const notes = [];
+    for (let m = 1; m <= TOTAL_BARS; m++) {
+      const pattern = sectionOf(m)();
+      const barStart = barOffset + (m - 1) * 4 * beat;
+      pattern.forEach((lanes, slot) => {
+        if (!lanes.length) return;
+        const t = barStart + slot * eighth;
+        lanes.forEach(lane => {
+          const type = lane === LANE.KICK ? 'kick'
+                     : lane === LANE.SNARE ? 'snare'
+                     : lane === LANE.OHAT ? 'ohihat' : 'hihat';
+          notes.push({ time: t, lane: lane, len: 0, type: type });
+        });
+      });
+    }
+    return notes;
+  }
 
   // 시드 고정 의사난수 (매번 같은 채보가 나오되, 단순 등차수열이 아니라
   // 실제로 무작위처럼 다양하게 레인이 섞이도록 함)
@@ -13883,7 +13956,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     // 첫 노트 시각이 최소 APPROACH(노트가 판정선까지 내려오는 시간)만큼은
     // 지난 뒤에 나오게 시작 시각을 보정한다 → 항상 맨 위에서부터 떨어지게 됨.
     const startOffset = Math.max(chart.offset, APPROACH + 0.05);
-    notes = autoGenerateNotes(cutoff, chart.bpm, startOffset);
+    // 손으로 옮긴 실제 채보(chart.notes)가 있으면 그것을 그대로 쓰고,
+    // 없는 곡(아직 준비 안 된 곡)만 기존처럼 자동 생성한다.
+    notes = chart.notes && chart.notes.length
+      ? chart.notes.filter(n => n.time <= cutoff)
+      : autoGenerateNotes(cutoff, chart.bpm, startOffset);
     noteEls = notes.map(n => ({
       ...n, el: null, bodyEl: null,
       hit: false, missed: false,
@@ -14024,22 +14101,39 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     }
   }
 
-  // 노트 종류(킥/슬랩/스네어)에 맞춰 효과음을 재생. 볼륨은 킥 50%, 슬랩 30%, 스네어 40%.
+  // 노트 종류(킥/슬랩/스네어/하이햇)에 맞춰 효과음을 재생.
+  // 기본 볼륨: 킥 70%, 슬랩 30%, 스네어 40%, 클로즈 하이햇 35%, 오픈 하이햇 35%.
+  const NOTE_SOUND_MAP = {
+    kick:   { src: 'kick.mp3',         volume: 0.7 },
+    snare:  { src: 'snare.mp3',        volume: 0.4 },
+    slap:   { src: 'bbyam.mp3',        volume: 0.3 },
+    hihat:  { src: 'close hi-hat.mp3', volume: 0.35 },
+    ohihat: { src: 'open hi-hat.mp3',  volume: 0.35 }
+  };
+
+  // 동시에(짧은 시간 안에) 여러 키를 눌러 여러 효과음이 겹치면 소리가 합쳐져
+  // 지나치게 커지는 문제를 막기 위한 "더킹" 처리. 최근 짧은 시간창(120ms) 안에
+  // 함께 울린 소리 개수를 세어, 개수가 많아질수록 각 소리의 볼륨을 비례해서 줄인다.
+  const CONCURRENT_SOUND_WINDOW_MS = 120;
+  let recentSoundTimestamps = [];
+
+  function getConcurrencyDuckFactor(){
+    const now = performance.now();
+    recentSoundTimestamps = recentSoundTimestamps.filter(t => now - t < CONCURRENT_SOUND_WINDOW_MS);
+    recentSoundTimestamps.push(now);
+    const concurrency = recentSoundTimestamps.length;
+    // 1개면 1.0(원래 볼륨), 2개면 약 0.71, 3개면 약 0.58 ... 제곱근 비율로 자연스럽게 감쇠
+    return concurrency <= 1 ? 1 : 1 / Math.sqrt(concurrency);
+  }
+
   function playNoteTypeSound(type){
     try {
-      if (type === 'kick') {
-        const a = new Audio('kick.mp3');
-        a.volume = 0.5;
-        a.play().catch(() => {});
-      } else if (type === 'snare') {
-        const a = new Audio('snare.mp3');
-        a.volume = 0.4;
-        a.play().catch(() => {});
-      } else if (type === 'slap') {
-        const a = new Audio('bbyam.mp3');
-        a.volume = 0.3;
-        a.play().catch(() => {});
-      }
+      const def = NOTE_SOUND_MAP[type];
+      if (!def) return;
+      const a = new Audio(def.src);
+      const duck = getConcurrencyDuckFactor();
+      a.volume = Math.max(0, Math.min(1, def.volume * duck));
+      a.play().catch(() => {});
     } catch(e){}
   }
 
