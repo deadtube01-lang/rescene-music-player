@@ -13498,10 +13498,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
   #rg-top .rg-stat{ font-size:14px; opacity:.85; }
   #rg-score{ font-size:20px; font-weight:700; }
-  #rg-close{
+  #rg-close, #rg-top #rg-restart{
     background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2);
     color:#fff; border-radius:8px; padding:6px 12px; cursor:pointer; font-size:14px;
   }
+  #rg-title-row{ text-align:center; font-size:13px; opacity:.75; padding:0 14px 8px; }
   #rg-field{
     position:relative; flex:1 1 auto; overflow:hidden;
     display:flex; justify-content:center;
@@ -13617,12 +13618,23 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     35%{ transform:scale(1.18); opacity:1; }
     100%{ transform:scale(1); opacity:0.92; }
   }
-  #rg-bottom{ flex:0 0 auto; padding:14px; display:flex; justify-content:center; gap:10px; }
-  #rg-bottom button{
+  #rg-result{
+    display:none; position:absolute; inset:0; z-index:7;
+    align-items:center; justify-content:center; flex-direction:column; gap:10px;
+    background:rgba(5,7,12,0.85); text-align:center;
+  }
+  #rg-result.show{ display:flex; }
+  #rg-result-grade{
+    font-size:96px; font-weight:900; line-height:1;
+    text-shadow:0 0 30px rgba(252,111,207,0.85), 0 4px 14px rgba(0,0,0,0.6);
+  }
+  #rg-result-title{ font-size:16px; opacity:.85; }
+  #rg-result-score{ font-size:22px; font-weight:700; }
+  #rg-result-buttons{ display:flex; gap:10px; margin-top:8px; }
+  #rg-result-buttons button{
     padding:10px 18px; border-radius:10px; border:1px solid rgba(255,255,255,0.2);
     background:rgba(255,255,255,0.08); color:#fff; font-size:14px; cursor:pointer;
   }
-  #rg-msg{ text-align:center; font-size:13px; opacity:.6; padding:0 14px 8px; }
 </style>
 
 <button id="rg-launch-btn" title="리듬게임">🎮</button>
@@ -13637,11 +13649,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 <div id="rg-overlay">
   <div id="rg-top">
-    <div class="rg-stat" id="rg-title-stat">-</div>
+    <button id="rg-restart">다시하기</button>
     <div id="rg-score">0</div>
     <button id="rg-close">닫기 ✕</button>
   </div>
-  <div id="rg-msg"></div>
+  <div id="rg-title-row"><div class="rg-stat" id="rg-title-stat">-</div></div>
   <div id="rg-field">
     <div id="rg-bg-video"></div>
     <div id="rg-judge-wrap">
@@ -13655,9 +13667,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       <div class="rg-lane" data-lane="2"><div class="rg-hitzone"></div><div class="rg-key-hint">J</div></div>
       <div class="rg-lane" data-lane="3"><div class="rg-hitzone"></div><div class="rg-key-hint">K</div></div>
     </div>
-  </div>
-  <div id="rg-bottom">
-    <button id="rg-restart">처음부터 다시 ▶</button>
+    <div id="rg-result">
+      <div id="rg-result-grade">-</div>
+      <div id="rg-result-title">-</div>
+      <div id="rg-result-score">SCORE 0</div>
+      <div id="rg-result-buttons">
+        <button id="rg-result-retry">다시하기</button>
+        <button id="rg-result-close">닫기 ✕</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -13768,7 +13786,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   // 게임 상태
   // ----------------------------------------------------------------
   const overlay = document.getElementById('rg-overlay');
-  const msgEl = document.getElementById('rg-msg');
+  const resultEl = document.getElementById('rg-result');
+  const resultGradeEl = document.getElementById('rg-result-grade');
+  const resultTitleEl = document.getElementById('rg-result-title');
+  const resultScoreEl = document.getElementById('rg-result-score');
   const judgeEl = document.getElementById('rg-judge');
   const judgeWrapEl = document.getElementById('rg-judge-wrap');
   const comboEl = document.getElementById('rg-combo-center');
@@ -13798,6 +13819,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   let noteEls = [];
   let score = 0, combo = 0;
   let running = false;
+  let gameFinished = false;
   let rafId = null;
   let fieldH = 0;
   let currentChart = null;
@@ -13830,7 +13852,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   function buildNotes(chart){
     currentChart = chart;
     const cutoff = chart.songEndTime || 210;
-    msgEl.textContent = 'Deja Vu 전용 자동 채보로 플레이 중 (박자는 추후 직접 다듬을 예정)';
     notes = autoGenerateNotes(cutoff, chart.bpm, chart.offset);
     noteEls = notes.map(n => ({
       ...n, el: null, bodyEl: null,
@@ -13951,7 +13972,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     judgeEl.style.color = color;
     judgeEl.style.opacity = '1';
     clearTimeout(showJudge._t);
-    showJudge._t = setTimeout(() => { judgeEl.style.opacity = '0'; }, 280);
+    showJudge._t = setTimeout(() => {
+      judgeEl.style.opacity = '0';
+      comboEl.style.opacity = '0'; // 콤보도 판정 텍스트와 함께 사라지게
+    }, 280);
   }
 
   function finishHold(n, result){
@@ -14072,8 +14096,36 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     if (!currentChart || !ytBgPlayer) return;
     try {
       const endTime = currentChart.videoEndTime || 999;
-      if (nowT >= endTime) ytBgPlayer.pauseVideo();
+      if (nowT >= endTime) {
+        ytBgPlayer.pauseVideo();
+        if (!gameFinished) finishGame();
+      }
     } catch(e){}
+  }
+
+  // 등급 계산: 획득 점수 / (노트 개수 * 만점) 기준 정확도로 S~F 등급 산출
+  function gradeFromAccuracy(acc){
+    if (acc >= 95) return 'S';
+    if (acc >= 90) return 'A';
+    if (acc >= 80) return 'B';
+    if (acc >= 70) return 'C';
+    if (acc >= 60) return 'D';
+    if (acc >= 50) return 'E';
+    return 'F';
+  }
+
+  function finishGame(){
+    gameFinished = true;
+    running = false;
+    if (rafId) cancelAnimationFrame(rafId);
+    noteEls.forEach(n => removeNoteEl(n));
+    const maxScore = (notes.length || 1) * JUDGE_SCORE.PERFECT;
+    const accuracy = Math.max(0, Math.min(100, (score / maxScore) * 100));
+    const grade = gradeFromAccuracy(accuracy);
+    resultGradeEl.textContent = grade;
+    resultTitleEl.textContent = currentSongName || '';
+    resultScoreEl.textContent = 'SCORE ' + score + ' (' + accuracy.toFixed(1) + '%)';
+    resultEl.classList.add('show');
   }
 
   function stopBgVideo(){
@@ -14111,10 +14163,10 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     buildNotes(chart);
     if (songName) currentSongName = songName;
     titleStatEl.textContent = currentSongName || '';
-    msgEl.textContent = '뮤비 불러오는 중...';
+    resultEl.classList.remove('show');
+    gameFinished = false;
     ensureBgVideo(chart, () => {
       runCountdown(() => {
-        msgEl.textContent = 'Deja Vu 전용 자동 채보로 플레이 중 (박자는 추후 직접 다듬을 예정)';
         try { ytBgPlayer && ytBgPlayer.playVideo && ytBgPlayer.playVideo(); } catch(e){}
         running = true;
         if (rafId) cancelAnimationFrame(rafId);
@@ -14125,9 +14177,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   function stopGame(){
     running = false;
+    gameFinished = false;
     if (rafId) cancelAnimationFrame(rafId);
     noteEls.forEach(n => removeNoteEl(n));
     stopBgVideo();
+    resultEl.classList.remove('show');
   }
 
   // ----------------------------------------------------------------
@@ -14172,6 +14226,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   document.getElementById('rg-close').addEventListener('click', () => {
     stopGame();
     overlay.classList.remove('show');
+  });
+  document.getElementById('rg-result-retry').addEventListener('click', () => {
+    if (currentChart) startGame(currentChart, currentSongName);
+  });
+  document.getElementById('rg-result-close').addEventListener('click', () => {
+    stopGame();
+    document.getElementById('rg-overlay').classList.remove('show');
   });
   document.getElementById('rg-restart').addEventListener('click', () => {
     if (currentChart) startGame(currentChart);
