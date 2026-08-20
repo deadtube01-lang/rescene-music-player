@@ -13469,13 +13469,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   #rg-select-wrap{
     width:min(360px,100%); max-height:80vh; overflow-y:auto;
     background:rgba(18,22,28,0.92); border:1px solid rgba(255,255,255,0.15);
-    border-radius:16px; padding:16px;
+    border-radius:16px; padding:16px; color:#fff;
   }
-  #rg-select-wrap h3{ font-size:16px; margin-bottom:12px; }
+  #rg-select-wrap h3{ font-size:16px; margin-bottom:12px; color:#fff; }
   .rg-song-item{
     display:flex; align-items:center; justify-content:space-between;
     padding:12px 14px; border-radius:10px; margin-bottom:8px;
-    background:rgba(255,255,255,0.05); cursor:pointer; font-size:14px;
+    background:rgba(255,255,255,0.05); cursor:pointer; font-size:14px; color:#fff;
   }
   .rg-song-item:hover{ background:rgba(255,255,255,0.1); }
   .rg-song-item.rg-disabled{ opacity:.4; cursor:not-allowed; }
@@ -13562,20 +13562,22 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       opacity:0;
     }
   }
-  /* 롱노트: 몸통(막대) + 머리(위쪽 캡) 구조. 몸통 길이는 JS에서 계산해 넣는다 */
+  /* 롱노트: 머리(위쪽 캡)와 몸통이 하나로 이어진 길쭉한 막대로 보이도록 구성.
+     머리는 아래쪽 모서리를 각지게, 몸통은 위쪽 모서리를 각지게 해서 이어붙인다. */
+  .rg-note.rg-long{ border-radius:6px 6px 0 0; }
   .rg-note.rg-long .rg-long-body{
     position:absolute; left:0; right:0; top:100%; height:0;
-    background:linear-gradient(180deg,rgba(143,211,255,0.55),rgba(79,140,255,0.35));
-    border-left:3px solid rgba(143,211,255,0.8);
-    border-right:3px solid rgba(143,211,255,0.8);
+    background:linear-gradient(180deg,#4f8cff,#8fd3ff);
+    border-radius:0 0 6px 6px;
+    box-shadow:0 2px 8px rgba(79,140,255,0.6);
   }
   .rg-note.rg-long.rg-long-active{
     background:linear-gradient(180deg,#ffe27d,#ffb84f);
     box-shadow:0 0 14px rgba(255,200,90,0.8);
   }
   .rg-note.rg-long.rg-long-active .rg-long-body{
-    background:linear-gradient(180deg,rgba(255,226,125,0.55),rgba(255,184,79,0.3));
-    border-color:rgba(255,226,125,0.85);
+    background:linear-gradient(180deg,#ffb84f,#ffe27d);
+    box-shadow:0 0 14px rgba(255,200,90,0.8);
   }
   .rg-key-hint{
     position:absolute; left:0; right:0; bottom:2%;
@@ -14062,8 +14064,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         events: {
           onReady: (e) => {
             ytBgReady = true;
-            // 카운트다운이 끝나기 전까진 재생하지 않는다(음소거만 해제해둠)
-            try { e.target.unMute(); e.target.setVolume(100); e.target.pauseVideo(); } catch(err){}
+            // 카운트다운이 끝나기 전까진 재생하지 않는다(음소거만 해제해둠).
+            // autoplay로 인해 잠깐 재생되며 시간이 흘렀을 수 있으므로 0초로 되돌린다.
+            try { e.target.unMute(); e.target.setVolume(100); e.target.seekTo(0, true); e.target.pauseVideo(); } catch(err){}
             onReadyCb && onReadyCb();
           },
           onStateChange: (e) => {
@@ -14167,7 +14170,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     gameFinished = false;
     ensureBgVideo(chart, () => {
       runCountdown(() => {
-        try { ytBgPlayer && ytBgPlayer.playVideo && ytBgPlayer.playVideo(); } catch(e){}
+        try { ytBgPlayer && ytBgPlayer.seekTo && ytBgPlayer.seekTo(0, true); ytBgPlayer.playVideo && ytBgPlayer.playVideo(); } catch(e){}
         running = true;
         if (rafId) cancelAnimationFrame(rafId);
         rafId = requestAnimationFrame(loop);
