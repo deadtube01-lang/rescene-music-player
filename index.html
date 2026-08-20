@@ -3832,8 +3832,8 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
             </div>
             <div class="vert-slider-col">
               <span class="vert-slider-label">SNARE</span>
-              <input type="range" id="snare-volume-slider" class="sub-vol-slider vert-slider" min="0" max="100" value="30" orient="vertical">
-              <span id="snare-volume-text" class="vert-slider-value">30</span>
+              <input type="range" id="snare-volume-slider" class="sub-vol-slider vert-slider" min="0" max="100" value="40" orient="vertical">
+              <span id="snare-volume-text" class="vert-slider-value">40</span>
             </div>
           </div>
 
@@ -10047,12 +10047,18 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
 
       if (isInputField) return;
 
+      // 리듬게임 플레이 중에는 a/s 키가 게임의 D/F/J/K와 겹치지 않지만,
+      // 뮤직플레이어의 슬랩/스네어 효과음까지 같이 울리면 안 되므로 막는다.
+      const rgOverlayEl = document.getElementById('rg-overlay');
+      const isRhythmGameOpen = rgOverlayEl && rgOverlayEl.classList.contains('show');
+
       const key = e.key.toLowerCase();
 
       if (key === 'q') {
         e.preventDefault();
         cycleUiHideStep();
       } else if (key === 'a') {
+        if (isRhythmGameOpen) return;
         e.preventDefault();
         if (baksuImg) {
           baksuImg.classList.remove('bounce-anim');
@@ -10064,6 +10070,7 @@ body.rm-device-mobile #mobile-home-view{display:none!important}
         bbyamAudio.volume = bbyamVol;
         bbyamAudio.play().catch(err => console.log(err));
       } else if (key === 's') {
+        if (isRhythmGameOpen) return;
         e.preventDefault();
         const targetWrapper = lpRecordWrapper || lpRecord;
         if (targetWrapper) {
@@ -13753,7 +13760,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       if (i > 6 && beatIndex === 0 && roll < 0.20 && (duration - t) > beat * 4) {
         const len = beat * (1.5 + Math.floor(rand() * 2)); // 약 1.5~3.5박 동안 유지
         const l = pickLane(rand, lastLane);
-        notes.push({ time: t, lane: l, len: len });
+        notes.push({ time: t, lane: l, len: len, type: 'kick' });
         lastLane = l;
         t += len; // 롱노트 길이만큼 통째로 건너뛰어 같은 레인 겹침 방지
         i++;
@@ -13763,7 +13770,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       // 기본 박(킥 드럼) — 강박에는 항상 노트를 둬서 곡의 기본 리듬을 따라가게 함
       if (isDownbeat) {
         const l = pickLane(rand, lastLane);
-        notes.push({ time: t, lane: l, len: 0 });
+        notes.push({ time: t, lane: l, len: 0, type: 'kick' });
         lastLane = l;
       }
 
@@ -13772,12 +13779,12 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         if (roll < 0.16) {
           const l1 = pickLane(rand, lastLane);
           const l2 = pickLane(rand, l1);
-          notes.push({ time: t, lane: l1, len: 0 });
-          notes.push({ time: t, lane: l2, len: 0 });
+          notes.push({ time: t, lane: l1, len: 0, type: 'snare' });
+          notes.push({ time: t, lane: l2, len: 0, type: 'snare' });
           lastLane = l2;
         } else {
           const l = pickLane(rand, lastLane);
-          notes.push({ time: t, lane: l, len: 0 });
+          notes.push({ time: t, lane: l, len: 0, type: 'snare' });
           lastLane = l;
         }
       }
@@ -13785,7 +13792,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       // 보컬의 세부 음절 표현 — 8분음표 위치에 추가 노트를 얹어 촘촘한 구간을 만듦
       if (roll > 0.5 && roll < 0.8) {
         const l = pickLane(rand, lastLane);
-        notes.push({ time: t + beat / 2, lane: l, len: 0 });
+        notes.push({ time: t + beat / 2, lane: l, len: 0, type: 'slap' });
         lastLane = l;
       }
 
@@ -13872,7 +13879,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   function buildNotes(chart){
     currentChart = chart;
     const cutoff = chart.songEndTime || 210;
-    notes = autoGenerateNotes(cutoff, chart.bpm, chart.offset);
+    // 첫 노트가 곡 시작과 동시에 이미 내려와 있는 상태로 등장하지 않도록,
+    // 첫 노트 시각이 최소 APPROACH(노트가 판정선까지 내려오는 시간)만큼은
+    // 지난 뒤에 나오게 시작 시각을 보정한다 → 항상 맨 위에서부터 떨어지게 됨.
+    const startOffset = Math.max(chart.offset, APPROACH + 0.05);
+    notes = autoGenerateNotes(cutoff, chart.bpm, startOffset);
     noteEls = notes.map(n => ({
       ...n, el: null, bodyEl: null,
       hit: false, missed: false,
@@ -14013,6 +14024,25 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     }
   }
 
+  // 노트 종류(킥/슬랩/스네어)에 맞춰 효과음을 재생. 볼륨은 킥 50%, 슬랩 30%, 스네어 40%.
+  function playNoteTypeSound(type){
+    try {
+      if (type === 'kick') {
+        const a = new Audio('kick.mp3');
+        a.volume = 0.5;
+        a.play().catch(() => {});
+      } else if (type === 'snare') {
+        const a = new Audio('snare.mp3');
+        a.volume = 0.4;
+        a.play().catch(() => {});
+      } else if (type === 'slap') {
+        const a = new Audio('bbyam.mp3');
+        a.volume = 0.3;
+        a.play().catch(() => {});
+      }
+    } catch(e){}
+  }
+
   function attemptHit(lane){
     if (!running) return;
     const nowT = getGameTime();
@@ -14025,6 +14055,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
     const tier = best ? tierFromDiff(bestDiff) : null;
     if (!best || !tier) return; // 판정 범위 밖(예: 롱노트 중간부터 누름) → 헛침(패널티 없음)
+
+    playNoteTypeSound(best.type);
 
     if (best.len > 0) {
       // 롱노트 시작(헤드) 판정 — 이후 꼬리까지 계속 눌러야 함
