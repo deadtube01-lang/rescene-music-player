@@ -13529,15 +13529,15 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
   /* 판정 구간을 표시 (이전보다 좁게 — 실제 판정 타이밍도 함께 좁혔음) */
   .rg-hitzone{
-    position:absolute; left:0; right:0; bottom:calc(14% - 22px);
-    height:44px;
+    position:absolute; left:0; right:0; bottom:calc(14% - 11px);
+    height:22px;
     background:linear-gradient(180deg,rgba(252,111,207,0) 0%,rgba(252,111,207,0.22) 50%,rgba(252,111,207,0) 100%);
     border-top:3px solid rgba(252,111,207,0.95);
     border-bottom:3px solid rgba(252,111,207,0.95);
     box-shadow:0 0 16px rgba(252,111,207,0.55);
   }
   .rg-note{
-    position:absolute; left:22%; right:22%; height:26px; border-radius:8px;
+    position:absolute; left:6%; right:6%; height:14px; border-radius:6px;
     background:linear-gradient(180deg,#8fd3ff,#4f8cff);
     box-shadow:0 2px 8px rgba(79,140,255,0.6);
     top:-30px;
@@ -13704,31 +13704,54 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const rand = mulberry32(20260820);
     const notes = [];
     let t = offset, i = 0, lastLane = -1;
+
     while (t < duration - 1) {
+      const beatIndex = i % 4;
+      const isDownbeat = beatIndex === 0 || beatIndex === 2;  // 킥 성향(강박)
+      const isBackbeat = beatIndex === 1 || beatIndex === 3;  // 스네어/보컬 악센트 성향(백비트)
       const roll = rand();
-      if (i > 3 && roll < 0.10) {
-        // 쉬는 박(리듬감을 위한 빈 마디)
-      } else if (roll < 0.28) {
-        // 8분음표 두 개(빠른 연타 느낌)
-        const l1 = pickLane(rand, lastLane); notes.push({ time: t, lane: l1, len: 0 }); lastLane = l1;
-        const l2 = pickLane(rand, lastLane); notes.push({ time: t + beat / 2, lane: l2, len: 0 }); lastLane = l2;
-      } else if (i > 4 && roll < 0.36 && (duration - t) > beat * 3) {
-        // 롱노트(2박)
+
+      // 프레이즈가 끝나는 지점(강박마다 확률적으로) — 보컬이 길게 끄는 구간을 롱노트로 표현.
+      // 다음 노트는 이 롱노트가 완전히 끝난 뒤부터 배치해서 같은 레인에서 겹치는 버그를 막는다.
+      if (i > 6 && beatIndex === 0 && roll < 0.20 && (duration - t) > beat * 4) {
+        const len = beat * (1.5 + Math.floor(rand() * 2)); // 약 1.5~3.5박 동안 유지
         const l = pickLane(rand, lastLane);
-        notes.push({ time: t, lane: l, len: beat * 2 });
+        notes.push({ time: t, lane: l, len: len });
         lastLane = l;
-      } else if (roll < 0.44) {
-        // 동시치기(2노트 코드)
-        const l1 = pickLane(rand, lastLane);
-        let l2 = pickLane(rand, l1);
-        notes.push({ time: t, lane: l1, len: 0 });
-        notes.push({ time: t, lane: l2, len: 0 });
-        lastLane = l2;
-      } else {
+        t += len; // 롱노트 길이만큼 통째로 건너뛰어 같은 레인 겹침 방지
+        i++;
+        continue;
+      }
+
+      // 기본 박(킥 드럼) — 강박에는 항상 노트를 둬서 곡의 기본 리듬을 따라가게 함
+      if (isDownbeat) {
         const l = pickLane(rand, lastLane);
         notes.push({ time: t, lane: l, len: 0 });
         lastLane = l;
       }
+
+      // 스네어/보컬 악센트(백비트) — 가끔 2노트 동시치기로 강조
+      if (isBackbeat) {
+        if (roll < 0.16) {
+          const l1 = pickLane(rand, lastLane);
+          const l2 = pickLane(rand, l1);
+          notes.push({ time: t, lane: l1, len: 0 });
+          notes.push({ time: t, lane: l2, len: 0 });
+          lastLane = l2;
+        } else {
+          const l = pickLane(rand, lastLane);
+          notes.push({ time: t, lane: l, len: 0 });
+          lastLane = l;
+        }
+      }
+
+      // 보컬의 세부 음절 표현 — 8분음표 위치에 추가 노트를 얹어 촘촘한 구간을 만듦
+      if (roll > 0.5 && roll < 0.8) {
+        const l = pickLane(rand, lastLane);
+        notes.push({ time: t + beat / 2, lane: l, len: 0 });
+        lastLane = l;
+      }
+
       t += beat;
       i++;
     }
@@ -14003,13 +14026,32 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const create = () => {
       ytBgPlayer = new YT.Player('rg-bg-video-inner', {
         videoId: chart.videoId,
-        playerVars: { autoplay: 1, controls: 0, disablekb: 1, modestbranding: 1, playsinline: 1 },
+        playerVars: {
+          autoplay: 1, controls: 0, disablekb: 1, modestbranding: 1, playsinline: 1,
+          rel: 0,
+          // 영상이 자연스러운 끝(=추천 영상 화면)에 도달하지 않도록, 같은 영상을
+          // 반복 재생하는 재생목록으로 취급시킴. 실제 정지는 watchVideoEnd()가
+          // videoEndTime 시점에 pauseVideo()로 처리하므로 사실상 절대 안 보임.
+          loop: 1,
+          playlist: chart.videoId
+        },
         events: {
           onReady: (e) => {
             ytBgReady = true;
             // 카운트다운이 끝나기 전까진 재생하지 않는다(음소거만 해제해둠)
             try { e.target.unMute(); e.target.setVolume(100); e.target.pauseVideo(); } catch(err){}
             onReadyCb && onReadyCb();
+          },
+          onStateChange: (e) => {
+            // 혹시라도 pauseVideo가 늦어 영상이 끝까지 도달하면(추천 영상 화면 방지용 안전장치)
+            // 즉시 처음(또는 종료 시각 살짝 전)으로 되감아 멈춘다.
+            if (e.data === YT.PlayerState.ENDED) {
+              try {
+                const endT = (currentChart && currentChart.videoEndTime) || 0;
+                e.target.seekTo(Math.max(0, endT - 0.3), true);
+                e.target.pauseVideo();
+              } catch(err){}
+            }
           }
         }
       });
