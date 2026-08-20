@@ -13527,20 +13527,39 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     border-right:1px solid rgba(255,255,255,0.06);
     overflow:hidden;
   }
-  /* 판정 구간을 넓고 눈에 띄게 표시 (얇은 선이 아니라 밴드 형태) */
+  /* 판정 구간을 표시 (이전보다 좁게 — 실제 판정 타이밍도 함께 좁혔음) */
   .rg-hitzone{
-    position:absolute; left:0; right:0; bottom:calc(14% - 34px);
-    height:68px;
+    position:absolute; left:0; right:0; bottom:calc(14% - 22px);
+    height:44px;
     background:linear-gradient(180deg,rgba(252,111,207,0) 0%,rgba(252,111,207,0.22) 50%,rgba(252,111,207,0) 100%);
     border-top:3px solid rgba(252,111,207,0.95);
     border-bottom:3px solid rgba(252,111,207,0.95);
     box-shadow:0 0 16px rgba(252,111,207,0.55);
   }
   .rg-note{
-    position:absolute; left:6%; right:6%; height:26px; border-radius:8px;
+    position:absolute; left:22%; right:22%; height:26px; border-radius:8px;
     background:linear-gradient(180deg,#8fd3ff,#4f8cff);
     box-shadow:0 2px 8px rgba(79,140,255,0.6);
     top:-30px;
+  }
+  /* 판정 성공 시 외부광선(글로우) 효과를 주고 사라짐 */
+  .rg-note.rg-hit-glow{
+    animation: rgNoteHitGlow 0.22s ease-out forwards;
+    pointer-events:none;
+  }
+  @keyframes rgNoteHitGlow{
+    0%{
+      box-shadow:0 0 10px 2px rgba(255,255,255,0.95), 0 0 22px 6px rgba(143,211,255,0.85);
+      filter:brightness(1.5);
+      transform:scale(1.06);
+      opacity:1;
+    }
+    100%{
+      box-shadow:0 0 26px 14px rgba(255,255,255,0);
+      filter:brightness(2.2);
+      transform:scale(1.3);
+      opacity:0;
+    }
   }
   /* 롱노트: 몸통(막대) + 머리(위쪽 캡) 구조. 몸통 길이는 JS에서 계산해 넣는다 */
   .rg-note.rg-long .rg-long-body{
@@ -13561,12 +13580,42 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     position:absolute; left:0; right:0; bottom:2%;
     text-align:center; font-size:13px; font-weight:700;
     color:rgba(255,255,255,0.5); pointer-events:none;
+    transition:color 0.05s ease, text-shadow 0.05s ease;
+  }
+  /* 키를 누르고 있는 동안 계속 핑크색으로 표시 (누르는 순간부터 뗄 때까지 유지) */
+  .rg-key-hint.rg-key-pressed{
+    color:#ff6fd8;
+    text-shadow:0 0 10px rgba(255,111,216,0.9), 0 0 20px rgba(255,111,216,0.6);
   }
   .rg-lane.rg-active{ background:rgba(252,111,207,0.12); }
+  #rg-judge-wrap{
+    position:absolute; top:20%; left:50%; transform:translateX(-50%);
+    display:flex; flex-direction:column; align-items:center; gap:4px;
+    pointer-events:none; z-index:4;
+  }
   #rg-judge{
-    position:absolute; top:22%; left:50%; transform:translateX(-50%);
-    font-size:22px; font-weight:800; opacity:0; pointer-events:none;
+    font-size:22px; font-weight:800; opacity:0;
     text-shadow:0 2px 6px rgba(0,0,0,0.6);
+    transition:opacity 0.15s ease;
+  }
+  #rg-combo-center{
+    font-size:16px; font-weight:700; color:#ffd9f2;
+    text-shadow:0 2px 6px rgba(0,0,0,0.6);
+    opacity:0; transition:opacity 0.15s ease;
+  }
+  #rg-countdown{
+    display:none; position:absolute; inset:0; z-index:6;
+    align-items:center; justify-content:center;
+    font-size:64px; font-weight:900; color:#fff;
+    text-shadow:0 0 30px rgba(252,111,207,0.85), 0 4px 14px rgba(0,0,0,0.6);
+    pointer-events:none;
+    background:rgba(5,7,12,0.35);
+  }
+  .rg-countdown-pop{ animation: rgCountdownPop 0.65s ease-out; }
+  @keyframes rgCountdownPop{
+    0%{ transform:scale(0.35); opacity:0; }
+    35%{ transform:scale(1.18); opacity:1; }
+    100%{ transform:scale(1); opacity:0.92; }
   }
   #rg-bottom{ flex:0 0 auto; padding:14px; display:flex; justify-content:center; gap:10px; }
   #rg-bottom button{
@@ -13588,14 +13637,18 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 <div id="rg-overlay">
   <div id="rg-top">
-    <div class="rg-stat">COMBO <span id="rg-combo">0</span></div>
+    <div class="rg-stat" id="rg-title-stat">-</div>
     <div id="rg-score">0</div>
     <button id="rg-close">닫기 ✕</button>
   </div>
   <div id="rg-msg"></div>
   <div id="rg-field">
     <div id="rg-bg-video"></div>
-    <div id="rg-judge"></div>
+    <div id="rg-judge-wrap">
+      <div id="rg-judge"></div>
+      <div id="rg-combo-center"></div>
+    </div>
+    <div id="rg-countdown"></div>
     <div id="rg-lanes">
       <div class="rg-lane" data-lane="0"><div class="rg-hitzone"></div><div class="rg-key-hint">D</div></div>
       <div class="rg-lane" data-lane="1"><div class="rg-hitzone"></div><div class="rg-key-hint">F</div></div>
@@ -13694,25 +13747,29 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   const overlay = document.getElementById('rg-overlay');
   const msgEl = document.getElementById('rg-msg');
   const judgeEl = document.getElementById('rg-judge');
+  const judgeWrapEl = document.getElementById('rg-judge-wrap');
+  const comboEl = document.getElementById('rg-combo-center');
   const scoreEl = document.getElementById('rg-score');
-  const comboEl = document.getElementById('rg-combo');
+  const titleStatEl = document.getElementById('rg-title-stat');
+  const countdownEl = document.getElementById('rg-countdown');
   const bgVideoEl = document.getElementById('rg-bg-video');
   const laneEls = Array.from(document.querySelectorAll('.rg-lane'));
+  const keyHintEls = laneEls.map(el => el.querySelector('.rg-key-hint'));
   const APPROACH = 1.5;         // 노트가 판정 구간까지 내려오는 데 걸리는 시간(초)
   const HIT_LINE_RATIO = 0.86;  // 필드 높이 대비 판정 구간 중심 위치(위에서부터)
   const KEY_MAP = { d: 0, f: 1, j: 2, k: 3 };
 
-  // 판정 범위(초) — 이전보다 넉넉하게 넓힘
+  // 판정 범위(초) — 이전보다 좁게 줄임
   const JUDGE = {
-    PERFECT: 0.09,
-    GREAT: 0.16,
-    GOOD: 0.26,
-    BAD: 0.40
+    PERFECT: 0.045,
+    GREAT: 0.08,
+    GOOD: 0.13,
+    BAD: 0.20
   };
   const JUDGE_COLOR = { PERFECT: '#7dffb0', GREAT: '#8fd3ff', GOOD: '#ffe27d', BAD: '#ff8d6b' };
   const JUDGE_SCORE = { PERFECT: 100, GREAT: 80, GOOD: 55, BAD: 25 };
-  // 롱노트 꼬리를 놓을 때 허용해주는 오차(초)
-  const HOLD_TAIL_TOLERANCE = 0.25;
+  // 롱노트 꼬리를 놓을 때 허용해주는 오차(초) — 판정 범위 축소에 맞춰 함께 축소
+  const HOLD_TAIL_TOLERANCE = 0.15;
 
   let notes = [];
   let noteEls = [];
@@ -13721,6 +13778,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   let rafId = null;
   let fieldH = 0;
   let currentChart = null;
+  let currentSongName = '';
   let activeHold = [null, null, null, null]; // 레인별 현재 홀드 중인 노트
   let ytBgPlayer = null;
   let ytBgReady = false;
@@ -13737,10 +13795,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   function resetGame(){
     score = 0; combo = 0;
     scoreEl.textContent = '0';
-    comboEl.textContent = '0';
+    comboEl.textContent = '';
+    comboEl.style.opacity = '0';
+    judgeEl.style.opacity = '0';
     noteEls.forEach(n => n.el && n.el.remove());
     noteEls = [];
     activeHold = [null, null, null, null];
+    keyHintEls.forEach(el => el && el.classList.remove('rg-key-pressed'));
   }
 
   function buildNotes(chart){
@@ -13780,6 +13841,20 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     const pxPerSec = hitY / APPROACH;
     noteEls.forEach(n => {
       if (!n.el) return;
+
+      // 롱노트를 누르고 있는 중: 헤드는 판정선에 고정하고, 남은 홀드 시간만큼만
+      // 몸통을 아래로 늘어뜨려서 "지금부터 얼마나 더 눌러야 하는지"가 보이게 함.
+      // (예전엔 헤드가 계속 아래로 내려가버려서 노트가 화면 밖으로 사라지는 버그가 있었음)
+      if (n.len > 0 && activeHold[n.lane] === n) {
+        const remaining = Math.max(0, (n.time + n.len) - nowT);
+        n.el.style.top = (hitY - 30) + 'px';
+        if (n.bodyEl) n.bodyEl.style.height = (remaining * pxPerSec) + 'px';
+        if (nowT >= n.time + n.len) {
+          finishHold(n, 'success');
+        }
+        return;
+      }
+
       const progress = 1 - (n.time - nowT) / APPROACH; // 0 → 1 (판정 구간 도달 시 1)
       const y = progress * hitY - 30;
       n.el.style.top = y + 'px';
@@ -13787,15 +13862,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         n.bodyEl.style.height = (n.len * pxPerSec) + 'px';
       }
 
-      // 롱노트를 누르고 있는 중이면 몸통이 판정 구간을 지나가도 유지, 꼬리 시각까지 도달하면 자동 성공
-      if (n.len > 0 && activeHold[n.lane] === n) {
-        if (nowT >= n.time + n.len) {
-          finishHold(n, 'success');
-        }
-        return;
-      }
-
       // 아직 안 눌렀는데 판정 범위(BAD)를 넘어서 지나가버림 → 실패 처리
+      // (롱노트도 헤드 기준으로 판정하므로, 중간부터 뒤늦게 눌러도 이미 실패 처리되어 반응하지 않음)
       if (!n.hit && !n.missed && !n.holdSuccess && !n.holdFailed && nowT - n.time > JUDGE.BAD) {
         n.missed = true;
         breakCombo();
@@ -13809,14 +13877,39 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     if (n.el) { n.el.remove(); n.el = null; n.bodyEl = null; }
   }
 
+  // 판정 성공한 노트에 외부광선(글로우) 효과를 잠깐 보여준 뒤 제거
+  function flashHitAndRemove(n){
+    if (n.el) {
+      n.el.classList.remove('rg-long-active');
+      n.el.classList.add('rg-hit-glow');
+      const el = n.el;
+      n.el = null; // updatePositions가 더 이상 건드리지 않도록 즉시 참조 해제
+      setTimeout(() => { el.remove(); }, 230);
+      n.bodyEl = null;
+    } else {
+      removeNoteEl(n);
+    }
+  }
+
   function breakCombo(){
     combo = 0;
-    comboEl.textContent = '0';
+    comboEl.textContent = '';
+    comboEl.style.opacity = '0';
+  }
+
+  function updateComboDisplay(){
+    if (combo > 0) {
+      comboEl.textContent = combo + ' COMBO';
+      comboEl.style.opacity = '1';
+    } else {
+      comboEl.textContent = '';
+      comboEl.style.opacity = '0';
+    }
   }
 
   function addScore(tier){
     combo++;
-    comboEl.textContent = String(combo);
+    updateComboDisplay();
     score += JUDGE_SCORE[tier];
     scoreEl.textContent = String(score);
     showJudge(tier, JUDGE_COLOR[tier]);
@@ -13834,7 +13927,6 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     judgeEl.textContent = text;
     judgeEl.style.color = color;
     judgeEl.style.opacity = '1';
-    judgeEl.style.transform = 'translateX(-50%) translateY(0px)';
     clearTimeout(showJudge._t);
     showJudge._t = setTimeout(() => { judgeEl.style.opacity = '0'; }, 280);
   }
@@ -13843,13 +13935,14 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     activeHold[n.lane] = null;
     if (result === 'success') {
       n.holdSuccess = true;
-      addScore(combo >= 0 ? 'GREAT' : 'GREAT');
+      addScore('GREAT');
+      flashHitAndRemove(n);
     } else {
       n.holdFailed = true;
       breakCombo();
       showJudge('BAD', JUDGE_COLOR.BAD);
+      removeNoteEl(n);
     }
-    removeNoteEl(n);
   }
 
   function attemptHit(lane){
@@ -13861,22 +13954,20 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       const diff = Math.abs(n.time - nowT);
       if (diff < bestDiff) { bestDiff = diff; best = n; }
     });
-    laneEls[lane].classList.add('rg-active');
-    setTimeout(() => laneEls[lane].classList.remove('rg-active'), 100);
 
     const tier = best ? tierFromDiff(bestDiff) : null;
-    if (!best || !tier) return; // 판정 범위 밖 → 헛침(패널티 없음)
+    if (!best || !tier) return; // 판정 범위 밖(예: 롱노트 중간부터 누름) → 헛침(패널티 없음)
 
     if (best.len > 0) {
-      // 롱노트 시작(헤드) 판정 — 이후 몸통을 계속 눌러야 함
+      // 롱노트 시작(헤드) 판정 — 이후 꼬리까지 계속 눌러야 함
       best.hit = true;
       activeHold[lane] = best;
       if (best.el) best.el.classList.add('rg-long-active');
       addScore(tier);
     } else {
       best.hit = true;
-      removeNoteEl(best);
       addScore(tier);
+      flashHitAndRemove(best);
     }
   }
 
@@ -13916,7 +14007,8 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         events: {
           onReady: (e) => {
             ytBgReady = true;
-            try { e.target.unMute(); e.target.setVolume(100); e.target.playVideo(); } catch(err){}
+            // 카운트다운이 끝나기 전까진 재생하지 않는다(음소거만 해제해둠)
+            try { e.target.unMute(); e.target.setVolume(100); e.target.pauseVideo(); } catch(err){}
             onReadyCb && onReadyCb();
           }
         }
@@ -13949,15 +14041,43 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     bgVideoEl.innerHTML = '';
   }
 
-  function startGame(chart){
+  // 3, 2, 1, START 카운트다운을 보여준 뒤 콜백 실행. 카운트다운이 끝나야
+  // 뮤비가 재생되고 노트가 내려오기 시작한다(노트는 항상 필드 맨 위에서 시작).
+  function runCountdown(cb){
+    const seq = ['3', '2', '1', 'START'];
+    let idx = 0;
+    countdownEl.style.display = 'flex';
+    function step(){
+      if (idx >= seq.length) {
+        countdownEl.style.display = 'none';
+        cb();
+        return;
+      }
+      countdownEl.textContent = seq[idx];
+      countdownEl.classList.remove('rg-countdown-pop');
+      void countdownEl.offsetWidth; // 애니메이션 재시작을 위한 강제 리플로우
+      countdownEl.classList.add('rg-countdown-pop');
+      const delay = seq[idx] === 'START' ? 500 : 700;
+      idx++;
+      setTimeout(step, delay);
+    }
+    step();
+  }
+
+  function startGame(chart, songName){
     resetGame();
     buildNotes(chart);
+    if (songName) currentSongName = songName;
+    titleStatEl.textContent = currentSongName || '';
     msgEl.textContent = '뮤비 불러오는 중...';
     ensureBgVideo(chart, () => {
-      msgEl.textContent = 'Deja Vu 전용 자동 채보로 플레이 중 (박자는 추후 직접 다듬을 예정)';
-      running = true;
-      if (rafId) cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(loop);
+      runCountdown(() => {
+        msgEl.textContent = 'Deja Vu 전용 자동 채보로 플레이 중 (박자는 추후 직접 다듬을 예정)';
+        try { ytBgPlayer && ytBgPlayer.playVideo && ytBgPlayer.playVideo(); } catch(e){}
+        running = true;
+        if (rafId) cancelAnimationFrame(rafId);
+        rafId = requestAnimationFrame(loop);
+      });
     });
   }
 
@@ -13993,7 +14113,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
         item.addEventListener('click', () => {
           selectBg.classList.remove('show');
           overlay.classList.add('show');
-          startGame(RM_CHARTS[song.key]);
+          startGame(RM_CHARTS[song.key], song.name);
         });
       }
       songListEl.appendChild(item);
@@ -14015,22 +14135,31 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     if (currentChart) startGame(currentChart);
   });
 
+  function setKeyPressed(lane, pressed){
+    laneEls[lane].classList.toggle('rg-active', pressed);
+    if (keyHintEls[lane]) keyHintEls[lane].classList.toggle('rg-key-pressed', pressed);
+  }
+
   document.addEventListener('keydown', (e) => {
     if (!overlay.classList.contains('show')) return;
-    if (e.repeat) return; // 길게 누르고 있을 때 반복 입력 방지 (롱노트는 별도 처리)
     const lane = KEY_MAP[e.key.toLowerCase()];
-    if (lane !== undefined) attemptHit(lane);
+    if (lane === undefined) return;
+    setKeyPressed(lane, true); // 떼기 전까지 계속 핑크색으로 표시
+    if (e.repeat) return; // 길게 누르고 있을 때 판정 입력 자체는 반복하지 않음(롱노트는 별도 처리)
+    attemptHit(lane);
   });
   document.addEventListener('keyup', (e) => {
     if (!overlay.classList.contains('show')) return;
     const lane = KEY_MAP[e.key.toLowerCase()];
-    if (lane !== undefined) releaseKey(lane);
+    if (lane === undefined) return;
+    setKeyPressed(lane, false);
+    releaseKey(lane);
   });
   laneEls.forEach(el => {
     const lane = parseInt(el.dataset.lane, 10);
-    el.addEventListener('pointerdown', () => attemptHit(lane));
-    el.addEventListener('pointerup', () => releaseKey(lane));
-    el.addEventListener('pointerleave', () => releaseKey(lane));
+    el.addEventListener('pointerdown', () => { setKeyPressed(lane, true); attemptHit(lane); });
+    el.addEventListener('pointerup', () => { setKeyPressed(lane, false); releaseKey(lane); });
+    el.addEventListener('pointerleave', () => { setKeyPressed(lane, false); releaseKey(lane); });
   });
 })();
 </script>
