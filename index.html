@@ -13450,15 +13450,42 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
      ============================================================ -->
 <style>
   #rg-launch-btn{
-    position:fixed; right:16px; bottom:16px; z-index:9998;
-    width:48px; height:48px; border-radius:50%;
-    background:rgba(18,22,28,0.65); border:1px solid rgba(255,255,255,0.25);
+    position:fixed; left:16px; bottom:120px; z-index:9998;
+    width:44px; height:44px; border-radius:50%;
+    background:rgba(18,22,28,0.6); border:1px solid rgba(255,255,255,0.25);
     backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
     box-shadow:0 4px 15px rgba(0,0,0,0.3); cursor:pointer;
     display:flex; align-items:center; justify-content:center;
-    font-size:22px; color:#fff; transition:transform .2s ease;
+    font-size:20px; color:#fff; transition:all .2s ease;
   }
-  #rg-launch-btn:hover{ transform:translateY(-2px); }
+  #rg-launch-btn:hover{ transform:translateY(-2px); box-shadow:0 6px 18px rgba(0,0,0,0.4); }
+
+  #rg-select-bg{
+    display:none; position:fixed; inset:0; z-index:99998;
+    background:rgba(6,4,12,0.82); backdrop-filter:blur(4px);
+    align-items:center; justify-content:center; padding:24px;
+  }
+  #rg-select-bg.show{ display:flex; }
+  #rg-select-wrap{
+    width:min(360px,100%); max-height:80vh; overflow-y:auto;
+    background:rgba(18,22,28,0.92); border:1px solid rgba(255,255,255,0.15);
+    border-radius:16px; padding:16px;
+  }
+  #rg-select-wrap h3{ font-size:16px; margin-bottom:12px; }
+  .rg-song-item{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 14px; border-radius:10px; margin-bottom:8px;
+    background:rgba(255,255,255,0.05); cursor:pointer; font-size:14px;
+  }
+  .rg-song-item:hover{ background:rgba(255,255,255,0.1); }
+  .rg-song-item.rg-disabled{ opacity:.4; cursor:not-allowed; }
+  .rg-song-item .rg-tag{ font-size:11px; padding:3px 8px; border-radius:6px; background:rgba(252,111,207,0.25); color:#ffb9e6; }
+  .rg-song-item.rg-disabled .rg-tag{ background:rgba(255,255,255,0.1); color:rgba(255,255,255,0.5); }
+  #rg-select-close{
+    display:block; width:100%; margin-top:6px; padding:10px; border-radius:10px;
+    border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.06);
+    color:#fff; cursor:pointer;
+  }
   #rg-overlay{
     display:none; position:fixed; inset:0; z-index:99999;
     background:#05070c; color:#fff; flex-direction:column;
@@ -13480,8 +13507,17 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     display:flex; justify-content:center;
     background:linear-gradient(180deg,#0b0e14 0%,#05070c 80%);
   }
+  #rg-bg-video{
+    position:absolute; inset:0; z-index:0; overflow:hidden;
+    opacity:0.55; pointer-events:none; background:#000;
+  }
+  #rg-bg-video iframe{
+    position:absolute; top:50%; left:50%; width:100%; height:100%;
+    min-width:100%; min-height:100%;
+    transform:translate(-50%,-50%) scale(1.4);
+  }
   #rg-lanes{
-    position:relative; width:min(420px,92%); height:100%;
+    position:relative; z-index:1; width:min(420px,92%); height:100%;
     display:flex; gap:6px;
   }
   .rg-lane{
@@ -13491,16 +13527,35 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     border-right:1px solid rgba(255,255,255,0.06);
     overflow:hidden;
   }
-  .rg-hitline{
-    position:absolute; left:0; right:0; bottom:14%;
-    height:4px; background:rgba(252,111,207,0.85);
-    box-shadow:0 0 10px rgba(252,111,207,0.8);
+  /* 판정 구간을 넓고 눈에 띄게 표시 (얇은 선이 아니라 밴드 형태) */
+  .rg-hitzone{
+    position:absolute; left:0; right:0; bottom:calc(14% - 34px);
+    height:68px;
+    background:linear-gradient(180deg,rgba(252,111,207,0) 0%,rgba(252,111,207,0.22) 50%,rgba(252,111,207,0) 100%);
+    border-top:3px solid rgba(252,111,207,0.95);
+    border-bottom:3px solid rgba(252,111,207,0.95);
+    box-shadow:0 0 16px rgba(252,111,207,0.55);
   }
   .rg-note{
-    position:absolute; left:6%; right:6%; height:22px; border-radius:6px;
+    position:absolute; left:6%; right:6%; height:26px; border-radius:8px;
     background:linear-gradient(180deg,#8fd3ff,#4f8cff);
     box-shadow:0 2px 8px rgba(79,140,255,0.6);
     top:-30px;
+  }
+  /* 롱노트: 몸통(막대) + 머리(위쪽 캡) 구조. 몸통 길이는 JS에서 계산해 넣는다 */
+  .rg-note.rg-long .rg-long-body{
+    position:absolute; left:0; right:0; top:100%; height:0;
+    background:linear-gradient(180deg,rgba(143,211,255,0.55),rgba(79,140,255,0.35));
+    border-left:3px solid rgba(143,211,255,0.8);
+    border-right:3px solid rgba(143,211,255,0.8);
+  }
+  .rg-note.rg-long.rg-long-active{
+    background:linear-gradient(180deg,#ffe27d,#ffb84f);
+    box-shadow:0 0 14px rgba(255,200,90,0.8);
+  }
+  .rg-note.rg-long.rg-long-active .rg-long-body{
+    background:linear-gradient(180deg,rgba(255,226,125,0.55),rgba(255,184,79,0.3));
+    border-color:rgba(255,226,125,0.85);
   }
   .rg-key-hint{
     position:absolute; left:0; right:0; bottom:2%;
@@ -13523,6 +13578,14 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
 <button id="rg-launch-btn" title="리듬게임">🎮</button>
 
+<div id="rg-select-bg">
+  <div id="rg-select-wrap">
+    <h3>🎮 플레이할 곡 선택</h3>
+    <div id="rg-song-list"></div>
+    <button id="rg-select-close">닫기</button>
+  </div>
+</div>
+
 <div id="rg-overlay">
   <div id="rg-top">
     <div class="rg-stat">COMBO <span id="rg-combo">0</span></div>
@@ -13531,12 +13594,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   </div>
   <div id="rg-msg"></div>
   <div id="rg-field">
+    <div id="rg-bg-video"></div>
     <div id="rg-judge"></div>
     <div id="rg-lanes">
-      <div class="rg-lane" data-lane="0"><div class="rg-hitline"></div><div class="rg-key-hint">D</div></div>
-      <div class="rg-lane" data-lane="1"><div class="rg-hitline"></div><div class="rg-key-hint">F</div></div>
-      <div class="rg-lane" data-lane="2"><div class="rg-hitline"></div><div class="rg-key-hint">J</div></div>
-      <div class="rg-lane" data-lane="3"><div class="rg-hitline"></div><div class="rg-key-hint">K</div></div>
+      <div class="rg-lane" data-lane="0"><div class="rg-hitzone"></div><div class="rg-key-hint">D</div></div>
+      <div class="rg-lane" data-lane="1"><div class="rg-hitzone"></div><div class="rg-key-hint">F</div></div>
+      <div class="rg-lane" data-lane="2"><div class="rg-hitzone"></div><div class="rg-key-hint">J</div></div>
+      <div class="rg-lane" data-lane="3"><div class="rg-hitzone"></div><div class="rg-key-hint">K</div></div>
     </div>
   </div>
   <div id="rg-bottom">
@@ -13551,20 +13615,68 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   // ----------------------------------------------------------------
   // 채보(노트) 데이터. 지금은 BPM 기반으로 자동 생성하지만, 나중에
   // 직접 타이밍을 찍어서 이 객체의 notes 배열을 손으로 교체/추가하면
-  // 그대로 반영된다. { time: 초, lane: 0~3 }
+  // 그대로 반영된다. { time: 초, lane: 0~3, len: 롱노트 길이(초, 0이면 일반 노트) }
+  // songEndTime: 이 시각 이후로는 노트를 더 생성/표시하지 않음
+  // videoId / videoEndTime: 배경 뮤비 영상과 끝나는 시각(초)
   // ----------------------------------------------------------------
   const RM_CHARTS = {
-    'deja vu': { bpm: 125, offset: 0.45, hand: null }
+    'deja vu': {
+      bpm: 125,
+      offset: 0.45,
+      songEndTime: 180.80,      // 3:00.80 이후로는 노트 생성 안 함
+      videoId: 'ZbO9PBdFRdc',
+      videoEndTime: 199         // 3:19 에서 배경 영상 정지
+    }
   };
 
+  // 시드 고정 의사난수 (매번 같은 채보가 나오되, 단순 등차수열이 아니라
+  // 실제로 무작위처럼 다양하게 레인이 섞이도록 함)
+  function mulberry32(seed){
+    return function(){
+      seed |= 0; seed = (seed + 0x6D2B79F5) | 0;
+      let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+      t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  function pickLane(rand, avoidLane){
+    let lane = Math.floor(rand() * 4);
+    if (lane === avoidLane) lane = (lane + 1 + Math.floor(rand() * 3)) % 4;
+    return lane;
+  }
+
   function autoGenerateNotes(duration, bpm, offset){
-    const interval = 60 / bpm;
+    const beat = 60 / bpm;
+    const rand = mulberry32(20260820);
     const notes = [];
-    let t = offset, i = 0;
-    while (t < duration - 2) {
-      notes.push({ time: t, lane: (i * 7 + 3) % 4 });
-      if (i % 8 === 5) notes.push({ time: t + interval / 2, lane: (i * 5 + 1) % 4 });
-      t += interval;
+    let t = offset, i = 0, lastLane = -1;
+    while (t < duration - 1) {
+      const roll = rand();
+      if (i > 3 && roll < 0.10) {
+        // 쉬는 박(리듬감을 위한 빈 마디)
+      } else if (roll < 0.28) {
+        // 8분음표 두 개(빠른 연타 느낌)
+        const l1 = pickLane(rand, lastLane); notes.push({ time: t, lane: l1, len: 0 }); lastLane = l1;
+        const l2 = pickLane(rand, lastLane); notes.push({ time: t + beat / 2, lane: l2, len: 0 }); lastLane = l2;
+      } else if (i > 4 && roll < 0.36 && (duration - t) > beat * 3) {
+        // 롱노트(2박)
+        const l = pickLane(rand, lastLane);
+        notes.push({ time: t, lane: l, len: beat * 2 });
+        lastLane = l;
+      } else if (roll < 0.44) {
+        // 동시치기(2노트 코드)
+        const l1 = pickLane(rand, lastLane);
+        let l2 = pickLane(rand, l1);
+        notes.push({ time: t, lane: l1, len: 0 });
+        notes.push({ time: t, lane: l2, len: 0 });
+        lastLane = l2;
+      } else {
+        const l = pickLane(rand, lastLane);
+        notes.push({ time: t, lane: l, len: 0 });
+        lastLane = l;
+      }
+      t += beat;
       i++;
     }
     return notes;
@@ -13584,10 +13696,23 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   const judgeEl = document.getElementById('rg-judge');
   const scoreEl = document.getElementById('rg-score');
   const comboEl = document.getElementById('rg-combo');
+  const bgVideoEl = document.getElementById('rg-bg-video');
   const laneEls = Array.from(document.querySelectorAll('.rg-lane'));
-  const APPROACH = 1.5; // 노트가 판정선까지 내려오는 데 걸리는 시간(초)
-  const HIT_LINE_RATIO = 0.86; // 필드 높이 대비 판정선 위치(위에서부터)
+  const APPROACH = 1.5;         // 노트가 판정 구간까지 내려오는 데 걸리는 시간(초)
+  const HIT_LINE_RATIO = 0.86;  // 필드 높이 대비 판정 구간 중심 위치(위에서부터)
   const KEY_MAP = { d: 0, f: 1, j: 2, k: 3 };
+
+  // 판정 범위(초) — 이전보다 넉넉하게 넓힘
+  const JUDGE = {
+    PERFECT: 0.09,
+    GREAT: 0.16,
+    GOOD: 0.26,
+    BAD: 0.40
+  };
+  const JUDGE_COLOR = { PERFECT: '#7dffb0', GREAT: '#8fd3ff', GOOD: '#ffe27d', BAD: '#ff8d6b' };
+  const JUDGE_SCORE = { PERFECT: 100, GREAT: 80, GOOD: 55, BAD: 25 };
+  // 롱노트 꼬리를 놓을 때 허용해주는 오차(초)
+  const HOLD_TAIL_TOLERANCE = 0.25;
 
   let notes = [];
   let noteEls = [];
@@ -13595,9 +13720,19 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   let running = false;
   let rafId = null;
   let fieldH = 0;
+  let currentChart = null;
+  let activeHold = [null, null, null, null]; // 레인별 현재 홀드 중인 노트
+  let ytBgPlayer = null;
+  let ytBgReady = false;
 
   function getAudio(){ try { return (typeof audio !== 'undefined') ? audio : null; } catch(e){ return null; } }
   function getTitle(){ const el = document.getElementById('song-title'); return el ? el.textContent : ''; }
+  // 게임의 진행 시각/소리는 이제 배경 뮤비(ytBgPlayer)가 기준이다. 뮤직 플레이어의
+  // 오디오는 게임 중엔 건드리지 않는다(재생 안 함) — 뮤비 소리만 들리게 하기 위함.
+  function getGameTime(){
+    try { return (ytBgPlayer && ytBgReady && ytBgPlayer.getCurrentTime) ? ytBgPlayer.getCurrentTime() : 0; }
+    catch(e){ return 0; }
+  }
 
   function resetGame(){
     score = 0; combo = 0;
@@ -13605,29 +13740,35 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     comboEl.textContent = '0';
     noteEls.forEach(n => n.el && n.el.remove());
     noteEls = [];
+    activeHold = [null, null, null, null];
   }
 
-  function buildNotes(){
-    const a = getAudio();
-    const dur = (a && a.duration && isFinite(a.duration)) ? a.duration : 210;
-    const chart = matchChart(getTitle());
-    if (chart) {
-      msgEl.textContent = 'Deja Vu 전용 자동 채보로 플레이 중 (박자는 추후 직접 다듬을 예정)';
-      notes = autoGenerateNotes(dur, chart.bpm, chart.offset);
-    } else {
-      msgEl.textContent = '현재 재생 중인 곡의 전용 채보가 없어 기본 패턴으로 생성했어요.';
-      notes = autoGenerateNotes(dur, 120, 0.6);
-    }
-    noteEls = notes.map(n => ({ ...n, el: null, hit: false, missed: false }));
+  function buildNotes(chart){
+    currentChart = chart;
+    const cutoff = chart.songEndTime || 210;
+    msgEl.textContent = 'Deja Vu 전용 자동 채보로 플레이 중 (박자는 추후 직접 다듬을 예정)';
+    notes = autoGenerateNotes(cutoff, chart.bpm, chart.offset);
+    noteEls = notes.map(n => ({
+      ...n, el: null, bodyEl: null,
+      hit: false, missed: false,
+      holdSuccess: false, holdFailed: false
+    }));
   }
 
   function spawnVisibleNotes(nowT){
     fieldH = laneEls[0].clientHeight;
     noteEls.forEach(n => {
-      if (n.el || n.hit || n.missed) return;
-      if (n.time - nowT <= APPROACH && n.time - nowT > -0.3) {
+      if (n.el || n.hit || n.missed || n.holdSuccess || n.holdFailed) return;
+      const endTime = n.time + (n.len || 0);
+      if (n.time - nowT <= APPROACH && endTime - nowT > -0.3) {
         const el = document.createElement('div');
-        el.className = 'rg-note';
+        el.className = 'rg-note' + (n.len > 0 ? ' rg-long' : '');
+        if (n.len > 0) {
+          const bodyEl = document.createElement('div');
+          bodyEl.className = 'rg-long-body';
+          el.appendChild(bodyEl);
+          n.bodyEl = bodyEl;
+        }
         laneEls[n.lane].appendChild(el);
         n.el = el;
       }
@@ -13636,20 +13777,57 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
 
   function updatePositions(nowT){
     const hitY = fieldH * HIT_LINE_RATIO;
+    const pxPerSec = hitY / APPROACH;
     noteEls.forEach(n => {
       if (!n.el) return;
-      const progress = 1 - (n.time - nowT) / APPROACH; // 0 → 1
+      const progress = 1 - (n.time - nowT) / APPROACH; // 0 → 1 (판정 구간 도달 시 1)
       const y = progress * hitY - 30;
       n.el.style.top = y + 'px';
-      if (!n.hit && !n.missed && nowT - n.time > 0.18) {
+      if (n.len > 0 && n.bodyEl) {
+        n.bodyEl.style.height = (n.len * pxPerSec) + 'px';
+      }
+
+      // 롱노트를 누르고 있는 중이면 몸통이 판정 구간을 지나가도 유지, 꼬리 시각까지 도달하면 자동 성공
+      if (n.len > 0 && activeHold[n.lane] === n) {
+        if (nowT >= n.time + n.len) {
+          finishHold(n, 'success');
+        }
+        return;
+      }
+
+      // 아직 안 눌렀는데 판정 범위(BAD)를 넘어서 지나가버림 → 실패 처리
+      if (!n.hit && !n.missed && !n.holdSuccess && !n.holdFailed && nowT - n.time > JUDGE.BAD) {
         n.missed = true;
-        combo = 0;
-        comboEl.textContent = '0';
-        showJudge('MISS', '#ff5d7a');
-        n.el.remove();
-        n.el = null;
+        breakCombo();
+        showJudge('BAD', JUDGE_COLOR.BAD);
+        removeNoteEl(n);
       }
     });
+  }
+
+  function removeNoteEl(n){
+    if (n.el) { n.el.remove(); n.el = null; n.bodyEl = null; }
+  }
+
+  function breakCombo(){
+    combo = 0;
+    comboEl.textContent = '0';
+  }
+
+  function addScore(tier){
+    combo++;
+    comboEl.textContent = String(combo);
+    score += JUDGE_SCORE[tier];
+    scoreEl.textContent = String(score);
+    showJudge(tier, JUDGE_COLOR[tier]);
+  }
+
+  function tierFromDiff(diff){
+    if (diff <= JUDGE.PERFECT) return 'PERFECT';
+    if (diff <= JUDGE.GREAT) return 'GREAT';
+    if (diff <= JUDGE.GOOD) return 'GOOD';
+    if (diff <= JUDGE.BAD) return 'BAD';
+    return null;
   }
 
   function showJudge(text, color){
@@ -13658,77 +13836,201 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     judgeEl.style.opacity = '1';
     judgeEl.style.transform = 'translateX(-50%) translateY(0px)';
     clearTimeout(showJudge._t);
-    showJudge._t = setTimeout(() => { judgeEl.style.opacity = '0'; }, 260);
+    showJudge._t = setTimeout(() => { judgeEl.style.opacity = '0'; }, 280);
+  }
+
+  function finishHold(n, result){
+    activeHold[n.lane] = null;
+    if (result === 'success') {
+      n.holdSuccess = true;
+      addScore(combo >= 0 ? 'GREAT' : 'GREAT');
+    } else {
+      n.holdFailed = true;
+      breakCombo();
+      showJudge('BAD', JUDGE_COLOR.BAD);
+    }
+    removeNoteEl(n);
   }
 
   function attemptHit(lane){
-    const a = getAudio();
-    if (!a) return;
-    const nowT = a.currentTime || 0;
+    if (!running) return;
+    const nowT = getGameTime();
     let best = null, bestDiff = Infinity;
     noteEls.forEach(n => {
-      if (n.hit || n.missed || n.lane !== lane) return;
+      if (n.hit || n.missed || n.holdSuccess || n.holdFailed || n.lane !== lane) return;
       const diff = Math.abs(n.time - nowT);
       if (diff < bestDiff) { bestDiff = diff; best = n; }
     });
     laneEls[lane].classList.add('rg-active');
     setTimeout(() => laneEls[lane].classList.remove('rg-active'), 100);
-    if (!best || bestDiff > 0.22) return; // 판정 범위 밖 → 그냥 무시(헛침)
-    best.hit = true;
-    if (best.el) { best.el.remove(); best.el = null; }
-    combo++;
-    comboEl.textContent = String(combo);
-    if (bestDiff <= 0.08) { score += 100; showJudge('PERFECT', '#7dffb0'); }
-    else { score += 60; showJudge('GOOD', '#ffe27d'); }
-    scoreEl.textContent = String(score);
+
+    const tier = best ? tierFromDiff(bestDiff) : null;
+    if (!best || !tier) return; // 판정 범위 밖 → 헛침(패널티 없음)
+
+    if (best.len > 0) {
+      // 롱노트 시작(헤드) 판정 — 이후 몸통을 계속 눌러야 함
+      best.hit = true;
+      activeHold[lane] = best;
+      if (best.el) best.el.classList.add('rg-long-active');
+      addScore(tier);
+    } else {
+      best.hit = true;
+      removeNoteEl(best);
+      addScore(tier);
+    }
+  }
+
+  function releaseKey(lane){
+    const n = activeHold[lane];
+    if (!n) return;
+    const nowT = getGameTime();
+    const tailTime = n.time + n.len;
+    if (Math.abs(nowT - tailTime) <= HOLD_TAIL_TOLERANCE || nowT >= tailTime) {
+      finishHold(n, 'success');
+    } else {
+      finishHold(n, 'fail');
+    }
   }
 
   function loop(){
-    const a = getAudio();
-    if (!a) { rafId = requestAnimationFrame(loop); return; }
-    const nowT = a.currentTime || 0;
+    if (!ytBgReady) { rafId = requestAnimationFrame(loop); return; }
+    const nowT = getGameTime();
     spawnVisibleNotes(nowT);
     updatePositions(nowT);
+    watchVideoEnd(nowT);
     if (running) rafId = requestAnimationFrame(loop);
   }
 
-  function startGame(){
-    const a = getAudio();
-    if (!a) { msgEl.textContent = '먼저 곡을 재생해주세요.'; return; }
+  // ----------------------------------------------------------------
+  // 배경 뮤비 = 게임의 유일한 소리/시간 기준. 뮤직 플레이어 쪽 오디오는
+  // 게임 중에는 아예 손대지 않는다(재생 X) — 뮤비 소리만 나오게 하기 위함.
+  // ----------------------------------------------------------------
+  function ensureBgVideo(chart, onReadyCb){
+    if (!chart || !chart.videoId) { onReadyCb && onReadyCb(); return; }
+    bgVideoEl.innerHTML = '<div id="rg-bg-video-inner"></div>';
+    ytBgReady = false;
+    const create = () => {
+      ytBgPlayer = new YT.Player('rg-bg-video-inner', {
+        videoId: chart.videoId,
+        playerVars: { autoplay: 1, controls: 0, disablekb: 1, modestbranding: 1, playsinline: 1 },
+        events: {
+          onReady: (e) => {
+            ytBgReady = true;
+            try { e.target.unMute(); e.target.setVolume(100); e.target.playVideo(); } catch(err){}
+            onReadyCb && onReadyCb();
+          }
+        }
+      });
+      ytBgPlayer._videoId = chart.videoId;
+    };
+    if (window.YT && window.YT.Player) create();
+    else {
+      let tries = 0;
+      const timer = setInterval(() => {
+        tries++;
+        if (window.YT && window.YT.Player) { clearInterval(timer); create(); }
+        else if (tries > 50) { clearInterval(timer); onReadyCb && onReadyCb(); }
+      }, 150);
+    }
+  }
+
+  function watchVideoEnd(nowT){
+    if (!currentChart || !ytBgPlayer) return;
+    try {
+      const endTime = currentChart.videoEndTime || 999;
+      if (nowT >= endTime) ytBgPlayer.pauseVideo();
+    } catch(e){}
+  }
+
+  function stopBgVideo(){
+    try { if (ytBgPlayer && ytBgPlayer.stopVideo) ytBgPlayer.stopVideo(); } catch(e){}
+    ytBgReady = false;
+    ytBgPlayer = null;
+    bgVideoEl.innerHTML = '';
+  }
+
+  function startGame(chart){
     resetGame();
-    buildNotes();
-    running = true;
-    if (rafId) cancelAnimationFrame(rafId);
-    rafId = requestAnimationFrame(loop);
+    buildNotes(chart);
+    msgEl.textContent = '뮤비 불러오는 중...';
+    ensureBgVideo(chart, () => {
+      msgEl.textContent = 'Deja Vu 전용 자동 채보로 플레이 중 (박자는 추후 직접 다듬을 예정)';
+      running = true;
+      if (rafId) cancelAnimationFrame(rafId);
+      rafId = requestAnimationFrame(loop);
+    });
   }
 
   function stopGame(){
     running = false;
     if (rafId) cancelAnimationFrame(rafId);
-    noteEls.forEach(n => n.el && n.el.remove());
+    noteEls.forEach(n => removeNoteEl(n));
+    stopBgVideo();
+  }
+
+  // ----------------------------------------------------------------
+  // 곡 선택 모달: 지금은 Deja Vu만 실제로 플레이 가능하고, 나머지는
+  // "준비중"으로 비활성 표시만 해둔다. (추후 RM_CHARTS에 채보를 추가하면
+  // 그 곡도 자동으로 활성화되도록 RM_CHARTS 키와 매칭)
+  const RG_SONG_LIST = [
+    { name: 'Deja Vu', key: 'deja vu' },
+    { name: 'YoYo', key: 'yoyo' },
+    { name: 'Glow Up', key: 'glow up' },
+    { name: 'lip bomb', key: 'lip bomb' },
+    { name: 'SCENEDROME', key: 'scenedrome' }
+  ];
+  const selectBg = document.getElementById('rg-select-bg');
+  const songListEl = document.getElementById('rg-song-list');
+
+  function renderSongList(){
+    songListEl.innerHTML = '';
+    RG_SONG_LIST.forEach(song => {
+      const playable = !!RM_CHARTS[song.key];
+      const item = document.createElement('div');
+      item.className = 'rg-song-item' + (playable ? '' : ' rg-disabled');
+      item.innerHTML = '<span>' + song.name + '</span><span class="rg-tag">' + (playable ? 'PLAY' : '준비중') + '</span>';
+      if (playable) {
+        item.addEventListener('click', () => {
+          selectBg.classList.remove('show');
+          overlay.classList.add('show');
+          startGame(RM_CHARTS[song.key]);
+        });
+      }
+      songListEl.appendChild(item);
+    });
   }
 
   document.getElementById('rg-launch-btn').addEventListener('click', () => {
-    overlay.classList.add('show');
-    startGame();
+    renderSongList();
+    selectBg.classList.add('show');
+  });
+  document.getElementById('rg-select-close').addEventListener('click', () => {
+    selectBg.classList.remove('show');
   });
   document.getElementById('rg-close').addEventListener('click', () => {
     stopGame();
     overlay.classList.remove('show');
   });
   document.getElementById('rg-restart').addEventListener('click', () => {
-    const a = getAudio();
-    if (a) { try { a.currentTime = 0; a.play && a.play(); } catch(e){} }
-    startGame();
+    if (currentChart) startGame(currentChart);
   });
 
   document.addEventListener('keydown', (e) => {
     if (!overlay.classList.contains('show')) return;
+    if (e.repeat) return; // 길게 누르고 있을 때 반복 입력 방지 (롱노트는 별도 처리)
     const lane = KEY_MAP[e.key.toLowerCase()];
     if (lane !== undefined) attemptHit(lane);
   });
+  document.addEventListener('keyup', (e) => {
+    if (!overlay.classList.contains('show')) return;
+    const lane = KEY_MAP[e.key.toLowerCase()];
+    if (lane !== undefined) releaseKey(lane);
+  });
   laneEls.forEach(el => {
-    el.addEventListener('pointerdown', () => attemptHit(parseInt(el.dataset.lane, 10)));
+    const lane = parseInt(el.dataset.lane, 10);
+    el.addEventListener('pointerdown', () => attemptHit(lane));
+    el.addEventListener('pointerup', () => releaseKey(lane));
+    el.addEventListener('pointerleave', () => releaseKey(lane));
   });
 })();
 </script>
