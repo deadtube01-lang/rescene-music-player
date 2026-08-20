@@ -13517,6 +13517,13 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     min-width:100%; min-height:100%;
     transform:translate(-50%,-50%) scale(1.4);
   }
+  /* 영상이 일시정지 상태일 때(로딩/카운트다운/종료 후) 유튜브가 자체적으로
+     보여주는 재생/일시정지 버튼이나 관련 영상 추천 화면이 비치지 않도록,
+     플레이 중이 아닐 때는 이 커버로 영상을 완전히 가려준다. */
+  #rg-bg-video-cover{
+    position:absolute; inset:0; z-index:0;
+    background:#05070c; pointer-events:none;
+  }
   #rg-lanes{
     position:relative; z-index:1; width:min(420px,92%); height:100%;
     display:flex; gap:6px;
@@ -13548,6 +13555,9 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     animation: rgNoteHitGlow 0.22s ease-out forwards;
     pointer-events:none;
   }
+  .rg-long-body.rg-hit-glow{
+    animation: rgNoteHitGlow 0.22s ease-out forwards;
+  }
   @keyframes rgNoteHitGlow{
     0%{
       box-shadow:0 0 10px 2px rgba(255,255,255,0.95), 0 0 22px 6px rgba(143,211,255,0.85);
@@ -13562,22 +13572,28 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       opacity:0;
     }
   }
-  /* 롱노트: 머리(위쪽 캡)와 몸통이 하나로 이어진 길쭉한 막대로 보이도록 구성.
-     머리는 아래쪽 모서리를 각지게, 몸통은 위쪽 모서리를 각지게 해서 이어붙인다. */
-  .rg-note.rg-long{ border-radius:6px 6px 0 0; }
+  /* 롱노트: 머리(아래쪽=먼저 판정)와 몸통(꼬리 쪽=나중에 판정)이 하나로 이어진
+     길쭉한 막대. 꼬리는 머리보다 나중 시각이라 화면 위쪽에 위치하므로, 몸통은
+     머리 위로 자라나며(bottom:100%) 머리와 함께 위에서부터 자연스럽게 내려온다. */
+  .rg-note.rg-long{ border-radius:0 0 6px 6px; }
   .rg-note.rg-long .rg-long-body{
-    position:absolute; left:0; right:0; top:100%; height:0;
-    background:linear-gradient(180deg,#4f8cff,#8fd3ff);
-    border-radius:0 0 6px 6px;
+    position:absolute; left:0; right:0; bottom:100%; height:0;
+    background:linear-gradient(180deg,#8fd3ff,#4f8cff);
+    border-radius:6px 6px 0 0;
     box-shadow:0 2px 8px rgba(79,140,255,0.6);
   }
   .rg-note.rg-long.rg-long-active{
     background:linear-gradient(180deg,#ffe27d,#ffb84f);
     box-shadow:0 0 14px rgba(255,200,90,0.8);
+    animation: rgLongHoldGlow 0.6s ease-in-out infinite;
   }
   .rg-note.rg-long.rg-long-active .rg-long-body{
     background:linear-gradient(180deg,#ffb84f,#ffe27d);
     box-shadow:0 0 14px rgba(255,200,90,0.8);
+  }
+  @keyframes rgLongHoldGlow{
+    0%, 100%{ box-shadow:0 0 10px rgba(255,200,90,0.7), 0 0 0 rgba(255,255,255,0); }
+    50%{ box-shadow:0 0 22px rgba(255,220,140,1), 0 0 30px rgba(255,220,140,0.7); }
   }
   .rg-key-hint{
     position:absolute; left:0; right:0; bottom:2%;
@@ -13658,6 +13674,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   <div id="rg-title-row"><div class="rg-stat" id="rg-title-stat">-</div></div>
   <div id="rg-field">
     <div id="rg-bg-video"></div>
+    <div id="rg-bg-video-cover"></div>
     <div id="rg-judge-wrap">
       <div id="rg-judge"></div>
       <div id="rg-combo-center"></div>
@@ -13799,6 +13816,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   const titleStatEl = document.getElementById('rg-title-stat');
   const countdownEl = document.getElementById('rg-countdown');
   const bgVideoEl = document.getElementById('rg-bg-video');
+  const bgVideoCoverEl = document.getElementById('rg-bg-video-cover');
   const laneEls = Array.from(document.querySelectorAll('.rg-lane'));
   const keyHintEls = laneEls.map(el => el.querySelector('.rg-key-hint'));
   const APPROACH = 1.5;         // 노트가 판정 구간까지 내려오는 데 걸리는 시간(초)
@@ -13928,6 +13946,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     if (n.el) {
       n.el.classList.remove('rg-long-active');
       n.el.classList.add('rg-hit-glow');
+      if (n.bodyEl) n.bodyEl.classList.add('rg-hit-glow'); // 롱노트는 몸통까지 함께 빛나게
       const el = n.el;
       n.el = null; // updatePositions가 더 이상 건드리지 않도록 즉시 참조 해제
       setTimeout(() => { el.remove(); }, 230);
@@ -14122,6 +14141,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     running = false;
     if (rafId) cancelAnimationFrame(rafId);
     noteEls.forEach(n => removeNoteEl(n));
+    bgVideoCoverEl.style.display = 'block'; // 영상이 멈춘 뒤 유튜브 추천/컨트롤 UI가 비치지 않도록 가림
     const maxScore = (notes.length || 1) * JUDGE_SCORE.PERFECT;
     const accuracy = Math.max(0, Math.min(100, (score / maxScore) * 100));
     const grade = gradeFromAccuracy(accuracy);
@@ -14162,6 +14182,11 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
   }
 
   function startGame(chart, songName){
+    // 이전 게임의 루프가 아직 돌고 있다면(예: 재생 도중 "다시하기") 즉시 멈춰서,
+    // 카운트다운 중에 옛 루프가 노트를 미리 움직여버리는 문제를 막는다.
+    running = false;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    bgVideoCoverEl.style.display = 'block'; // 로딩/카운트다운 중엔 영상을 가려서 유튜브 자체 UI가 안 보이게
     resetGame();
     buildNotes(chart);
     if (songName) currentSongName = songName;
@@ -14172,6 +14197,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
       runCountdown(() => {
         try { ytBgPlayer && ytBgPlayer.seekTo && ytBgPlayer.seekTo(0, true); ytBgPlayer.playVideo && ytBgPlayer.playVideo(); } catch(e){}
         running = true;
+        bgVideoCoverEl.style.display = 'none'; // 실제 플레이 중에만 영상을 보여줌
         if (rafId) cancelAnimationFrame(rafId);
         rafId = requestAnimationFrame(loop);
       });
@@ -14185,6 +14211,7 @@ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',
     noteEls.forEach(n => removeNoteEl(n));
     stopBgVideo();
     resultEl.classList.remove('show');
+    bgVideoCoverEl.style.display = 'block';
   }
 
   // ----------------------------------------------------------------
